@@ -27,10 +27,10 @@ target_state_name_char = char(target_state_name);
 %safe_target_state_name = strrep(target_state_name, ' ', '_'); % Replace spaces with underscores
 
 
-window = 0.5; % sec 
+windowAroundEvent = 0.5; % sec  *** to setting    epoch to take around the trigger event
 some_column_size = window*2*1000; % ms
 
-num_units = size (population, 2 );
+num_units = size(population, 2);
 
 for u = 1:num_units
     num_trial = size (population(u).trial, 2 );
@@ -43,7 +43,7 @@ for u = 1:num_units
     raster_labels.stimulus_position_X_coordinate = cell(1, num_trial);
     
     % Initialize numeric array for raster_data
-    raster_data = NaN(num_trial, some_column_size); 
+    raster_data = NaN(num_trial, some_column_size);
     
     
     for t = 1:num_trial
@@ -70,28 +70,31 @@ for u = 1:num_units
         else
             raster_labels.stimulus_side{1, t} = 'L';
         end
-   
+        
         X_coordinate = real(population(u).trial(t).tar_pos);
         Y_coordinate = imag(population(u).trial(t).tar_pos);
         raster_labels.stimulus_position_X_coordinate{1, t} = X_coordinate;
         raster_labels.stimulus_position_Y_coordinate{1, t} = Y_coordinate;
         
-        %%% raster_site_info
-        raster_site_info.session_ID = population(u).unit_ID;
-        raster_site_info.recording_channel = population(u).channel;
-        raster_site_info.unit = population(u).block_unit;
+ 
         
     end
     
+    %%% raster_site_info
+    raster_site_info.session_ID = %% population(u).unit_ID; % Lin_20211109
+    raster_site_info.recording_channel = population(u).channel;
+    raster_site_info.unit_ID = population(u).unit_ID;
+    raster_site_info.block_unit = population(u).block_unit;
+
     
     raster_data = raster_data(~isnan(raster_data(:, 1)), :); % Remove NaN rows (trials with success == 0) from raster_data
     raster_labels.stimulus_ID = raster_labels.stimulus_ID(~cellfun('isempty', raster_labels.stimulus_ID)); % Remove empty cells (trials with success == 0) from raster_data
     raster_labels.stimulus_side = raster_labels.stimulus_side(~cellfun('isempty', raster_labels.stimulus_side));
     raster_labels.stimulus_position_X_coordinate = raster_labels.stimulus_position_X_coordinate(~cellfun('isempty', raster_labels.stimulus_position_X_coordinate));
     raster_labels.stimulus_position_Y_coordinate = raster_labels.stimulus_position_Y_coordinate(~cellfun('isempty', raster_labels.stimulus_position_Y_coordinate));
-
     
-filename = [OUTPUT_PATH_raster population(u).unit_ID '_trial_state_' target_state_name_char];
-save(filename,'raster_data', 'raster_labels', 'raster_site_info')
+    
+    filename = [OUTPUT_PATH_raster population(u).unit_ID '_trial_state_' target_state_name_char];
+    save(filename,'raster_data', 'raster_labels', 'raster_site_info')
 end
 
