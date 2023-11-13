@@ -8,8 +8,8 @@ load(mat_filename);
 
 run('sdndt_Sim_LIP_dPul_NDT_settings');
 
-if ~exist(OUTPUT_PATH,'dir')
-    mkdir(OUTPUT_PATH);
+if ~exist(OUTPUT_PATH_raster,'dir')
+    mkdir(OUTPUT_PATH_raster);
 end
 
 target_state = 6; % 6 - cue on , 4 - target acquisition
@@ -91,7 +91,7 @@ for u = 1:num_units
     raster_labels.stimulus_position_Y_coordinate = raster_labels.stimulus_position_Y_coordinate(~cellfun('isempty', raster_labels.stimulus_position_Y_coordinate));
 
     
-filename = [OUTPUT_PATH population(u).unit_ID '_trial_state_' target_state_name_char];
+filename = [OUTPUT_PATH_raster population(u).unit_ID '_trial_state_' target_state_name_char];
 save(filename,'raster_data', 'raster_labels', 'raster_site_info')
 end
 
