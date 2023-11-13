@@ -90,13 +90,7 @@ for u = 1:num_units
     raster_labels.stimulus_position_X_coordinate = raster_labels.stimulus_position_X_coordinate(~cellfun('isempty', raster_labels.stimulus_position_X_coordinate));
     raster_labels.stimulus_position_Y_coordinate = raster_labels.stimulus_position_Y_coordinate(~cellfun('isempty', raster_labels.stimulus_position_Y_coordinate));
 
-    % if ~isempty(raster_data) % Convert to a numeric array
-    %     raster_data = cat(1, raster_data{:});
-    % else
-    %     fprintf('No successful trials for unit %d.\n', u);
-    % end
-
-
+    
 filename = [OUTPUT_PATH population(u).unit_ID '_trial_state_' target_state_name_char];
 save(filename,'raster_data', 'raster_labels', 'raster_site_info')
 end
