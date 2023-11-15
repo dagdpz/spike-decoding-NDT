@@ -12,7 +12,7 @@ if ~exist(OUTPUT_PATH_raster,'dir')
     mkdir(OUTPUT_PATH_raster);
 end
 
-target_state = 6; % 6 - cue on , 4 - target acquisition
+target_state = 4; % 6 - cue on , 4 - target acquisition
 
 switch target_state
     case 6
