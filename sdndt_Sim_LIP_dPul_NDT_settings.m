@@ -8,6 +8,8 @@ OUTPUT_PATH_raster = 'C:\Projects\Sim_dPul_LIP\NDT\raster\';
 % for creating binned_data
 OUTPUT_PATH_binned = 'C:\Projects\Sim_dPul_LIP\NDT\binned\';
 
+
+
 settings.windowAroundEvent = 0.5; % s:  epoch to take around the trigger event
 
 % data preparation

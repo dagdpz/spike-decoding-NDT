@@ -105,6 +105,8 @@ for u = 1:num_units
     raster_site_info.electrode_depth = population(u).electrode_depth;
     
     
+
+    
     
     raster_data = raster_data(~isnan(raster_data(:, 1)), :); % Remove NaN rows (trials with success == 0) from raster_data
     raster_labels.trial_type = raster_labels.trial_type(~cellfun('isempty', raster_labels.trial_type)); % Remove empty cells (trials with success == 0) from raster_data
@@ -117,6 +119,7 @@ for u = 1:num_units
     raster_labels.run = raster_labels.run(~cellfun('isempty', raster_labels.run));
     
     
+
     filename = [OUTPUT_PATH_raster population(u).unit_ID '_raster_trial_state_' target_state_name '.mat'];
     save(filename,'raster_data', 'raster_labels', 'raster_site_info')
 end
