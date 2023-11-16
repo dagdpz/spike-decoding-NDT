@@ -1,5 +1,5 @@
-function [raster_data, raster_labels, raster_site_info] = sdndt_Sim_LIP_dPul_NDT_make_raster(mat_filename)
-% [raster_data, raster_labels, raster_site_info] = sdndt_Sim_LIP_dPul_NDT_make_raster('Y:\Projects\Simultaneous_dPul_PPC_recordings\ephys\dPul_LIP_Lin_20211109\population_Linus_20211109.mat');
+function [raster_data, raster_labels, raster_site_info] = sdndt_Sim_LIP_dPul_NDT_decoding(mat_filename)
+% [raster_data, raster_labels, raster_site_info] = sdndt_Sim_LIP_dPul_NDT_decoding('Y:\Projects\Simultaneous_dPul_PPC_recordings\ephys\dPul_LIP_Lin_20211109\population_Linus_20211109.mat');
 
 % This code loads one population**.mat file and converts it to a raster_data, array 0 and 1.
 
@@ -15,7 +15,7 @@ if ~exist(OUTPUT_PATH_raster,'dir')
     mkdir(OUTPUT_PATH_raster);
 end
 
-target_state = 4; % 6 - cue on , 4 - target acquisition
+target_state = 6; % 6 - cue on , 4 - target acquisition
 
 switch target_state
     case 6
@@ -125,7 +125,34 @@ for u = 1:num_units
 
     filename = [OUTPUT_PATH_raster population(u).unit_ID '_raster_trial_state_' target_state_name '.mat'];
     save(filename,'raster_data', 'raster_labels', 'raster_site_info')
+end 
     
+    %% Make Binned_data
+    % Add the path to the NDT so add_ndt_paths_and_init_rand_generator can be called
+    toolbox_basedir_name = 'Y:\Sources\ndt.1.0.4';
+    addpath(toolbox_basedir_name);
+    % Add the NDT paths using add_ndt_paths_and_init_rand_generator
+    add_ndt_paths_and_init_rand_generator;
+    
+    save_prefix_name = [OUTPUT_PATH_binned 'Binned_Sim_LIP_dPul__NDT_data_' target_state_name];
+    if ~exist(OUTPUT_PATH_binned,'dir')
+        mkdir(OUTPUT_PATH_binned);
+    end
+    
+    
+%     % Upload the necessary files: only cueON or only GOsignal
+%     file_list = dir(fullfile(OUTPUT_PATH_raster, ['*' target_state_name '*.mat'])); %  Use dir to list all files in the directory
+%     for f = 1:numel(file_list) % Loop through the files and load them
+%         file_path = fullfile(OUTPUT_PATH_raster, file_list(f).name);
+%         load(file_path);
+%     end
+    
+    raster_data_directory_name = [OUTPUT_PATH_raster '*' target_state_name '*']
+    binned_data_file_name = create_binned_data_from_raster_data(raster_data_directory_name, save_prefix_name, settings.bin_width, settings.step_size);
+    
+    % smooth the data
+%     binned_data = arrayfun(@(x) smoothdata(binned_data{x}, 2, settings.smoothing_method, settings.smoothing_window), 1:length(binned_data), 'UniformOutput', false);
+%     save([binned_format_file_name(1:end-4) '_smoothed.mat'],'binned_data','binned_labels','binned_site_info');
 
-end
+
 
