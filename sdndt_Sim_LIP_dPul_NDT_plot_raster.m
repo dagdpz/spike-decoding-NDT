@@ -106,7 +106,7 @@ for i = 1:length(trial_types)
     line([time_point_500ms_bin time_point_500ms_bin], get(gca, 'YLim'), 'color', [1 0 0]); % % Plot the vertical line at the corresponding bin in the binned data
     %line([500 500], get(gca, 'YLim'), 'color', [1 0 0]);
     ylabel('Number of spikes');
-    xlabel('Bin');
+    xlabel('Number of bins');
     %xlabel('Time (ms)');
     set(gca, 'Position', get(gca, 'Position') + [0, 0, 0, -0.05]);
     
