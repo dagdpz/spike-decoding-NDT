@@ -11,8 +11,9 @@ OUTPUT_PATH_binned = 'C:/Projects/Sim_dPul_LIP/NDT/binned/';
 settings.windowAroundEvent = 0.5; % s:  epoch to take around the trigger event
 
 % data preparation to create binned_data
-settings.bin_width = 150;
-settings.step_size = 50;
+settings.start_time = 1;
+settings.bin_width = 100;
+settings.step_size = 25;
 
 % data preparation
 settings.bin_dur = 50; % ms

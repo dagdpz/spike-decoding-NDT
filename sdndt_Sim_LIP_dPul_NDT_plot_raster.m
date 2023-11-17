@@ -7,10 +7,15 @@ function [raster_data, raster_labels, raster_site_info] = sdndt_Sim_LIP_dPul_NDT
 % Replace 'your_file_name.mat' with the actual file name you want to process
 load(mat_filename);
 
+run('sdndt_Sim_LIP_dPul_NDT_settings');
+
+
 % Extract information states from the file name
 [~, filename, ~] = fileparts(mat_filename);
 parts = strsplit(filename, '_');
 state_info = parts{end}; % Extract the stage information from the file name
+
+
 switch state_info
     case 'GOsignal'
         target_state_name = state_info;
@@ -80,10 +85,29 @@ for i = 1:length(trial_types)
     
     %Plot PSTH for the current trial type
     subplot(2, 4, length(trial_types) + i);
-    bar(sum(sorted_trial_data(trial_indices, :), 1)); % bar(sum(trial_data));
-    line([500 500], get(gca, 'YLim'), 'color', [1 0 0]);
+    
+    end_time = length(raster_data);
+    if (length(settings.bin_width) == 1) && (length(settings.step_size) == 1); % if a single bin width and step size have been specified, then create binned data that averaged data over bin_width sized bins, sampled at sampling_interval intervals
+        bin_start_time = settings.start_time : settings.step_size : (end_time - settings.bin_width  + 1);
+        bin_widths = settings.bin_width .* ones(size(bin_start_time));
+    end
+    sorted_data = sorted_trial_data(trial_indices, :);
+    
+    % Initialize bins with zeros (preallocation)
+    bins = zeros(size(sorted_data, 1), length(bin_start_time));
+    for b = 1:length(bin_start_time)
+        bins(:, b) = mean(sorted_data(:, bin_start_time(b):(bin_start_time(b) + bin_widths(b) -1)), 2);
+    end
+    
+    bar(sum(bins, 1));
+    %bar(sum(sorted_trial_data(trial_indices, :), 1)); % bar(sum(trial_data));
+    
+    time_point_500ms_bin = find(bin_start_time <= 500, 1, 'last'); % Find the bin corresponding to 500 ms in the binned data
+    line([time_point_500ms_bin time_point_500ms_bin], get(gca, 'YLim'), 'color', [1 0 0]); % % Plot the vertical line at the corresponding bin in the binned data
+    %line([500 500], get(gca, 'YLim'), 'color', [1 0 0]);
     ylabel('Number of spikes');
-    xlabel('Time (ms)');
+    xlabel('Bin');
+    %xlabel('Time (ms)');
     set(gca, 'Position', get(gca, 'Position') + [0, 0, 0, -0.05]);
     
     % Set title only for subplot(2, 4, length(trial_types) + i)
