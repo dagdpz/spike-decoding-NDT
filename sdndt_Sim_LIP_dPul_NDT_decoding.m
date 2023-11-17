@@ -55,6 +55,7 @@ for u = 1:num_units
             fprintf('Trial %d in unit %d excluded from analysis (success = 0).\n', t, u);
             continue;  % Skip the rest of the loop and move to the next trial
         end
+        % choiceVariable = [population(45).trial(:).success]; valueToCount = true; howManySuccessTrials = sum(choiceVariable == valueToCount);
         
         %%% raster_data
         state_index = find(population(u).trial(t).states == target_state); % Find the index of the target state in the 'states' array
