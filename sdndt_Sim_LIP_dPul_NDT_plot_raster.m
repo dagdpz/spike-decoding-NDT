@@ -64,11 +64,12 @@ for i = 1:length(trial_types)
     % Get the corresponding presentation times for the current trial type
     %presentation_times_trial_type = raster_labels.presentation_times(trial_indices);
     % Sort the trials based on presentation times
-    [~, sorted_indices] = ismember(trial_indices, 1:length(raster_labels.trial_type_side)); %[~, sorted_indices] = sort(raster_labels.trial_type_side == trial_type);
-
+    %[~, sorted_indices] = ismember(trial_indices, 1:length(raster_labels.trial_type_side)); %[~, sorted_indices] = sort(raster_labels.trial_type_side == trial_type);
+	sorted_trial_data = zeros(size(raster_data, 1), size(raster_data, 2));
+    sorted_trial_data(:, trial_indices) = raster_data(:, trial_indices);
     
     % Plot raster for the current trial type
-    imagesc(~trial_data(:, trial_indices(sorted_indices))); %  imagesc(~trial_data);
+    imagesc(~sorted_trial_data(:, trial_indices)); %imagesc(~trial_data(:, trial_indices(sorted_indices))); %  imagesc(~trial_data);
     colormap gray;
     axis([0 1000 0 400]);
     line([500 500], get(gca, 'YLim'), 'color', [1 0 0]);
