@@ -27,7 +27,7 @@ switch target_state
         % You might want to handle the case when target_state is neither 6 nor 4
 end
 
-
+units_skipped = 0; % Initialize the counter for skipped units
 columnsNumberBasedOnWindow = settings.windowAroundEvent*2*1000; % windowAroundEvent in ms
 
 num_units = size(population, 2);
@@ -48,6 +48,8 @@ for u = 1:num_units
     % Initialize numeric array for raster_data
     raster_data = NaN(num_trial, columnsNumberBasedOnWindow);
     
+    blocks_present = []; % Track the blocks present in the trials
+    
     
     for t = 1:num_trial
         
@@ -56,6 +58,10 @@ for u = 1:num_units
             continue;  % Skip the rest of the loop and move to the next trial
         end
         % choiceVariable = [population(45).trial(:).success]; valueToCount = true; howManySuccessTrials = sum(choiceVariable == valueToCount);
+        
+        blocks_present = unique([blocks_present, population(u).trial(t).block]); % Add the block information to the blocks_present array
+        
+        
         
         %%% raster_data
         state_index = find(population(u).trial(t).states == target_state); % Find the index of the target state in the 'states' array
@@ -93,6 +99,7 @@ for u = 1:num_units
         
     end
     
+   
     %%% raster_site_info
     raster_site_info.recording_channel = population(u).channel;
     raster_site_info.session_ID = population(u).unit_ID(1:12);
@@ -108,9 +115,7 @@ for u = 1:num_units
     raster_site_info.grid_y = population(u).grid_y;
     raster_site_info.electrode_depth = population(u).electrode_depth;
     
-    
-
-    
+        
     
     raster_data = raster_data(~isnan(raster_data(:, 1)), :); % Remove NaN rows (trials with success == 0) from raster_data
     raster_labels.trial_type = raster_labels.trial_type(~cellfun('isempty', raster_labels.trial_type)); % Remove empty cells (trials with success == 0) from raster_data
@@ -123,10 +128,22 @@ for u = 1:num_units
     raster_labels.run = raster_labels.run(~cellfun('isempty', raster_labels.run));
     
     
+    % Check if both blocks 1 and 2 are present in the trials
+    if ismember(1, blocks_present) && ismember(2, blocks_present)
+        % Save data only if both blocks 1 and 2 are present
+        filename = [OUTPUT_PATH_raster population(u).unit_ID '_raster_trial_state_' target_state_name '.mat'];
+        save(filename, 'raster_data', 'raster_labels', 'raster_site_info');
+    else
+        fprintf('Skipping unit %d because it does not have both blocks 1 and 2.\n', u);
+        units_skipped = units_skipped + 1;
+    end
+    
+    %     filename = [OUTPUT_PATH_raster population(u).unit_ID '_raster_trial_state_' target_state_name '.mat'];
+    %     save(filename,'raster_data', 'raster_labels', 'raster_site_info')
+end
 
-    filename = [OUTPUT_PATH_raster population(u).unit_ID '_raster_trial_state_' target_state_name '.mat'];
-    save(filename,'raster_data', 'raster_labels', 'raster_site_info')
-end 
+fprintf('%d units out of %d for the file %s not taken in the analysis.\n', units_skipped, num_units, mat_filename);
+    
     
     %% Make Binned_data
     % Add the path to the NDT so add_ndt_paths_and_init_rand_generator can be called
@@ -232,10 +249,10 @@ the_cross_validator.test_only_at_training_times = 1;
 DECODING_RESULTS = the_cross_validator.run_cv_decoding;
 
 
-save_file_name = [filename_binned_data '_' labels_to_use_string string_to_add_to_filename '_DECODING_RESULTS.mat'];
+save_file_name = [OUTPUT_PATH_binned filename_binned_data '_' labels_to_use_string string_to_add_to_filename '_DECODING_RESULTS.mat'];
 save(save_file_name, 'DECODING_RESULTS');
 
 % Plot decoding
-LIP_Caltech_NDT__plot_results(save_file_name);
+sdndt_Sim_LIP_dPul_NDT_plot_decoding_results(save_file_name);
 
 

@@ -26,9 +26,9 @@ settings.num_cv_splits = 20;
 settings.num_resample_runs = 50;
 
 % plotting
-settings.time_lim = [-1000 5000]; % s, relative to cue onset
+settings.time_lim = [0 1000]; % s, relative to cue onset
 settings.y_lim = [30 100];
 
-settings.significant_event_times = [0 200 1200]; % for plotting relevant trial events
+settings.significant_event_times = [0 500 1000]; % for plotting relevant trial events
 
 settings.errorbar_type_to_plot = 1;
