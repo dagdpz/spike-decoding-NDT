@@ -25,4 +25,5 @@ mat-file: like population_Linus_20211109.mat, which contains variable population
 Output:                                                                                                                                                                                                                               
 mat-file: like Lin_20211109_02_raster_trial_state_cueON.mat, which contains variables raster_data, raster_labels, raster_site_info. 
 
-
+# sdndt_Sim_LIP_dPul_NDT_plot_decoding_results.m                   
+The function contains additional settings for plotting decoding results.                    
