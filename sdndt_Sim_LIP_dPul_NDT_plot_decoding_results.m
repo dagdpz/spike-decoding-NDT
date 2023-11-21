@@ -18,8 +18,9 @@ result_names{1} = save_file_name;
 % create the plot results object
 plot_obj = plot_standard_results_object(result_names);
 
-% put a line at the time when the stimulus was shown
-plot_obj.significant_event_times = settings.significant_event_times;
+% put a line at the time when the stimulus was shown 
+% plot_obj.significant_event_times = settings.significant_event_times;
+% the xline(500) function below is used for this purpose
 
 plot_obj.errorbar_file_names = result_names;
 plot_obj.errorbar_type_to_plot = settings.errorbar_type_to_plot;
@@ -29,6 +30,7 @@ plot_obj.plot_results;
 
 title(labels_to_use_string);
 
+xline(500); 
 set(gca,'Xlim',settings.time_lim, 'Ylim',settings.y_lim);
 
 saveas(gcf, [save_file_name(1:end-4) '_DA_as_a_function_of_time.png']);

@@ -29,6 +29,7 @@ settings.num_resample_runs = 50;
 settings.time_lim = [0 1000]; % s, relative to cue onset
 settings.y_lim = [30 100];
 
-settings.significant_event_times = [0 500 1000]; % for plotting relevant trial events
+% settings.significant_event_times = [0 500 1000]; % for plotting relevant trial events
+% the xline(500) function in the sdndt_Sim_LIP_dPul_NDT_plot_decoding_results.m code is used for this purpose
 
 settings.errorbar_type_to_plot = 1;

@@ -1,7 +1,18 @@
-function [raster_data, raster_labels, raster_site_info] = sdndt_Sim_LIP_dPul_NDT_decoding(mat_filename)
-% [raster_data, raster_labels, raster_site_info] = sdndt_Sim_LIP_dPul_NDT_decoding('Y:\Projects\Simultaneous_dPul_PPC_recordings\ephys\dPul_LIP_Lin_20211109\population_Linus_20211109.mat');
-
+function [raster_data, raster_labels, raster_site_info] = sdndt_Sim_LIP_dPul_NDT_decoding(mat_filename, target_state, target_brain_structure)
 % This code loads one population**.mat file and converts it to a raster_data, array 0 and 1.
+% The code converts the received raster data into binned data and then performs decoding. 
+
+% TEST MODE. 
+% To check how the code works, we load only one file as input (one session = one day of recording). For example:
+% sdndt_Sim_LIP_dPul_NDT_decoding('Y:\Projects\Simultaneous_dPul_PPC_recordings\ephys\dPul_LIP_Lin_20211109\population_Linus_20211109.mat');
+
+% DECODING MODE. 
+% sdndt_Sim_LIP_dPul_NDT_decoding(mat_filename, target_state, target_brain_structure);
+% mat_filename - list of files that are required for decoding 
+% target_state - 6 - cue on , 4 - target acquisition
+% target_brain_structure = 'dPul_L', 'LIP_L', if both 'LIP_L_dPul_L'
+
+
 
 load(mat_filename);
 %load('Y:\Projects\Simultaneous_dPul_PPC_recordings\ephys\dPul_LIP_Lin_20211109\population_Linus_20211109.mat'); % once debug is complete, comment this line and enable the line above
@@ -15,7 +26,7 @@ if ~exist(OUTPUT_PATH_raster,'dir')
     mkdir(OUTPUT_PATH_raster);
 end
 
-target_state = 6; % 6 - cue on , 4 - target acquisition
+%target_state = 6; % 6 - cue on , 4 - target acquisition
 
 switch target_state
     case 6
@@ -27,7 +38,9 @@ switch target_state
         % You might want to handle the case when target_state is neither 6 nor 4
 end
 
+
 units_skipped = 0; % Initialize the counter for skipped units
+all_brain_structures = {}; % Initialize a cell array to store all brain structure names
 columnsNumberBasedOnWindow = settings.windowAroundEvent*2*1000; % windowAroundEvent in ms
 
 num_units = size(population, 2);
@@ -61,7 +74,7 @@ for u = 1:num_units
         
         blocks_present = unique([blocks_present, population(u).trial(t).block]); % Add the block information to the blocks_present array
         
-        
+                
         
         %%% raster_data
         state_index = find(population(u).trial(t).states == target_state); % Find the index of the target state in the 'states' array
@@ -128,10 +141,15 @@ for u = 1:num_units
     raster_labels.run = raster_labels.run(~cellfun('isempty', raster_labels.run));
     
     
+    all_brain_structures = [all_brain_structures, raster_site_info.target]; % Accumulate all brain structure names in the list
+    
+  
+    
+    
     % Check if both blocks 1 and 2 are present in the trials
     if ismember(1, blocks_present) && ismember(2, blocks_present)
         % Save data only if both blocks 1 and 2 are present
-        filename = [OUTPUT_PATH_raster population(u).unit_ID '_raster_trial_state_' target_state_name '.mat'];
+        filename = [OUTPUT_PATH_raster population(u).unit_ID '_raster_' raster_site_info.target '_trial_state_' target_state_name '.mat'];
         save(filename, 'raster_data', 'raster_labels', 'raster_site_info');
     else
         fprintf('Skipping unit %d because it does not have both blocks 1 and 2.\n', u);
@@ -143,7 +161,11 @@ for u = 1:num_units
 end
 
 fprintf('%d units out of %d for the file %s not taken in the analysis.\n', units_skipped, num_units, mat_filename);
-    
+
+brain_structures_present = unique(all_brain_structures); % Get unique brain structure names
+all_brain_structures = [brain_structures_present{1, 1}, '_', brain_structures_present{1, 2}]; % format suitable for file names 
+
+
     
     %% Make Binned_data
     % Add the path to the NDT so add_ndt_paths_and_init_rand_generator can be called
@@ -152,20 +174,49 @@ fprintf('%d units out of %d for the file %s not taken in the analysis.\n', units
     % Add the NDT paths using add_ndt_paths_and_init_rand_generator
     add_ndt_paths_and_init_rand_generator;
     
-    save_prefix_name = [OUTPUT_PATH_binned 'Binned_Sim_LIP_dPul__NDT_data_' target_state_name];
+    
+   % target_brain_structure = all_brain_structures; % all structures from which neurons were recorded can be found in the variable brain_structures_present
+    
+    switch target_brain_structure
+        case 'dPul_L'
+            target_brain_structure = 'dPul_L';
+        case 'LIP_L'
+            target_brain_structure = 'LIP_L';
+        otherwise
+            target_brain_structure = all_brain_structures;
+    end
+    
+    save_prefix_name = [OUTPUT_PATH_binned 'Binned_Sim_LIP_dPul__NDT_data_for_' target_brain_structure '_' target_state_name];
     if ~exist(OUTPUT_PATH_binned,'dir')
         mkdir(OUTPUT_PATH_binned);
     end
     
     
-%     % Upload the necessary files: only cueON or only GOsignal
-%     file_list = dir(fullfile(OUTPUT_PATH_raster, ['*' target_state_name '*.mat'])); %  Use dir to list all files in the directory
-%     for f = 1:numel(file_list) % Loop through the files and load them
-%         file_path = fullfile(OUTPUT_PATH_raster, file_list(f).name);
-%         load(file_path);
-%     end
+    %     % Upload the necessary files: only cueON or only GOsignal
+    %     file_list = dir(fullfile(OUTPUT_PATH_raster, ['*' target_state_name '*.mat'])); %  Use dir to list all files in the directory
+    %     for f = 1:numel(file_list) % Loop through the files and load them
+    %         file_path = fullfile(OUTPUT_PATH_raster, file_list(f).name);
+    %         load(file_path);
+    %     end
     
-    raster_data_directory_name = [OUTPUT_PATH_raster '*' target_state_name '*']
+    all_target_brain_structure = {'dPul_L', 'LIP_L', 'other_structure'}; % Example value, replace it with your actual variable
+    
+    switch target_brain_structure
+        case 'dPul_L'
+            search_target_brain_structure_among_raster_data = 'dPul_L';
+        case 'LIP_L'
+            search_target_brain_structure_among_raster_data = 'LIP_L';
+        otherwise
+            % Check if target_structure_of_brain is in all_brain_structures
+            if any(strcmp(target_brain_structure, all_target_brain_structure))
+                search_target_brain_structure_among_raster_data = target_structure_of_brain;
+            else
+                search_target_brain_structure_among_raster_data = [];
+            end
+    end
+    
+    
+    raster_data_directory_name = [OUTPUT_PATH_raster '*' search_target_brain_structure_among_raster_data '_trial_state_' target_state_name '*'];
     binned_data_file_name = create_binned_data_from_raster_data(raster_data_directory_name, save_prefix_name, settings.bin_width, settings.step_size);
     
     load(binned_data_file_name);  % load the binned data
