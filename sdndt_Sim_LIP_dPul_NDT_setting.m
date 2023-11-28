@@ -1,23 +1,27 @@
 % sdndt_Sim_LIP_dPul_NDT_setting
 
+base_path = 'E:/Projects/Sim_dPul_LIP/NDT/';
+
+
+
 % for creating raster_data
 INPUT_PATH = 'Y:/Projects/Simultaneous_dPul_PPC_recordings/ephys/dPul_LIP_Lin_20211109/';
-OUTPUT_PATH_raster = 'C:/Projects/Sim_dPul_LIP/NDT/raster/';
+OUTPUT_PATH_raster = [base_path 'raster/'];
 
 % Specify the directory to save the lists
-OUTPUT_PATH_list_of_required_files = 'C:/Projects/Sim_dPul_LIP/NDT/raster/List_of_required_files/';
+OUTPUT_PATH_list_of_required_files = [base_path 'List_of_required_files/'];
 
 % for creating binned_data
-OUTPUT_PATH_binned = 'C:/Projects/Sim_dPul_LIP/NDT/binned/';
+OUTPUT_PATH_binned = [base_path 'binned/'];
 
 
 
 settings.windowAroundEvent = 0.5; % s:  epoch to take around the trigger event
 
 % data preparation to create binned_data
-settings.start_time = 1;
-settings.bin_width = 100;
-settings.step_size = 25;
+settings.start_time = 1; % ms
+settings.bin_width = 100; % ms
+settings.step_size = 25; % ms
 
 % data preparation
 settings.bin_dur = 50; % ms

@@ -4,14 +4,15 @@ Decoding spiking activity with NDT
 Requires NDT: http://www.readout.info
 
 # sdndt_Sim_LIP_dPul_NDT_setting.m
-Сontains information about the base path. This code is invented for the convenience of different users.
+Сontains information about the base path (for the convenience of different users) and all other settings.
 
 # sdndt_Sim_LIP_dPul_NDT_to_make_raster.m
 Converts data from file type: "population_Linus_20211109.mat" to raster data.                                                                                                                                
 Input:                                                                                                                                                                                                                          
 mat-file: like population_Linus_20211109.mat, which contains variable population                                                                                                                                           
 Output:                                                                                                                                                                                                                               
-mat-file: like Lin_20211109_02_raster_trial_state_cueON.mat, which contains variables raster_data, raster_labels, raster_site_info. 
+many mat-files: like Lin_20211109_02_raster_trial_state_cueON.mat, which contains variables raster_data, raster_labels, raster_site_info. 
+for each unit, epoch around certain trigger point (e.g. state_CueOn, state_GoSignal), and each block, separate mat-file
 
 # sdndt_Sim_LIP_dPul_NDT_plot_raster.m
 Plots spike rasters from each trial and peri-stimulus time histogram (PSTH) of the data.                                                                                                                                     
