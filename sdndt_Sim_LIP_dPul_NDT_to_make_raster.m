@@ -10,7 +10,7 @@ load(mat_file_name);
 run('sdndt_Sim_LIP_dPul_NDT_setting');
 
 
-%%Make raster_data 
+%%Make raster_data
 
 if ~exist(OUTPUT_PATH_raster,'dir')
     mkdir(OUTPUT_PATH_raster);
@@ -41,11 +41,18 @@ for u = 1:num_units
     
     unique_blocks = unique([population(u).trial.block]); % Get the unique block numbers for the current unit
     % num_trial = size (population(u).trial, 2 );
+    num_of_success_trials_per_unit(u) = 0; % Reset the counter for each unit
     
     % Loop over unique blocks for the current unit
     for b = unique_blocks
         % Filter trials for the current block
         block_trials = [population(u).trial.block] == b;
+        
+        % Check if the current block is the second or third block
+%         if b == 1 || b == 2 || b == 3
+%             % Continue to the next block if it's the second or third block
+%             continue;
+%         end
         
         % Get the number of trials for the current block
         num_block_trials = sum(block_trials);
@@ -69,36 +76,43 @@ for u = 1:num_units
             %blocks_present = []; % Track the blocks present in the trials
             
             
-            
+            % Loop over trials for the current block
             for t = find(block_trials) % t = 1:num_trial
+                
+
+                if population(u).trial(t).success == 0 % Check if the trial should be excluded based on success value
+                    fprintf('Trial %d in unit %d excluded from analysis (success = 0).\n', t, u);
+                    continue;  % Skip the rest of the loop and move to the next trial
+                end
+                % choiceVariable = [population(45).trial(:).success]; valueToCount = true; howManySuccessTrials = sum(choiceVariable == valueToCount);
+                %blocks_present = unique([blocks_present, population(u).trial(t).block]); % Add the block information to the blocks_present array
+                
+                
+                % Check which block the trial belongs to
+                current_block = population(u).trial(t).block;
+                
+                %%% raster_data
+                state_index = find(population(u).trial(t).states == target_state);
+                if isempty(state_index)
+                    fprintf('State %d not found. Excluding from analysis.\n', target_state);
+                else
+                    onsetTimeOfRequiredStage(t) = population(u).trial(t).states_onset(state_index);
+                    % Use the index to retrieve the corresponding value from 'states_onset'
+                    %raster_data(t, :) = histcounts(population(u).trial(t).arrival_times, (onsetTimeOfRequiredStage(t) - settings.windowAroundEvent):0.001:(onsetTimeOfRequiredStage(t) + settings.windowAroundEvent));
+                    if current_block == 1
+                        raster_data(t, :) = histcounts(population(u).trial(t).arrival_times, (onsetTimeOfRequiredStage(t) - settings.windowAroundEvent):0.001:(onsetTimeOfRequiredStage(t) + settings.windowAroundEvent));
+                    elseif current_block == 2
+                        raster_data(t, :) = histcounts(population(u).trial(t).arrival_times, (onsetTimeOfRequiredStage(t) - settings.windowAroundEvent):0.001:(onsetTimeOfRequiredStage(t) + settings.windowAroundEvent));
+                    end
+                end
+                
                 
                 % how many successful trials were made for each unit individually (as there are units with different numbers of record blocks)
                 if population(u).trial(t).success == 1
                     num_of_success_trials_per_unit(u) = num_of_success_trials_per_unit(u) + 1;
                 end
                 
-                if population(u).trial(t).success == 0 % Check if the trial should be excluded based on success value
-                    fprintf('Trial %d in unit %d excluded from analysis (success = 0).\n', t, u);
-                    continue;  % Skip the rest of the loop and move to the next trial
-                end
-                % choiceVariable = [population(45).trial(:).success]; valueToCount = true; howManySuccessTrials = sum(choiceVariable == valueToCount);
                 
-                
-                
-                
-                
-                %blocks_present = unique([blocks_present, population(u).trial(t).block]); % Add the block information to the blocks_present array
-                
-                
-                
-                %%% raster_data
-                state_index = find(population(u).trial(t).states == target_state); % Find the index of the target state in the 'states' array
-                if isempty(state_index)
-                    fprintf('State %d not found. Excluding from analysis.\n', target_state);
-                else
-                    onsetTimeOfRequiredStage (t) = population(u).trial(t).states_onset(state_index); % Use the index to retrieve the corresponding value from 'states_onset'
-                    raster_data(t, :) = histcounts(population(u).trial(t).arrival_times, (onsetTimeOfRequiredStage(t) - settings.windowAroundEvent):0.001:(onsetTimeOfRequiredStage(t) + settings.windowAroundEvent));
-                end
                 
                 
                 %%% raster_labels
@@ -124,7 +138,9 @@ for u = 1:num_units
                 raster_labels.perturbation{1, t} = population(u).trial(t).perturbation;
                 raster_labels.block{1, t} = population(u).trial(t).block;
                 raster_labels.run{1, t} = population(u).trial(t).run;
+               
                 
+                 
             end
             
             
@@ -171,10 +187,13 @@ for u = 1:num_units
             %         units_skipped = units_skipped + 1;
             %     end
             
+            
             % Save data for the current block
             filename = [OUTPUT_PATH_raster population(u).unit_ID '_raster_' raster_site_info.target '_trial_state_' target_state_name '_block_' num2str(b) '.mat'];
             save(filename, 'raster_data', 'raster_labels', 'raster_site_info');
+            
         end
+        
     end
     % Accumulate all brain structure names in the list
     all_brain_structures = [all_brain_structures, raster_site_info.target];
@@ -187,7 +206,7 @@ end
 brain_structures_present = unique(all_brain_structures); % Get unique brain structure names
 all_brain_structures = strjoin(brain_structures_present, '_'); % format suitable for file names
 
-    
+
 
 end
 
