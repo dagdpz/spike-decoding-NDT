@@ -1,5 +1,5 @@
-function [raster_data, raster_labels, raster_site_info] = sdndt_Sim_LIP_dPul_NDT_to_make_raster(mat_file_name, target_state)
-%  sdndt_Sim_LIP_dPul_NDT_to_make_raster('Y:\Projects\Simultaneous_dPul_PPC_recordings\ephys\dPul_LIP_Lin_20211109\population_Linus_20211109.mat', 4);
+function [raster_data, raster_labels, raster_site_info] = sdndt_Sim_LIP_dPul_NDT_make_raster(mat_file_name, target_state)
+%  sdndt_Sim_LIP_dPul_NDT_make_raster('Y:\Projects\Simultaneous_dPul_PPC_recordings\ephys\dPul_LIP_Lin_20211109\population_Linus_20211109.mat', 4);
 
 % This code loads one population**.mat file and converts it to a raster_data, array 0 and 1.
 
@@ -7,7 +7,7 @@ function [raster_data, raster_labels, raster_site_info] = sdndt_Sim_LIP_dPul_NDT
 load(mat_file_name);
 %load('Y:\Projects\Simultaneous_dPul_PPC_recordings\ephys\dPul_LIP_Lin_20211109\population_Linus_20211109.mat'); % once debug is complete, comment this line and enable the line above
 
-run('sdndt_Sim_LIP_dPul_NDT_setting');
+run('sdndt_Sim_LIP_dPul_NDT_settings');
 
 
 %%Make raster_data
@@ -29,7 +29,7 @@ switch target_state
 end
 
 
-units_skipped = 0; % Initialize the counter for skipped units
+%units_skipped = 0; % Initialize the counter for skipped units
 all_brain_structures = {}; % Initialize a cell array to store all brain structure names
 columnsNumberBasedOnWindow = settings.windowAroundEvent*2*1000; % windowAroundEvent in ms
 
@@ -81,7 +81,7 @@ for u = 1:num_units
                 
 
                 if population(u).trial(t).success == 0 % Check if the trial should be excluded based on success value
-                    fprintf('Trial %d in unit %d excluded from analysis (success = 0).\n', t, u);
+                    %fprintf('Trial %d in unit %d excluded from analysis (success = 0).\n', t, u);
                     continue;  % Skip the rest of the loop and move to the next trial
                 end
                 % choiceVariable = [population(45).trial(:).success]; valueToCount = true; howManySuccessTrials = sum(choiceVariable == valueToCount);
@@ -94,7 +94,7 @@ for u = 1:num_units
                 %%% raster_data
                 state_index = find(population(u).trial(t).states == target_state);
                 if isempty(state_index)
-                    fprintf('State %d not found. Excluding from analysis.\n', target_state);
+                    %fprintf('State %d not found. Excluding from analysis.\n', target_state);
                 else
                     onsetTimeOfRequiredStage(t) = population(u).trial(t).states_onset(state_index);
                     % Use the index to retrieve the corresponding value from 'states_onset'

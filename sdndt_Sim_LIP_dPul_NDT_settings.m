@@ -1,12 +1,12 @@
-% sdndt_Sim_LIP_dPul_NDT_setting
+% sdndt_Sim_LIP_dPul_NDT_settings
 
-base_path = 'E:/Projects/Sim_dPul_LIP/NDT/';
+base_path = 'C:/Projects/Sim_dPul_LIP/NDT/';
 
 
 
 % for creating raster_data
 INPUT_PATH = 'Y:/Projects/Simultaneous_dPul_PPC_recordings/ephys/dPul_LIP_Lin_20211109/';
-OUTPUT_PATH_raster = [base_path 'raster/'];
+OUTPUT_PATH_raster = [base_path 'raster/']; 
 
 % Specify the directory to save the lists
 OUTPUT_PATH_list_of_required_files = [base_path 'List_of_required_files/'];
