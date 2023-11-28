@@ -49,24 +49,36 @@ for u = 1:num_units
         block_trials = [population(u).trial.block] == b;
         
         % Check if the current block is the second or third block
-%         if b == 1 || b == 2 || b == 3
-%             % Continue to the next block if it's the second or third block
-%             continue;
-%         end
+        %         if b == 1 || b == 2 || b == 3
+        %             % Continue to the next block if it's the second or third block
+        %             continue;
+        %         end
         
         % Get the number of trials for the current block
         num_block_trials = sum(block_trials);
         
+        % Initialize cell arrays
+        % Initializing the arrays outside the block loop ensures that each block starts with empty arrays, preventing any data leakage or mixing between blocks.
+        raster_labels.trial_type = cell(1, 0);
+        raster_labels.sideSelected = cell(1, 0);
+        raster_labels.trial_type_side = cell(1, 0);
+        raster_labels.stimulus_position_X_coordinate = cell(1, 0);
+        raster_labels.stimulus_position_Y_coordinate = cell(1, 0);
+        raster_labels.perturbation = cell(1, 0);
+        raster_labels.block = cell(1, 0);
+        raster_labels.run = cell(1, 0);
+        raster_data = NaN(0, columnsNumberBasedOnWindow);
+        
         if num_block_trials > 0
-            % Initialize cell arrays
-            raster_labels.trial_type = cell(1, num_block_trials);
-            raster_labels.sideSelected = cell(1, num_block_trials);
-            raster_labels.trial_type_side = cell(1, num_block_trials);
-            raster_labels.stimulus_position_X_coordinate = cell(1, num_block_trials);
-            raster_labels.stimulus_position_Y_coordinate = cell(1, num_block_trials);
-            raster_labels.perturbation = cell(1, num_block_trials);
-            raster_labels.block = cell(1, num_block_trials);
-            raster_labels.run = cell(1, num_block_trials);
+%             % Initialize cell arrays
+%             raster_labels.trial_type = cell(1, num_block_trials);
+%             raster_labels.sideSelected = cell(1, num_block_trials);
+%             raster_labels.trial_type_side = cell(1, num_block_trials);
+%             raster_labels.stimulus_position_X_coordinate = cell(1, num_block_trials);
+%             raster_labels.stimulus_position_Y_coordinate = cell(1, num_block_trials);
+%             raster_labels.perturbation = cell(1, num_block_trials);
+%             raster_labels.block = cell(1, num_block_trials);
+%             raster_labels.run = cell(1, num_block_trials);
             
             
             
@@ -99,11 +111,13 @@ for u = 1:num_units
                     onsetTimeOfRequiredStage(t) = population(u).trial(t).states_onset(state_index);
                     % Use the index to retrieve the corresponding value from 'states_onset'
                     %raster_data(t, :) = histcounts(population(u).trial(t).arrival_times, (onsetTimeOfRequiredStage(t) - settings.windowAroundEvent):0.001:(onsetTimeOfRequiredStage(t) + settings.windowAroundEvent));
-                    if current_block == 1
-                        raster_data(t, :) = histcounts(population(u).trial(t).arrival_times, (onsetTimeOfRequiredStage(t) - settings.windowAroundEvent):0.001:(onsetTimeOfRequiredStage(t) + settings.windowAroundEvent));
-                    elseif current_block == 2
-                        raster_data(t, :) = histcounts(population(u).trial(t).arrival_times, (onsetTimeOfRequiredStage(t) - settings.windowAroundEvent):0.001:(onsetTimeOfRequiredStage(t) + settings.windowAroundEvent));
-                    end
+                    %                     if current_block == 1
+                    %                         raster_data(t, :) = histcounts(population(u).trial(t).arrival_times, (onsetTimeOfRequiredStage(t) - settings.windowAroundEvent):0.001:(onsetTimeOfRequiredStage(t) + settings.windowAroundEvent));
+                    %                     elseif current_block == 2
+                    %                         raster_data(t, :) = histcounts(population(u).trial(t).arrival_times, (onsetTimeOfRequiredStage(t) - settings.windowAroundEvent):0.001:(onsetTimeOfRequiredStage(t) + settings.windowAroundEvent));
+                    %                     end
+                    %end+1 is: "add a new element after the last element." It is a convenient way to append a new row to a matrix without explicitly specifying the row index.
+                    raster_data(end+1, :) = histcounts(population(u).trial(t).arrival_times, (onsetTimeOfRequiredStage(t) - settings.windowAroundEvent):0.001:(onsetTimeOfRequiredStage(t) + settings.windowAroundEvent)); % If you were to use raster_data = [raster_data; new_data];, it would achieve the same result. 
                 end
                 
                 
