@@ -1,6 +1,6 @@
 function sdndt_Sim_LIP_dPul_NDT_plot_decoding_results(save_file_name)
 
-run('sdndt_Sim_LIP_dPul_NDT_settings');
+run('sdndt_Sim_LIP_dPul_NDT_setting');
 
 load(save_file_name);
 
@@ -19,7 +19,7 @@ result_names{1} = save_file_name;
 plot_obj = plot_standard_results_object(result_names);
 
 % put a line at the time when the stimulus was shown 
-% plot_obj.significant_event_times = settings.significant_event_times;
+% plot_obj.significant_event_times = setting.significant_event_times;
 % the xline(500) function below is used for this purpose
 
 plot_obj.errorbar_file_names = result_names;

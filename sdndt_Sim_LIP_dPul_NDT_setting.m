@@ -1,14 +1,15 @@
-% sdndt_Sim_LIP_dPul_NDT_settings
+% sdndt_Sim_LIP_dPul_NDT_setting
 
 % for creating raster_data
 INPUT_PATH = 'Y:/Projects/Simultaneous_dPul_PPC_recordings/ephys/dPul_LIP_Lin_20211109/';
 OUTPUT_PATH_raster = 'C:/Projects/Sim_dPul_LIP/NDT/raster/';
 
 % Specify the directory to save the lists
-OUTPUT_PATH_list_of_required_files = 'C:\Projects\Sim_dPul_LIP\NDT\raster\List_of_required_files';
+OUTPUT_PATH_list_of_required_files = 'C:/Projects/Sim_dPul_LIP/NDT/raster/List_of_required_files/';
 
 % for creating binned_data
 OUTPUT_PATH_binned = 'C:/Projects/Sim_dPul_LIP/NDT/binned/';
+
 
 
 settings.windowAroundEvent = 0.5; % s:  epoch to take around the trigger event
@@ -36,3 +37,5 @@ settings.y_lim = [30 100];
 % the xline(500) function in the sdndt_Sim_LIP_dPul_NDT_plot_decoding_results.m code is used for this purpose
 
 settings.errorbar_type_to_plot = 1;
+
+
