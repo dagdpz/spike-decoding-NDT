@@ -92,70 +92,60 @@ for u = 1:num_units
             for t = find(block_trials) % t = 1:num_trial
                 
 
-                if population(u).trial(t).success == 0 % Check if the trial should be excluded based on success value
-                    %fprintf('Trial %d in unit %d excluded from analysis (success = 0).\n', t, u);
-                    continue;  % Skip the rest of the loop and move to the next trial
-                end
-                % choiceVariable = [population(45).trial(:).success]; valueToCount = true; howManySuccessTrials = sum(choiceVariable == valueToCount);
-                %blocks_present = unique([blocks_present, population(u).trial(t).block]); % Add the block information to the blocks_present array
-                
-                
-                % Check which block the trial belongs to
-                current_block = population(u).trial(t).block;
-                
-                %%% raster_data
-                state_index = find(population(u).trial(t).states == target_state);
-                if isempty(state_index)
-                    %fprintf('State %d not found. Excluding from analysis.\n', target_state);
-                else
-                    onsetTimeOfRequiredStage(t) = population(u).trial(t).states_onset(state_index);
-                    % Use the index to retrieve the corresponding value from 'states_onset'
-                    %raster_data(t, :) = histcounts(population(u).trial(t).arrival_times, (onsetTimeOfRequiredStage(t) - settings.windowAroundEvent):0.001:(onsetTimeOfRequiredStage(t) + settings.windowAroundEvent));
-                    %                     if current_block == 1
-                    %                         raster_data(t, :) = histcounts(population(u).trial(t).arrival_times, (onsetTimeOfRequiredStage(t) - settings.windowAroundEvent):0.001:(onsetTimeOfRequiredStage(t) + settings.windowAroundEvent));
-                    %                     elseif current_block == 2
-                    %                         raster_data(t, :) = histcounts(population(u).trial(t).arrival_times, (onsetTimeOfRequiredStage(t) - settings.windowAroundEvent):0.001:(onsetTimeOfRequiredStage(t) + settings.windowAroundEvent));
-                    %                     end
-                    %end+1 is: "add a new element after the last element." It is a convenient way to append a new row to a matrix without explicitly specifying the row index.
-                    raster_data(end+1, :) = histcounts(population(u).trial(t).arrival_times, (onsetTimeOfRequiredStage(t) - settings.windowAroundEvent):0.001:(onsetTimeOfRequiredStage(t) + settings.windowAroundEvent)); % If you were to use raster_data = [raster_data; new_data];, it would achieve the same result. 
-                end
-                
-                
-                % how many successful trials were made for each unit individually (as there are units with different numbers of record blocks)
-                if population(u).trial(t).success == 1
+                if population(u).trial(t).success == 1 % Check if the trial should be excluded based on success value
+                    
+                    
+                    
+                    %%% raster_data
+                    state_index = find(population(u).trial(t).states == target_state);
+                    if isempty(state_index)
+                        %fprintf('State %d not found. Excluding from analysis.\n', target_state);
+                    else
+                        onsetTimeOfRequiredStage(t) = population(u).trial(t).states_onset(state_index);
+                        % Use the index to retrieve the corresponding value from 'states_onset'
+                        %raster_data(t, :) = histcounts(population(u).trial(t).arrival_times, (onsetTimeOfRequiredStage(t) - settings.windowAroundEvent):0.001:(onsetTimeOfRequiredStage(t) + settings.windowAroundEvent));
+                        %                     if current_block == 1
+                        %                         raster_data(t, :) = histcounts(population(u).trial(t).arrival_times, (onsetTimeOfRequiredStage(t) - settings.windowAroundEvent):0.001:(onsetTimeOfRequiredStage(t) + settings.windowAroundEvent));
+                        %                     elseif current_block == 2
+                        %                         raster_data(t, :) = histcounts(population(u).trial(t).arrival_times, (onsetTimeOfRequiredStage(t) - settings.windowAroundEvent):0.001:(onsetTimeOfRequiredStage(t) + settings.windowAroundEvent));
+                        %                     end
+                        %end+1 is: "add a new element after the last element." It is a convenient way to append a new row to a matrix without explicitly specifying the row index.
+                        raster_data(end+1, :) = histcounts(population(u).trial(t).arrival_times, (onsetTimeOfRequiredStage(t) - settings.windowAroundEvent):0.001:(onsetTimeOfRequiredStage(t) + settings.windowAroundEvent)); % If you were to use raster_data = [raster_data; new_data];, it would achieve the same result.
+                    end
+                    
+                    
+                    % how many successful trials were made for each unit individually (as there are units with different numbers of record blocks)
+                    
                     num_of_success_trials_per_unit(u) = num_of_success_trials_per_unit(u) + 1;
+                    
+                    
+                    %%% raster_labels
+                    if population(u).trial(t).choice
+                        raster_labels.trial_type{1, t} =  'choice';
+                    else
+                        raster_labels.trial_type{1, t} =  'instr';
+                    end
+                    
+                    if real(population(u).trial(t).tar_pos) > 0 % Convert positive values to 'R' and negative values to 'L'
+                        raster_labels.sideSelected{1, t} = 'R';
+                    else
+                        raster_labels.sideSelected{1, t} = 'L';
+                    end
+                    
+                    raster_labels.trial_type_side {1, t} = append(raster_labels.trial_type{1, t},'_',raster_labels.sideSelected{1, t});
+                    
+                    X_coordinate(1, t) = real(population(u).trial(t).tar_pos);
+                    Y_coordinate(1, t) = imag(population(u).trial(t).tar_pos);
+                    raster_labels.stimulus_position_X_coordinate{1, t} = X_coordinate(1, t);
+                    raster_labels.stimulus_position_Y_coordinate{1, t} = Y_coordinate(1, t);
+                    
+                    raster_labels.perturbation{1, t} = population(u).trial(t).perturbation;
+                    raster_labels.block{1, t} = population(u).trial(t).block;
+                    raster_labels.run{1, t} = population(u).trial(t).run;
+                    
                 end
-                
-                
-                
-                
-                %%% raster_labels
-                if population(u).trial(t).choice
-                    raster_labels.trial_type{1, t} =  'choice';
-                else
-                    raster_labels.trial_type{1, t} =  'instr';
-                end
-                
-                if real(population(u).trial(t).tar_pos) > 0 % Convert positive values to 'R' and negative values to 'L'
-                    raster_labels.sideSelected{1, t} = 'R';
-                else
-                    raster_labels.sideSelected{1, t} = 'L';
-                end
-                
-                raster_labels.trial_type_side {1, t} = append(raster_labels.trial_type{1, t},'_',raster_labels.sideSelected{1, t});
-                
-                X_coordinate(1, t) = real(population(u).trial(t).tar_pos);
-                Y_coordinate(1, t) = imag(population(u).trial(t).tar_pos);
-                raster_labels.stimulus_position_X_coordinate{1, t} = X_coordinate(1, t);
-                raster_labels.stimulus_position_Y_coordinate{1, t} = Y_coordinate(1, t);
-                
-                raster_labels.perturbation{1, t} = population(u).trial(t).perturbation;
-                raster_labels.block{1, t} = population(u).trial(t).block;
-                raster_labels.run{1, t} = population(u).trial(t).run;
-               
-                
                  
-            end
+            end % for each trial
             
             
             %%% raster_site_info
@@ -219,8 +209,4 @@ end
 
 brain_structures_present = unique(all_brain_structures); % Get unique brain structure names
 all_brain_structures = strjoin(brain_structures_present, '_'); % format suitable for file names
-
-
-
-end
 
