@@ -49,16 +49,16 @@ function sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files(OUTPUT_PATH_raster)
             sessionBlockInfo.(sessionID).unitConventions.(unitID) = strsplit(data.raster_site_info.block_unit, ' ');
 
             % Check if it's the first block
-            if  contains(files(i).name, 'block_1') 
+            if contains(files(i).name, 'block_1') &&  all(cellfun(@(x) all(x == 1), data.raster_labels.block))
             list_of_required_files.firstBlockFiles = [list_of_required_files.firstBlockFiles; files(i).name];
         
 
                 % Check if it's the second block
-            elseif contains(files(i).name, 'block_2')
+            elseif contains(files(i).name, 'block_2') && all(cellfun(@(x) all(x == 2), data.raster_labels.block))
                 list_of_required_files.secondBlockFiles = [list_of_required_files.secondBlockFiles; files(i).name];
 
                 % Check if it's the third block
-            elseif contains(files(i).name, 'block_3')
+            elseif contains(files(i).name, 'block_3')&& all(cellfun(@(x) all(x == 3), data.raster_labels.block))
                 list_of_required_files.thirdBlockFiles = [list_of_required_files.thirdBlockFiles; files(i).name];
             end
 
