@@ -21,7 +21,7 @@ Input:
 mat-file: like Lin_20211109_01_raster_dPul_L_trial_state_cueON_block_1.mat                                             
 
 # sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files.m
-Groups files with raster data into groups: files containing only block 1, files containing only block 2, files containing only block 3, all files, and files having common units in all blocks. 
+Groups files with raster data into groups: files containing only block 1, files containing only block 2, files containing only block 3, all files, and files having common units in all blocks.                                        
 Input:                                                                                                                                                                                                                           
 many mat-files: like Lin_20211109_01_raster_dPul_L_trial_state_cueON_block_1.mat, which contains variables raster_data, raster_labels, raster_site_info. 
 
