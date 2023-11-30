@@ -25,7 +25,7 @@ mat-file: like Lin_20211109_01_raster_dPul_L_trial_state_cueON_block_1.mat
 # sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files.m
 Groups files with raster data into groups: files containing only block 1, files containing only block 2, files containing only block 3, all files, and files having common units in all blocks.    
 
-Input:                                                                                                                                                                                                                           
+Input:                                                                                                                                                                                                                       
 many mat-files: like Lin_20211109_01_raster_dPul_L_trial_state_cueON_block_1.mat, which contains variables raster_data, raster_labels, raster_site_info. 
 
 Output:                                                                                                                                                                                                       
@@ -34,17 +34,17 @@ mat-file: sdndt_Sim_LIP_dPul_NDT_list_of_required_files.mat, which contains vari
 # sdndt_Sim_LIP_dPul_NDT_decoding_per_block.m
 Converts data from raster data into binned data (including merging binned data, if necessary), which it then uses for decoding.                                                                                                         
 
-Input:                                                                                                                                                                                                                           
+Input:                                                                                                                                                                                            
 many mat-files: like Lin_20211109_01_raster_dPul_L_trial_state_cueON_block_1.mat,  which contains variables binned_data, binned_labels, binned_site_info   
 
 Output:   
-
+                                                                                                                                                                                                               
 mat-files:                                                                                                                                                                                                                
 like Binned_Sim_LIP_dPul__NDT_data_for_dPul_L_cueON_block_1_100ms_bins_25ms_sampled.mat, which contains variables binned_data, binned_labels, binned_site_info.
 like Binned_Sim_LIP_dPul__NDT_data_for_dPul_L_cueON_block_1_100ms_bins_25ms_sampled_smoothed.mat, which contains smooth the binned data                                                    
 like Binned_Sim_LIP_dPul__NDT_data_for_dPul_L_cueON_block_1_100ms_bins_25ms_sampled_instr_R instr_L_DECODING_RESULTS.mat which contains results of decoding                                             
 
-picture:                                                                                                                                                                                                                                                          
+picture:                                                                                                                                                                                                             
 like Binned_Sim_LIP_dPul__NDT_data_for_dPul_L_cueON_block_1_100ms_bins_25ms_sampled_instr_R instr_L_DECODING_RESULTS_DA_as_a_function_of_time.png, which shows the decoding accuracy 
 
 # sdndt_Sim_LIP_dPul_NDT_plot_decoding_results.m                   
