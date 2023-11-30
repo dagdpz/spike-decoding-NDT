@@ -9,7 +9,8 @@ Requires NDT: http://www.readout.info
 # sdndt_Sim_LIP_dPul_NDT_make_raster.m
 Converts data from file type: "population_Linus_20211109.mat" to raster data.                                                                                                                                
 Input:                                                                                                                                                                                                                          
-mat-file: like population_Linus_20211109.mat, which contains variable population                                                                                                                                           
+mat-file: like population_Linus_20211109.mat, which contains variable population   
+
 Output:                                                                                                                                                                                                                               
 many mat-files: like Lin_20211109_01_raster_dPul_L_trial_state_cueON_block_1.mat, which contains variables raster_data, raster_labels, raster_site_info. 
 for each unit, epoch around a certain trigger point (e.g. state_CueOn, state_GoSignal), and each block, separate mat-file
@@ -23,13 +24,16 @@ mat-file: like Lin_20211109_01_raster_dPul_L_trial_state_cueON_block_1.mat
 Groups files with raster data into groups: files containing only block 1, files containing only block 2, files containing only block 3, all files, and files having common units in all blocks. 
 Input:                                                                                                                                                                                                                           
 many mat-files: like Lin_20211109_01_raster_dPul_L_trial_state_cueON_block_1.mat, which contains variables raster_data, raster_labels, raster_site_info. 
+
 Output:                                                                                                                                                                                                       
 mat-file: sdndt_Sim_LIP_dPul_NDT_list_of_required_files.mat, which contains variables list_of_required_files.firstBlockFiles, list_of_required_files.secondBlockFiles, list_of_required_files.thirdBlockFiles, list_of_required_files.allBlocksFiles, list_of_required_files.commonBlocksFiles                                                                                                                                           
 
 # sdndt_Sim_LIP_dPul_NDT_decoding_per_block.m
 Converts data from raster data into binned data (including merging binned data, if necessary), which it then uses for decoding.                                                                                                         
+
 Input:                                                                                                                                                                                                                           
 many mat-files: like Lin_20211109_01_raster_dPul_L_trial_state_cueON_block_1.mat,  which contains variables binned_data, binned_labels, binned_site_info   
+
 Output:                                                                                                                                                                                                                                                     
 mat-files:                                                                                                                                                                                                                
 like Binned_Sim_LIP_dPul__NDT_data_for_dPul_L_cueON_block_1_100ms_bins_25ms_sampled.mat, which contains variables binned_data, binned_labels, binned_site_info.
