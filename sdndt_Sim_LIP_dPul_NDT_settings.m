@@ -9,8 +9,8 @@ INPUT_PATH = 'Y:/Projects/Simultaneous_dPul_PPC_recordings/ephys/dPul_LIP_Lin_20
 OUTPUT_PATH_raster = [base_path 'raster/']; 
 
 % Specify the directory to save the lists
-OUTPUT_PATH_list_of_required_files = [base_path 'List_of_required_files/'];
-
+OUTPUT_PATH_list_of_required_files = [OUTPUT_PATH_raster 'List_of_required_files/']; 
+ 
 % for creating binned_data
 OUTPUT_PATH_binned = [base_path 'binned/'];
 

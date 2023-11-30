@@ -1,6 +1,6 @@
 function sdndt_Sim_LIP_dPul_NDT_plot_decoding_results(save_file_name)
 
-run('sdndt_Sim_LIP_dPul_NDT_setting');
+run('sdndt_Sim_LIP_dPul_NDT_settings');
 
 load(save_file_name);
 

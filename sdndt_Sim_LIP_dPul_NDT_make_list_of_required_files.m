@@ -1,9 +1,13 @@
 function sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files(OUTPUT_PATH_raster)
-    % sdndt_Sim_LIP_dPul_NDT_to_make_list_of_required_files('C:\Projects\Sim_dPul_LIP\NDT\raster\');
+    % sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files('C:\Projects\Sim_dPul_LIP\NDT\raster\');
 
     % Make a list of files
-    run('sdndt_Sim_LIP_dPul_NDT_setting');
-
+    run('sdndt_Sim_LIP_dPul_NDT_settings');
+    
+    if ~exist(OUTPUT_PATH_list_of_required_files,'dir')
+        mkdir(OUTPUT_PATH_list_of_required_files);
+    end
+    
     % Get a list of all .mat files in the directory
     files = dir(fullfile(OUTPUT_PATH_raster, '*.mat'));
 

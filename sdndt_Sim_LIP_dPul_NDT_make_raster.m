@@ -48,12 +48,6 @@ for u = 1:num_units
         % Filter trials for the current block
         block_trials = [population(u).trial.block] == b;
         
-        % Check if the current block is the second or third block
-        %         if b == 1 || b == 2 || b == 3
-        %             % Continue to the next block if it's the second or third block
-        %             continue;
-        %         end
-        
         % Get the number of trials for the current block
         num_block_trials = sum(block_trials);
         
@@ -104,18 +98,13 @@ for u = 1:num_units
                         onsetTimeOfRequiredStage(t) = population(u).trial(t).states_onset(state_index);
                         % Use the index to retrieve the corresponding value from 'states_onset'
                         %raster_data(t, :) = histcounts(population(u).trial(t).arrival_times, (onsetTimeOfRequiredStage(t) - settings.windowAroundEvent):0.001:(onsetTimeOfRequiredStage(t) + settings.windowAroundEvent));
-                        %                     if current_block == 1
-                        %                         raster_data(t, :) = histcounts(population(u).trial(t).arrival_times, (onsetTimeOfRequiredStage(t) - settings.windowAroundEvent):0.001:(onsetTimeOfRequiredStage(t) + settings.windowAroundEvent));
-                        %                     elseif current_block == 2
-                        %                         raster_data(t, :) = histcounts(population(u).trial(t).arrival_times, (onsetTimeOfRequiredStage(t) - settings.windowAroundEvent):0.001:(onsetTimeOfRequiredStage(t) + settings.windowAroundEvent));
-                        %                     end
+                        
                         %end+1 is: "add a new element after the last element." It is a convenient way to append a new row to a matrix without explicitly specifying the row index.
                         raster_data(end+1, :) = histcounts(population(u).trial(t).arrival_times, (onsetTimeOfRequiredStage(t) - settings.windowAroundEvent):0.001:(onsetTimeOfRequiredStage(t) + settings.windowAroundEvent)); % If you were to use raster_data = [raster_data; new_data];, it would achieve the same result.
                     end
                     
                     
                     % how many successful trials were made for each unit individually (as there are units with different numbers of record blocks)
-                    
                     num_of_success_trials_per_unit(u) = num_of_success_trials_per_unit(u) + 1;
                     
                     
@@ -143,7 +132,7 @@ for u = 1:num_units
                     raster_labels.block{1, t} = population(u).trial(t).block;
                     raster_labels.run{1, t} = population(u).trial(t).run;
                     
-                end
+                end % population(u).trial(t).success == 1
                  
             end % for each trial
             
@@ -196,12 +185,13 @@ for u = 1:num_units
             filename = [OUTPUT_PATH_raster population(u).unit_ID '_raster_' raster_site_info.target '_trial_state_' target_state_name '_block_' num2str(b) '.mat'];
             save(filename, 'raster_data', 'raster_labels', 'raster_site_info');
             
-        end
+        end % num_block_trials > 0
         
-    end
+    end %  b = unique_blocks
+    
     % Accumulate all brain structure names in the list
     all_brain_structures = [all_brain_structures, raster_site_info.target];
-end
+end % for u = 1:num_units
 
 
 
