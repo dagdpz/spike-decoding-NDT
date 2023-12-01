@@ -1,4 +1,4 @@
-function sdndt_Sim_LIP_dPul_NDT_decoding_per_block(mat_filename, target_brain_structure, target_state, listOfRequiredFiles)
+function sdndt_Sim_LIP_dPul_NDT_decoding(mat_filename, target_brain_structure, target_state, listOfRequiredFiles)
 % This code loads one population**.mat file and converts it to a raster_data, array 0 and 1.
 % The code converts the received raster data into binned data and then performs decoding.
 
