@@ -5,11 +5,9 @@ base_path = 'C:/Projects/Sim_dPul_LIP/NDT/';
 
 
 % for creating raster_data
-INPUT_PATH = 'Y:/Projects/Simultaneous_dPul_PPC_recordings/ephys/dPul_LIP_Lin_20211109/';
+INPUT_PATH = 'Y:/Projects/Simultaneous_dPul_PPC_recordings/ephys/';
 OUTPUT_PATH_raster = [base_path 'raster/']; 
 
-% Specify the directory to save the lists
-OUTPUT_PATH_list_of_required_files = [OUTPUT_PATH_raster 'List_of_required_files/']; 
  
 % for creating binned_data
 OUTPUT_PATH_binned = [base_path 'binned/'];
@@ -32,6 +30,9 @@ settings.smoothing_method = 'gaussian'; % movmean / gaussian, see smoothdata
 % Decoding
 settings.num_cv_splits = 20;
 settings.num_resample_runs = 50;
+% additiobal
+settings.num_times_to_repeat_each_label_per_cv_split = 2; % can have multiple repetitions of each label in each cross-validation split (which is a faster way to run the code that uses most of the data)
+settings.create_simultaneously_recorded_populations = 1; % flag, which specifies that the data was recorded at the simultaneously (if not simultaneously - 0)
 
 % plotting
 settings.time_lim = [0 1000]; % s, relative to cue onset

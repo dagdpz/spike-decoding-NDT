@@ -1,10 +1,10 @@
-function sdndt_Sim_LIP_dPul_NDT_decoding(mat_filename, target_brain_structure, target_state, listOfRequiredFiles)
+function sdndt_Sim_LIP_dPul_NDT_decoding(dateOfRecording, mat_filename, target_brain_structure, target_state, listOfRequiredFiles)
 % This code loads one population**.mat file and converts it to a raster_data, array 0 and 1.
 % The code converts the received raster data into binned data and then performs decoding.
 
 % TEST MODE.
 % To check how the code works, we load only one file as input (one session = one day of recording). For example:
-% sdndt_Sim_LIP_dPul_NDT_decoding_per_block('C:\Projects\Sim_dPul_LIP\NDT\raster\List_of_required_files\sdndt_Sim_LIP_dPul_NDT_list_of_required_files.mat', 'dPul_L', 4, 'firstBlockFiles');
+% sdndt_Sim_LIP_dPul_NDT_decoding('20211109', 'sdndt_Sim_LIP_dPul_NDT_list_of_required_files.mat', 'dPul_L', 4, 'firstBlockFiles');
 
 % DECODING MODE.
 % sdndt_Sim_LIP_dPul_NDT_decoding(mat_filename, target_state, target_brain_structure);
@@ -12,13 +12,15 @@ function sdndt_Sim_LIP_dPul_NDT_decoding(mat_filename, target_brain_structure, t
 % target_state - 6 - cue on , 4 - target acquisition
 % target_brain_structure = 'dPul_L', 'LIP_L', if both 'LIP_L_dPul_L'
 
-
-
-load(mat_filename);
-%load('C:\Projects\Sim_dPul_LIP\NDT\raster\List_of_required_files\sdndt_Sim_LIP_dPul_NDT_list_of_required_files.mat'); % once debug is complete, comment this line and enable the line above
-
 run('sdndt_Sim_LIP_dPul_NDT_settings');
 %run('sdndt_Sim_LIP_dPul_NDT_make_raster');
+
+OUTPUT_PATH_list_of_required_files = [OUTPUT_PATH_raster dateOfRecording '/List_of_required_files/' mat_filename];
+
+load(OUTPUT_PATH_list_of_required_files);
+%load('C:\Projects\Sim_dPul_LIP\NDT\raster\List_of_required_files\sdndt_Sim_LIP_dPul_NDT_list_of_required_files.mat'); % once debug is complete, comment this line and enable the line above
+
+
 
 
 
@@ -42,8 +44,8 @@ switch listOfRequiredFiles
         listOfRequiredFiles = list_of_required_files.thirdBlockFiles;
     case 'allBlocksFiles'
         listOfRequiredFiles = list_of_required_files.allBlocksFiles;
-    otherwise % 'commonBlocksFiles'
-        listOfRequiredFiles = list_of_required_files.commonBlocksFiles;
+    otherwise % 'overlapBlocksFiles'
+        listOfRequiredFiles = list_of_required_files.overlapBlocksFiles;
 end
 
 switch target_state
@@ -134,119 +136,183 @@ switch targetBlock
         targetBlockUsed_among_raster_data = targetBlockUsed;
 end
 
-save_prefix_name = [OUTPUT_PATH_binned 'Binned_Sim_LIP_dPul__NDT_data_for_' target_brain_structure '_' target_state_name '_' targetBlockUsed];
- 
-if ~exist(OUTPUT_PATH_binned,'dir')
-    mkdir(OUTPUT_PATH_binned);
+
+if isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles)
+    Overlap_blocks = 'Overlap_blocks/';
+else
+    Overlap_blocks = '';
 end
 
+OUTPUT_PATH_binned_dateOfRecording = [OUTPUT_PATH_binned dateOfRecording '/'];
+Binned_data_dir = [OUTPUT_PATH_binned_dateOfRecording Overlap_blocks];
+save_prefix_name = [Binned_data_dir 'Binned_Sim_LIP_dPul__NDT_data_for_' target_brain_structure '_' target_state_name '_' targetBlockUsed];
+
+if ~exist(Binned_data_dir,'dir')
+    mkdir(Binned_data_dir);
+end
 
 
 %% Combining blocks, creating a metablock if 'commonBlocksFiles'
 
-% Check if listOfRequiredFiles is 'commonBlocksFiles'
-
-% if isequal(listOfRequiredFiles, 'commonBlocksFiles')
 % Assuming you have a cell array of groups of files
+
+OUTPUT_PATH_raster_dateOfRecording = [OUTPUT_PATH_raster dateOfRecording '/'];
+OUTPUT_PATH_raster_dateOfRecording_Overlap_blocks = [OUTPUT_PATH_raster_dateOfRecording 'Overlap_blocks/'];
+if ~exist(OUTPUT_PATH_raster_dateOfRecording_Overlap_blocks,'dir')
+    mkdir(OUTPUT_PATH_raster_dateOfRecording_Overlap_blocks);
+end
 
 
 % Assuming list_of_required_files.commonBlocksFiles is already defined
 
 % Extract unique prefixes from the filenames
-unique_prefixes = {};
-for idx = 1:length(list_of_required_files.commonBlocksFiles)
-    current_file_parts = strsplit(list_of_required_files.commonBlocksFiles{idx}, '_');
-    current_prefix = strjoin(current_file_parts(1:9), '_');
+if isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles)
     
-    % Check if the current_prefix is not already in unique_prefixes
-    if ~any(strcmp(unique_prefixes, current_prefix))
-        unique_prefixes{end+1} = current_prefix;
+    unique_prefixes = {};
+    for idx = 1:length(list_of_required_files.overlapBlocksFiles)
+        current_file_parts = strsplit(list_of_required_files.overlapBlocksFiles{idx}, '_');
+        current_prefix = strjoin(current_file_parts(1:9), '_');
+        
+        % Check if the current_prefix is not already in unique_prefixes
+        if ~any(strcmp(unique_prefixes, current_prefix))
+            unique_prefixes{end+1} = current_prefix;
+        end
     end
+    
+    %     for prefix_idx = 1:length(unique_prefixes)
+    %         current_prefix = unique_prefixes{prefix_idx};
+    
+    % Extract unique prefixes from the filenames based on your criteria
+    %unique_prefixes = unique(cellfun(@(file) strjoin(strsplit(file, '_'), '_'), list_of_required_files.overlapBlocksFiles, 'UniformOutput', false), 'stable');
+    
+    
+    for prefix_idx = 1:length(unique_prefixes)
+        current_prefix = unique_prefixes{prefix_idx};
+        
+        
+        % Filter files based on the target_brain_structure
+        %         current_group_files = list_of_required_files.overlapBlocksFiles(startsWith(list_of_required_files.overlapBlocksFiles, current_prefix) ...
+        %             & contains(list_of_required_files.overlapBlocksFiles, search_target_brain_structure_among_raster_data)...
+        %             & contains(list_of_required_files.overlapBlocksFiles, target_state_name));
+        
+        % Filter files based on the target_brain_structure, target_state, and listOfRequiredFiles
+        current_group_files = list_of_required_files.overlapBlocksFiles(startsWith(list_of_required_files.overlapBlocksFiles, current_prefix) ...
+            & contains(list_of_required_files.overlapBlocksFiles, target_state_name));
+        
+        
+        % Check if the search term is not empty before using it in contains
+        %                 if ~isempty(search_target_brain_structure_among_raster_data)
+        %                    current_group_files = current_group_files & contains(list_of_required_files.overlapBlocksFiles, search_target_brain_structure_among_raster_data);
+        %                 end
+        %         if ~isempty(search_target_brain_structure_among_raster_data)
+        %             % Filter files based on the target_brain_structure, target_state, and listOfRequiredFiles
+        %             current_group_files = list_of_required_files.overlapBlocksFiles(contains(list_of_required_files.overlapBlocksFiles, search_target_brain_structure_among_raster_data) & contains(list_of_required_files.overlapBlocksFiles, target_state_name));
+        %         else
+        %             % Filter files based on the target_state only
+        %             current_group_files = list_of_required_files.overlapBlocksFiles(contains(list_of_required_files.overlapBlocksFiles, target_state_name));
+        %         end
+        if ~isempty(search_target_brain_structure_among_raster_data)
+            % Filter files based on the target_brain_structure
+            current_group_files = current_group_files(contains(current_group_files, search_target_brain_structure_among_raster_data));
+        end
+        
+        % Ensure that only files with the correct target_brain_structure are included
+        current_group_files = current_group_files(contains(current_group_files, ['_' target_brain_structure '_']));
+        
+        
+        
+        
+        
+        % Check if any files are present in the current group before proceeding
+        if  ~isempty(current_group_files) %   any(current_group_files)
+            
+            
+            % Initialize cell arrays to store data from each file
+            extracted_raster_data = cell(length(current_group_files), 1);
+            extracted_raster_labels = cell(length(current_group_files), 1);
+            extracted_raster_site_info = cell(length(current_group_files), 1);
+            
+            
+            
+            % Loop through each file in the list
+            for c = 1:length(current_group_files)
+                % Get the current file from the list
+                current_file = current_group_files{c};
+                
+                % Load the data from the current file
+                data = load([current_file]);
+                
+                % Extract variables from the loaded data
+                extracted_raster_data{c} = data.raster_data;
+                extracted_raster_labels{c} = data.raster_labels;
+                extracted_raster_site_info{c} = data.raster_site_info;
+            end
+            
+            % Check if files can be merged based on relevant parts of the filenames
+            can_be_merged = true(length(current_group_files), 1);
+            reference_parts = strsplit(current_group_files{1}, '_');
+            
+            for p = 2:length(current_group_files)
+                current_parts = strsplit(current_group_files{p}, '_');
+                can_be_merged(p) = isequal(reference_parts(1:9), current_parts(1:9));
+            end
+            
+            
+            
+            % Filter out files that cannot be merged
+            extracted_raster_data = extracted_raster_data(can_be_merged);
+            extracted_raster_labels = extracted_raster_labels(can_be_merged);
+            extracted_raster_site_info = extracted_raster_site_info(can_be_merged);
+            
+            
+            % !!! Proceed with merging only if there are files that can be merged
+            if any(can_be_merged)
+                % Concatenate raster_data using vertcat
+                raster_data = vertcat(extracted_raster_data{:});
+                
+                % Concatenate raster_labels fields separately
+                raster_labels = struct(); % Initialize an empty struct for raster_labels
+                
+                fields_to_concatenate = {'trial_type', 'sideSelected', 'trial_type_side', 'stimulus_position_X_coordinate', 'stimulus_position_Y_coordinate', 'perturbation', 'block', 'run'};
+                
+                for field = fields_to_concatenate
+                    field_name = char(field);
+                    % Extract the values for the current field from each cell in the cell array
+                    field_values = cellfun(@(x) x.(field_name), extracted_raster_labels, 'UniformOutput', false);
+                    
+                    % Concatenate the values into a single array and assign to the struct
+                    raster_labels.(field_name) = [field_values{:}];
+                end
+                
+                % Use the raster_site_info from the first file since they are assumed to be the same
+                raster_site_info = extracted_raster_site_info{1};
+                
+                % Create a new filename for the merged file (using the first file's name)
+                [~, base_name, ~] = fileparts(current_group_files{1});
+                merged_filename = [OUTPUT_PATH_raster_dateOfRecording_Overlap_blocks erase(base_name, '_block_1') '_' targetBlockUsed '.mat'];
+                
+                % Save the merged data to a new file
+                save(merged_filename, 'raster_data', 'raster_labels', 'raster_site_info');
+            end
+        end
+    end
+else
+    % disp('The cell arrays are not equal.');
 end
-
-for prefix_idx = 1:length(unique_prefixes)
-    current_prefix = unique_prefixes{prefix_idx};
-
-    % Filter files based on the current prefix
-    current_group_files = list_of_required_files.commonBlocksFiles(startsWith(list_of_required_files.commonBlocksFiles, current_prefix));
-
-    % Rest of your existing code
-
-    % Initialize cell arrays to store data from each file
-    extracted_raster_data = cell(length(current_group_files), 1);
-    extracted_raster_labels = cell(length(current_group_files), 1);
-    extracted_raster_site_info = cell(length(current_group_files), 1);
-
-    % Loop through each file in the list
-    for c = 1:length(current_group_files)
-        % Get the current file from the list
-        current_file = current_group_files{c};
-
-        % Load the data from the current file
-        data = load([OUTPUT_PATH_raster current_file]);
-
-        % Extract variables from the loaded data
-        extracted_raster_data{c} = data.raster_data;
-        extracted_raster_labels{c} = data.raster_labels;
-        extracted_raster_site_info{c} = data.raster_site_info;
-    end
-
-    % Check if files can be merged based on relevant parts of the filenames
-    can_be_merged = true(length(current_group_files), 1);
-    reference_parts = strsplit(current_group_files{1}, '_');
-
-    for p = 2:length(current_group_files)
-        current_parts = strsplit(current_group_files{p}, '_');
-        can_be_merged(p) = isequal(reference_parts(1:9), current_parts(1:9));
-    end
-
-    % Filter out files that cannot be merged
-    extracted_raster_data = extracted_raster_data(can_be_merged);
-    extracted_raster_labels = extracted_raster_labels(can_be_merged);
-    extracted_raster_site_info = extracted_raster_site_info(can_be_merged);
-
-    % Concatenate raster_data using vertcat
-    raster_data = vertcat(extracted_raster_data{:});
-
-    % Concatenate raster_labels fields separately
-    raster_labels = struct(); % Initialize an empty struct for raster_labels
-
-    fields_to_concatenate = {'trial_type', 'sideSelected', 'trial_type_side', 'stimulus_position_X_coordinate', 'stimulus_position_Y_coordinate', 'perturbation', 'block', 'run'};
-
-    for field = fields_to_concatenate
-        field_name = char(field);
-        % Extract the values for the current field from each cell in the cell array
-        field_values = cellfun(@(x) x.(field_name), extracted_raster_labels, 'UniformOutput', false);
-
-        % Concatenate the values into a single array and assign to the struct
-        raster_labels.(field_name) = [field_values{:}];
-    end
-
-    % Use the raster_site_info from the first file since they are assumed to be the same
-    raster_site_info = extracted_raster_site_info{1};
-
-    % Create a new filename for the merged file (using the first file's name)
-    [~, base_name, ~] = fileparts(current_group_files{1});
-    merged_filename = [OUTPUT_PATH_raster erase(base_name, '_block_1') '_' targetBlockUsed '.mat'];
-
-    % Save the merged data to a new file
-    save(merged_filename, 'raster_data', 'raster_labels', 'raster_site_info');
-end
-
-
 
 
 %%  Make Binned_data
 
-raster_data_directory_name =  [OUTPUT_PATH_raster '*' search_target_brain_structure_among_raster_data '_trial_state_' target_state_name '_' targetBlockUsed_among_raster_data '*'];
+Raster_data_dir = [OUTPUT_PATH_raster_dateOfRecording Overlap_blocks];
+raster_data_directory_name =  [Raster_data_dir  '*' search_target_brain_structure_among_raster_data '_trial_state_' target_state_name '_' targetBlockUsed_among_raster_data '*'];
 binned_data_file_name = create_binned_data_from_raster_data(raster_data_directory_name, save_prefix_name, settings.bin_width, settings.step_size);
-    
-    load(binned_data_file_name);  % load the binned data
-    [~, filename_binned_data, ~] = fileparts(binned_data_file_name);
-    
-    % smooth the data 
+
+load(binned_data_file_name);  % load the binned data
+[~, filename_binned_data, ~] = fileparts(binned_data_file_name);
+
+% smooth the data
 binned_data = arrayfun(@(x) smoothdata(binned_data{x}, 2, settings.smoothing_method, settings.smoothing_window), 1:length(binned_data), 'UniformOutput', false);
-save([OUTPUT_PATH_binned filename_binned_data '_smoothed.mat'],'binned_data','binned_labels','binned_site_info'); 
+save([Binned_data_dir filename_binned_data '_smoothed.mat'],'binned_data','binned_labels','binned_site_info');
 
 
  labels_to_use = {'instr_R', 'instr_L'};
@@ -269,16 +335,16 @@ specific_label_name_to_use = 'trial_type_side';
 num_cv_splits = settings.num_cv_splits; % 20 cross-validation runs
 
 % Create a datasource that takes our binned data, and specifies that we want to decode
-ds = basic_DS([OUTPUT_PATH_binned filename_binned_data '_smoothed.mat'], specific_label_name_to_use, num_cv_splits);
+ds = basic_DS([Binned_data_dir filename_binned_data '_smoothed.mat'], specific_label_name_to_use, num_cv_splits);
 
 % can have multiple repetitions of each label in each cross-validation split (which is a faster way to run the code that uses most of the data)
-% ds.num_times_to_repeat_each_label_per_cv_split = 2;
+ds.num_times_to_repeat_each_label_per_cv_split = settings.num_times_to_repeat_each_label_per_cv_split;
 
 % optionally can specify particular sites to use
 ds.sites_to_use = find_sites_with_k_label_repetitions(binned_labels.trial_type_side, num_cv_splits, labels_to_use);  
 
 % flag, which specifies that the data was recorded at the simultaneously  
-ds.create_simultaneously_recorded_populations = 1;
+ds.create_simultaneously_recorded_populations = settings.create_simultaneously_recorded_populations;
 
 % can do the decoding on a subset of labels
 ds.label_names_to_use = labels_to_use; % {'instr_R', 'instr_L'} {'choice_R', 'choice_L'}
@@ -322,8 +388,9 @@ the_cross_validator.test_only_at_training_times = 1;
 DECODING_RESULTS = the_cross_validator.run_cv_decoding;
 
 
-save_file_name = [OUTPUT_PATH_binned filename_binned_data '_' labels_to_use_string string_to_add_to_filename '_DECODING_RESULTS.mat'];
+save_file_name = [Binned_data_dir filename_binned_data '_' labels_to_use_string string_to_add_to_filename '_DECODING_RESULTS.mat'];
 save(save_file_name, 'DECODING_RESULTS');
+
 
 % Plot decoding
 sdndt_Sim_LIP_dPul_NDT_plot_decoding_results(save_file_name);

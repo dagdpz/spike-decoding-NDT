@@ -1,22 +1,24 @@
-function sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files(OUTPUT_PATH_raster)
-    % sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files('C:\Projects\Sim_dPul_LIP\NDT\raster\');
+function sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files(dateOfRecording)
+    % sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files('20211109');
 
     % Make a list of files
     run('sdndt_Sim_LIP_dPul_NDT_settings');
     
+    OUTPUT_PATH_raster_dateOfRecording = [OUTPUT_PATH_raster dateOfRecording '/'];
+    OUTPUT_PATH_list_of_required_files = [OUTPUT_PATH_raster_dateOfRecording 'List_of_required_files/'];
     if ~exist(OUTPUT_PATH_list_of_required_files,'dir')
         mkdir(OUTPUT_PATH_list_of_required_files);
     end
     
     % Get a list of all .mat files in the directory
-    files = dir(fullfile(OUTPUT_PATH_raster, '*.mat'));
+    files = dir(fullfile(OUTPUT_PATH_raster_dateOfRecording, '*.mat'));
 
     % Initialize lists for each category
     list_of_required_files.firstBlockFiles = {};
     list_of_required_files.secondBlockFiles = {};
     list_of_required_files.thirdBlockFiles = {};
     list_of_required_files.allBlocksFiles = {};
-    list_of_required_files.commonBlocksFiles = {};
+    list_of_required_files.overlapBlocksFiles = {};
 
     % Initialize a struct to store the maximum block value and conventions for each session
     sessionBlockInfo = struct();
@@ -29,7 +31,7 @@ function sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files(OUTPUT_PATH_raster)
         unitID = ['Unit_', unitID]; 
 
         % Load the data from the file
-        data = load(fullfile(OUTPUT_PATH_raster, files(i).name));
+        data = load(fullfile(OUTPUT_PATH_raster_dateOfRecording, files(i).name));
 
         % Check if the file contains information about the first block
         if isfield(data, 'raster_site_info') && isfield(data.raster_site_info, 'block_unit') && ...
@@ -50,21 +52,21 @@ function sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files(OUTPUT_PATH_raster)
 
             % Check if it's the first block
             if contains(files(i).name, 'block_1') &&  all(cellfun(@(x) all(x == 1), data.raster_labels.block))
-            list_of_required_files.firstBlockFiles = [list_of_required_files.firstBlockFiles; files(i).name];
+            list_of_required_files.firstBlockFiles = [list_of_required_files.firstBlockFiles; fullfile(files(i).folder, files(i).name)];
         
 
                 % Check if it's the second block
             elseif contains(files(i).name, 'block_2') && all(cellfun(@(x) all(x == 2), data.raster_labels.block))
-                list_of_required_files.secondBlockFiles = [list_of_required_files.secondBlockFiles; files(i).name];
+                list_of_required_files.secondBlockFiles = [list_of_required_files.secondBlockFiles; fullfile(files(i).folder, files(i).name)];
 
                 % Check if it's the third block
             elseif contains(files(i).name, 'block_3')&& all(cellfun(@(x) all(x == 3), data.raster_labels.block))
-                list_of_required_files.thirdBlockFiles = [list_of_required_files.thirdBlockFiles; files(i).name];
+                list_of_required_files.thirdBlockFiles = [list_of_required_files.thirdBlockFiles; fullfile(files(i).folder, files(i).name)];
             end
 
             % Check if it's all blocks
             % Add the file to the allBlocksFiles list
-            list_of_required_files.allBlocksFiles = [list_of_required_files.allBlocksFiles; files(i).name];
+            list_of_required_files.allBlocksFiles = [list_of_required_files.allBlocksFiles; fullfile(files(i).folder, files(i).name)];
 
         end
 
@@ -83,8 +85,8 @@ function sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files(OUTPUT_PATH_raster)
         if areConventionsSame(sessionBlockInfo.(sessionID).unitConventions, unitsWithMaxBlocks, sessionBlockInfo.(sessionID).maxBlock)
             % Include files in commonBlocksFiles
             for unitID = unitsWithMaxBlocks
-                commonFiles = getCommonFiles(sessionID, unitID, files, sessionBlockInfo);
-                list_of_required_files.commonBlocksFiles = [list_of_required_files.commonBlocksFiles; commonFiles(:)];
+                overlapFiles = getOverlapFiles(sessionID, unitID, files, sessionBlockInfo);
+                list_of_required_files.overlapBlocksFiles = [list_of_required_files.overlapBlocksFiles; overlapFiles(:)];
             end
         end
     end
@@ -214,8 +216,8 @@ end
 
 
 % Helper function to get common files for a session and unit
-function commonFiles = getCommonFiles(sessionID, unitID, files, sessionBlockInfo)
-    commonFiles = {};
+function overlapFiles = getOverlapFiles(sessionID, unitID, files, sessionBlockInfo)
+    overlapFiles = {};
     for w = 1:length(files)
         [fileSessionID, fileUnitID, fileBlockNumber] = extractFileInfo(files(w).name);
 
@@ -227,7 +229,7 @@ function commonFiles = getCommonFiles(sessionID, unitID, files, sessionBlockInfo
 
             % Check if the numeric part of unitID matches fileUnitID
             if strcmp(numericUnitID, fileUnitID) %&& fileBlockNumber <= sessionBlockInfo.(sessionID).maxBlock
-                commonFiles = [commonFiles, files(w).name];
+                overlapFiles = [overlapFiles;  fullfile(files(w).folder, files(w).name)];
             end
         end
     end

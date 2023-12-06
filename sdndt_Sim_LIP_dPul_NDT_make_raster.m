@@ -1,23 +1,35 @@
 function [raster_data, raster_labels, raster_site_info] = sdndt_Sim_LIP_dPul_NDT_make_raster(mat_file_name, target_state)
-%  sdndt_Sim_LIP_dPul_NDT_make_raster('Y:\Projects\Simultaneous_dPul_PPC_recordings\ephys\dPul_LIP_Lin_20211109\population_Linus_20211109.mat', 4);
+%  sdndt_Sim_LIP_dPul_NDT_make_raster('dPul_LIP_Lin_20211109\population_Linus_20211109.mat', 4);
 
 % This code loads one population**.mat file and converts it to a raster_data, array 0 and 1.
 
 
-load(mat_file_name);
-%load('Y:\Projects\Simultaneous_dPul_PPC_recordings\ephys\dPul_LIP_Lin_20211109\population_Linus_20211109.mat'); % once debug is complete, comment this line and enable the line above
-
 run('sdndt_Sim_LIP_dPul_NDT_settings');
 
 
-%%Make raster_data
+input_population_file = [INPUT_PATH mat_file_name];
+load(input_population_file);
+%load('Y:\Projects\Simultaneous_dPul_PPC_recordings\ephys\dPul_LIP_Lin_20211109\population_Linus_20211109.mat'); % once debug is complete, comment this line and enable the line above
 
-if ~exist(OUTPUT_PATH_raster,'dir')
-    mkdir(OUTPUT_PATH_raster);
+
+
+
+% creating a personalized folder for a particular session 
+parts = strsplit(mat_file_name, '_');
+required_parts =  parts(end);
+dateOfRecording = char(strrep(required_parts, '.mat', ''));
+
+
+
+
+%%Make raster_data
+OUTPUT_PATH_raster_dateOfRecording = [OUTPUT_PATH_raster dateOfRecording '/'];
+if ~exist(OUTPUT_PATH_raster_dateOfRecording,'dir')
+    mkdir(OUTPUT_PATH_raster_dateOfRecording);
 end
 
-%target_state = 6; % 6 - cue on , 4 - target acquisition
 
+%target_state = 6; % 6 - cue on , 4 - target acquisition
 switch target_state
     case 6
         target_state_name = 'cueON';
@@ -182,7 +194,7 @@ for u = 1:num_units
             
             
             % Save data for the current block
-            filename = [OUTPUT_PATH_raster population(u).unit_ID '_raster_' raster_site_info.target '_trial_state_' target_state_name '_block_' num2str(b) '.mat'];
+            filename = [OUTPUT_PATH_raster_dateOfRecording population(u).unit_ID '_raster_' raster_site_info.target '_trial_state_' target_state_name '_block_' num2str(b) '.mat'];
             save(filename, 'raster_data', 'raster_labels', 'raster_site_info');
             
         end % num_block_trials > 0
