@@ -33,11 +33,15 @@ mat-files:
 like sdndt_Sim_LIP_dPul_NDT_20211109_list_of_required_files.mat (filelist for only one session), which contains variables list_of_required_files.firstBlockFiles, list_of_required_files.secondBlockFiles, list_of_required_files.thirdBlockFiles, list_of_required_files.allBlocksFiles, list_of_required_files.commonBlocksFiles   
 like sdndt_Sim_LIP_dPul_NDT_allOverlapBlocksFiles_list_of_required_files.mat (filelist for all sessions), which contains variable list_of_required_files.overlapBlocksFilesAcrossSessions                                                              
 
-# sdndt_Sim_LIP_dPul_NDT_decoding_per_block.m
-Converts data from raster data into binned data (including merging binned data, if necessary), which it then uses for decoding.                                                                                                         
+# filelist_of_days_from_Simultaneous_dPul_PPC_recordings.m
+Contains the dateOfRecording variable, which contains the dates of the sessions to be used for decoding. Needed for decoding across sessions. 
+
+# sdndt_Sim_LIP_dPul_NDT_decoding.m
+Converts data from raster data into binned data (including merging binned data, if necessary), which it then uses for decoding. It is possible to decode both within a single session and across multiple sessions.                                                         
 
 Input:                                                                                                                                                                                            
-many mat-files: like Lin_20211109_01_raster_dPul_L_trial_state_cueON_block_1.mat,  which contains variables binned_data, binned_labels, binned_site_info   
+many mat-files:                                                                                                                                                                                                           
+like Lin_20211109_01_raster_dPul_L_trial_state_cueON_block_1.mat, which contains variables raster_data, raster_labels, raster_site_info.  
 
 Output:   
                                                                                                                                                                                                                
