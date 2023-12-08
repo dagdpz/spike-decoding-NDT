@@ -28,8 +28,8 @@ Groups files with raster data into groups: files containing only block 1, files 
 Input:                                                                                                                                                                                                                       
 many mat-files: like Lin_20211109_01_raster_dPul_L_trial_state_cueON_block_1.mat, which contains variables raster_data, raster_labels, raster_site_info. 
 
-Output:                                                                                                                                                                                                       
-mat-file:                                                                                                                                                                                                                             
+Output:                                                                                                                                                                                                                                                                      
+mat-files:                                                                                                                                                                                                                                                                                               
 like sdndt_Sim_LIP_dPul_NDT_20211109_list_of_required_files.mat (filelist for only one session), which contains variables list_of_required_files.firstBlockFiles, list_of_required_files.secondBlockFiles, list_of_required_files.thirdBlockFiles, list_of_required_files.allBlocksFiles, list_of_required_files.commonBlocksFiles   
 like sdndt_Sim_LIP_dPul_NDT_allOverlapBlocksFiles_list_of_required_files.mat (filelist for all sessions), which contains variable list_of_required_files.overlapBlocksFilesAcrossSessions                                                              
 
