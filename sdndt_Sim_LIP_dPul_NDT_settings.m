@@ -2,12 +2,9 @@
 
 base_path = 'C:/Projects/Sim_dPul_LIP/NDT/';
 
-
-
 % for creating raster_data
 INPUT_PATH = 'Y:/Projects/Simultaneous_dPul_PPC_recordings/ephys/';
 OUTPUT_PATH_raster = [base_path 'raster/']; 
-
  
 % for creating binned_data
 OUTPUT_PATH_binned = [base_path 'binned/'];
@@ -25,6 +22,8 @@ settings.step_size = 25; % ms
 settings.bin_dur = 50; % ms
 settings.smoothing_window = 3; % number of bins to smooth over
 settings.smoothing_method = 'gaussian'; % movmean / gaussian, see smoothdata
+
+
 
 
 % Decoding

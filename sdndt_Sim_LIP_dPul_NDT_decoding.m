@@ -1,26 +1,39 @@
-function sdndt_Sim_LIP_dPul_NDT_decoding(dateOfRecording, mat_filename, target_brain_structure, target_state, listOfRequiredFiles)
+function sdndt_Sim_LIP_dPul_NDT_decoding(dateOfRecording, target_brain_structure, target_state, listOfRequiredFiles)
 % This code loads one population**.mat file and converts it to a raster_data, array 0 and 1.
 % The code converts the received raster data into binned data and then performs decoding.
 
-% TEST MODE.
-% To check how the code works, we load only one file as input (one session = one day of recording). For example:
-% sdndt_Sim_LIP_dPul_NDT_decoding('20211109', 'sdndt_Sim_LIP_dPul_NDT_list_of_required_files.mat', 'dPul_L', 4, 'firstBlockFiles');
+% HOW TO CALL THE FUNCTION?
+% If we decode within a session:
+% sdndt_Sim_LIP_dPul_NDT_decoding('20211109', 'dPul_L', 4, 'firstBlockFiles');
+% sdndt_Sim_LIP_dPul_NDT_decoding('20211110', 'LIP_L', 6, 'overlapBlocksFiles');
 
-% DECODING MODE.
-% sdndt_Sim_LIP_dPul_NDT_decoding(mat_filename, target_state, target_brain_structure);
-% mat_filename - list of files that are required for decoding
-% target_state - 6 - cue on , 4 - target acquisition
+% If we decode across sessions:
+% sdndt_Sim_LIP_dPul_NDT_decoding('merged_files_across_sessions', 'dPul_L', 4, 'overlapBlocksFilesAcrossSessions');
+
+% ADDITIONAL SETTINGS
+% dateOfRecording - folder name
 % target_brain_structure = 'dPul_L', 'LIP_L', if both 'LIP_L_dPul_L'
+% target_state: 6 - cue on , 4 - target acquisition
+% listOfRequiredFiles - variable name, which contains the list of necessary files for decoding:
+%                       'firstBlockFiles', 'secondBlockFiles', 'thirdBlockFiles',
+%                       'allBlocksFiles', 'overlapBlocksFiles',
+%                       'overlapBlocksFilesAcrossSessions'
+
+
 
 run('sdndt_Sim_LIP_dPul_NDT_settings');
 %run('sdndt_Sim_LIP_dPul_NDT_make_raster');
 
-OUTPUT_PATH_list_of_required_files = [OUTPUT_PATH_raster dateOfRecording '/List_of_required_files/' mat_filename];
+if isequal(listOfRequiredFiles, 'overlapBlocksFilesAcrossSessions')
+    partOfName = 'allOverlapBlocksFiles';
+    dateOfRecording = 'merged_files_across_sessions';  % Set a default value for the dateOfRecording in this case
+else
+    partOfName = dateOfRecording;
+end
+
+OUTPUT_PATH_list_of_required_files = [OUTPUT_PATH_raster dateOfRecording '/List_of_required_files/sdndt_Sim_LIP_dPul_NDT_' partOfName '_list_of_required_files.mat'];
 
 load(OUTPUT_PATH_list_of_required_files);
-%load('C:\Projects\Sim_dPul_LIP\NDT\raster\List_of_required_files\sdndt_Sim_LIP_dPul_NDT_list_of_required_files.mat'); % once debug is complete, comment this line and enable the line above
-
-
 
 
 
@@ -44,8 +57,10 @@ switch listOfRequiredFiles
         listOfRequiredFiles = list_of_required_files.thirdBlockFiles;
     case 'allBlocksFiles'
         listOfRequiredFiles = list_of_required_files.allBlocksFiles;
-    otherwise % 'overlapBlocksFiles'
+    case 'overlapBlocksFiles'
         listOfRequiredFiles = list_of_required_files.overlapBlocksFiles;
+    otherwise % 'overlapBlocksFilesAcrossSessions'
+        listOfRequiredFiles = list_of_required_files.overlapBlocksFilesAcrossSessions;
 end
 
 switch target_state
@@ -75,7 +90,7 @@ end
 %         load(file_path);
 %     end
 
-all_target_brain_structure = {'dPul_L', 'LIP_L'}; 
+all_target_brain_structure = {'dPul_L', 'LIP_L'};
 
 switch target_brain_structure
     case 'dPul_L'
@@ -123,7 +138,7 @@ switch targetBlock
 end
 
 
-all_targetBlock = {'block_1', 'block_2', 'block_3'}; 
+all_targetBlock = {'block_1', 'block_2', 'block_3'};
 
 switch targetBlock
     case 'block_1'
@@ -132,16 +147,23 @@ switch targetBlock
         targetBlockUsed_among_raster_data = 'block_2';
     case 'block_3'
         targetBlockUsed_among_raster_data = 'block_3';
-    otherwise 
-        targetBlockUsed_among_raster_data = targetBlockUsed;
+    otherwise
+        if isfield(list_of_required_files, 'overlapBlocksFilesAcrossSessions') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFilesAcrossSessions)
+            targetBlockUsed_among_raster_data = [];
+        else
+            targetBlockUsed_among_raster_data = targetBlockUsed;
+        end
 end
 
 
-if isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles)
+if isfield(list_of_required_files, 'overlapBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles)
     Overlap_blocks = 'Overlap_blocks/';
+elseif isfield(list_of_required_files, 'overlapBlocksFilesAcrossSessions') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFilesAcrossSessions)
+    Overlap_blocks = 'overlapBlocksFilesAcrossSessions/';
 else
     Overlap_blocks = '';
 end
+
 
 OUTPUT_PATH_binned_dateOfRecording = [OUTPUT_PATH_binned dateOfRecording '/'];
 Binned_data_dir = [OUTPUT_PATH_binned_dateOfRecording Overlap_blocks];
@@ -152,21 +174,49 @@ if ~exist(Binned_data_dir,'dir')
 end
 
 
+
 %% Combining blocks, creating a metablock if 'commonBlocksFiles'
 
 % Assuming you have a cell array of groups of files
+% for h = 1:numel(listOfRequiredFiles)
+%     parts{h} = strsplit(listOfRequiredFiles{h}, '\');
+%     requiredParts{h} = fullfile(parts{h}{1:6});
+%     uniqueRequiredRasterFolder = unique(requiredParts);
+% end
+
+% If we are interested in overlapBlocksFilesAcrossSessions, we create a folder where we will put all the files from this category
+if isfield(list_of_required_files, 'overlapBlocksFilesAcrossSessions') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFilesAcrossSessions)
+    folderForCopyingFilesAcrossSessions = [OUTPUT_PATH_raster dateOfRecording '/overlapBlocksFilesAcrossSessions/'];
+    % Create the destination folder if it doesn't exist
+    if ~exist(folderForCopyingFilesAcrossSessions, 'dir')
+        mkdir(folderForCopyingFilesAcrossSessions);
+    end
+    
+    for h = 1:numel(listOfRequiredFiles)
+        currentFilePath = listOfRequiredFiles{h}; % Get the current file path
+        [~, currentFileName, currentFileExt] = fileparts(currentFilePath); % Generate the destination path by replacing the initial part of the path
+        destinationPath = fullfile(folderForCopyingFilesAcrossSessions, [currentFileName currentFileExt]);
+        copyfile(currentFilePath, destinationPath); % Copy the file to the destination folder
+    end
+end
+
 
 OUTPUT_PATH_raster_dateOfRecording = [OUTPUT_PATH_raster dateOfRecording '/'];
-OUTPUT_PATH_raster_dateOfRecording_Overlap_blocks = [OUTPUT_PATH_raster_dateOfRecording 'Overlap_blocks/'];
+
+OUTPUT_PATH_raster_dateOfRecording_Overlap_blocks = [OUTPUT_PATH_raster_dateOfRecording Overlap_blocks];
 if ~exist(OUTPUT_PATH_raster_dateOfRecording_Overlap_blocks,'dir')
     mkdir(OUTPUT_PATH_raster_dateOfRecording_Overlap_blocks);
 end
 
 
+
+
+
+
 % Assuming list_of_required_files.commonBlocksFiles is already defined
 
 % Extract unique prefixes from the filenames
-if isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles)
+if isfield(list_of_required_files, 'overlapBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles)   % if isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles)
     
     unique_prefixes = {};
     for idx = 1:length(list_of_required_files.overlapBlocksFiles)
@@ -265,7 +315,7 @@ if isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles)
             extracted_raster_site_info = extracted_raster_site_info(can_be_merged);
             
             
-            % !!! Proceed with merging only if there are files that can be merged
+            %  Proceed with merging only if there are files that can be merged
             if any(can_be_merged)
                 % Concatenate raster_data using vertcat
                 raster_data = vertcat(extracted_raster_data{:});
@@ -315,7 +365,7 @@ binned_data = arrayfun(@(x) smoothdata(binned_data{x}, 2, settings.smoothing_met
 save([Binned_data_dir filename_binned_data '_smoothed.mat'],'binned_data','binned_labels','binned_site_info');
 
 
- labels_to_use = {'instr_R', 'instr_L'};
+labels_to_use = {'instr_R', 'instr_L'};
 % labels_to_use = {'choice_R', 'choice_L'};
 % labels_to_use = {'instr_R', 'choice_R'};
 % labels_to_use = {'instr_L', 'choice_L'};
@@ -331,8 +381,13 @@ end
 
 %%  Begin the decoding analysis
 %  6.  Create a datasource object
-specific_label_name_to_use = 'trial_type_side'; 
+specific_label_name_to_use = 'trial_type_side';
 num_cv_splits = settings.num_cv_splits; % 20 cross-validation runs
+
+if isfield(list_of_required_files, 'overlapBlocksFilesAcrossSessions') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFilesAcrossSessions)
+    settings.create_simultaneously_recorded_populations = 0;
+end
+
 
 % Create a datasource that takes our binned data, and specifies that we want to decode
 ds = basic_DS([Binned_data_dir filename_binned_data '_smoothed.mat'], specific_label_name_to_use, num_cv_splits);
@@ -341,9 +396,9 @@ ds = basic_DS([Binned_data_dir filename_binned_data '_smoothed.mat'], specific_l
 ds.num_times_to_repeat_each_label_per_cv_split = settings.num_times_to_repeat_each_label_per_cv_split;
 
 % optionally can specify particular sites to use
-ds.sites_to_use = find_sites_with_k_label_repetitions(binned_labels.trial_type_side, num_cv_splits, labels_to_use);  
+ds.sites_to_use = find_sites_with_k_label_repetitions(binned_labels.trial_type_side, num_cv_splits, labels_to_use);
 
-% flag, which specifies that the data was recorded at the simultaneously  
+% flag, which specifies that the data was recorded at the simultaneously
 ds.create_simultaneously_recorded_populations = settings.create_simultaneously_recorded_populations;
 
 % can do the decoding on a subset of labels
@@ -354,7 +409,7 @@ ds.label_names_to_use = labels_to_use; % {'instr_R', 'instr_L'} {'choice_R', 'ch
 % note that the FP objects are stored in a cell array, which allows multiple FP objects to be used in one analysis
 the_feature_preprocessors{1} = zscore_normalize_FP;
 
-% other useful options:   
+% other useful options:
 
 % can include a feature-selection features preprocessor to only use the top k most selective neurons
 % fp = select_or_exclude_top_k_features_FP;
@@ -375,12 +430,12 @@ the_classifier = max_correlation_coefficient_CL;
 the_cross_validator = standard_resample_CV(ds, the_classifier, the_feature_preprocessors);
 
 % Set how many times the outer 'resample' loop is run
-the_cross_validator.num_resample_runs = settings.num_resample_runs; 
+the_cross_validator.num_resample_runs = settings.num_resample_runs;
 
-% other useful options:   
+% other useful options:
 
 % can greatly speed up the run-time of the analysis by not creating a full TCT matrix (i.e., only trainging and testing the classifier on the same time bin)
-the_cross_validator.test_only_at_training_times = 1;  
+the_cross_validator.test_only_at_training_times = 1;
 
 
 
@@ -394,5 +449,3 @@ save(save_file_name, 'DECODING_RESULTS');
 
 % Plot decoding
 sdndt_Sim_LIP_dPul_NDT_plot_decoding_results(save_file_name);
-
-
