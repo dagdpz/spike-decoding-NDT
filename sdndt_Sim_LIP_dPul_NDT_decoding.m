@@ -1,19 +1,23 @@
-function sdndt_Sim_LIP_dPul_NDT_decoding(dateOfRecording, target_brain_structure, target_state, listOfRequiredFiles)
+function sdndt_Sim_LIP_dPul_NDT_decoding(dateOfRecording, target_brain_structure, target_state, labels_to_use, listOfRequiredFiles)
 % This code loads one population**.mat file and converts it to a raster_data, array 0 and 1.
 % The code converts the received raster data into binned data and then performs decoding.
 
 % HOW TO CALL THE FUNCTION?
 % If we decode within a session:
-% sdndt_Sim_LIP_dPul_NDT_decoding('20211109', 'dPul_L', 4, 'firstBlockFiles');
-% sdndt_Sim_LIP_dPul_NDT_decoding('20211110', 'LIP_L', 6, 'overlapBlocksFiles');
+% sdndt_Sim_LIP_dPul_NDT_decoding('20211109', 'dPul_L', 4, 'instr_R_instr_L', 'firstBlockFiles');
+% sdndt_Sim_LIP_dPul_NDT_decoding('20211110', 'LIP_L', 6, 'instr_R_instr_L', 'overlapBlocksFiles');
 
 % If we decode across sessions:
-% sdndt_Sim_LIP_dPul_NDT_decoding('merged_files_across_sessions', 'dPul_L', 4, 'overlapBlocksFilesAcrossSessions');
+% sdndt_Sim_LIP_dPul_NDT_decoding('merged_files_across_sessions', 'dPul_L', 4, 'instr_R_instr_L', 'overlapBlocksFilesAcrossSessions');
 
 % ADDITIONAL SETTINGS
 % dateOfRecording - folder name
 % target_brain_structure = 'dPul_L', 'LIP_L', if both 'LIP_L_dPul_L'
 % target_state: 6 - cue on , 4 - target acquisition
+% labels_to_use: 'instr_R_instr_L'            
+%                'choice_R_choice_L' 
+%                'instr_R_choice_R'
+%                'instr_L_choice_L'
 % listOfRequiredFiles - variable name, which contains the list of necessary files for decoding:
 %                       'firstBlockFiles', 'secondBlockFiles', 'thirdBlockFiles',
 %                       'allBlocksFiles', 'overlapBlocksFiles',
@@ -69,7 +73,7 @@ switch target_state
     case 4
         target_state_name = 'GOsignal';
     otherwise
-        fprintf('Invalid target_state value: %d\n', target_state);
+        %fprintf('Invalid target_state value: %d\n', target_state);
         % You might want to handle the case when target_state is neither 6 nor 4
 end
 
@@ -364,17 +368,30 @@ load(binned_data_file_name);  % load the binned data
 binned_data = arrayfun(@(x) smoothdata(binned_data{x}, 2, settings.smoothing_method, settings.smoothing_window), 1:length(binned_data), 'UniformOutput', false);
 save([Binned_data_dir filename_binned_data '_smoothed.mat'],'binned_data','binned_labels','binned_site_info');
 
+%% Prepearing for decoding
 
-labels_to_use = {'instr_R', 'instr_L'};
+%labels_to_use = {'instr_R', 'instr_L'};
 % labels_to_use = {'choice_R', 'choice_L'};
 % labels_to_use = {'instr_R', 'choice_R'};
 % labels_to_use = {'instr_L', 'choice_L'};
+
+switch labels_to_use
+    case 'instr_R_instr_L'
+        labels_to_use = {'instr_R', 'instr_L'};
+    case 'choice_R_choice_L'
+        labels_to_use = {'choice_R', 'choice_L'};
+    case 'instr_R_choice_R'
+        labels_to_use = {'instr_R', 'choice_R'};
+    otherwise % 'instr_L_choice_L'
+        labels_to_use = {'instr_L', 'choice_L'};
+end
+
 
 string_to_add_to_filename = '';
 labels_to_use_string = strjoin(labels_to_use);
 
 % Determining how many times each condition was repeated
-for k = 1:91
+for k = 1:150
     inds_of_sites_with_at_least_k_repeats = find_sites_with_k_label_repetitions(binned_labels.trial_type_side , k, labels_to_use);
     num_sites_with_k_repeats(k) = length(inds_of_sites_with_at_least_k_repeats);
 end
