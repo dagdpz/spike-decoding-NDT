@@ -399,6 +399,7 @@ ds.num_times_to_repeat_each_label_per_cv_split = settings.num_times_to_repeat_ea
 ds.sites_to_use = find_sites_with_k_label_repetitions(binned_labels.trial_type_side, num_cv_splits, labels_to_use);
 
 % flag, which specifies that the data was recorded at the simultaneously
+
 ds.create_simultaneously_recorded_populations = settings.create_simultaneously_recorded_populations;
 
 % can do the decoding on a subset of labels

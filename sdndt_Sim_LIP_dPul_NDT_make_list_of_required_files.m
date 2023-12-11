@@ -4,6 +4,7 @@ function sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files(inputArg)
 
 % If I plan to decode across all sessions:
 % sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files('filelist_of_days_from_Simultaneous_dPul_PPC_recordings');
+% !(To do this action, you must first have filelists for each session individually)!
 
 % Make a list of files
 run('sdndt_Sim_LIP_dPul_NDT_settings');
