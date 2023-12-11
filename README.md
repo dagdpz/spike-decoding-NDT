@@ -29,7 +29,8 @@ mat-file:
 Groups files with raster data into groups: files containing only block 1, files containing only block 2, files containing only block 3, all files (from a particular session), and overlap blocks files (files that contain the same units in all blocks of a given session).    
 
 Input:                                                                                                                                                                                                                       
-many mat-files: like Lin_20211109_01_raster_dPul_L_trial_state_cueON_block_1.mat, which contains variables raster_data, raster_labels, raster_site_info. 
+many mat-files: 
+- like Lin_20211109_01_raster_dPul_L_trial_state_cueON_block_1.mat, which contains variables raster_data, raster_labels, raster_site_info. 
 
 Output:                                                                                                                                                                                                                                                                      
 mat-files:                                                                                                                                                                                                                                                                                               
