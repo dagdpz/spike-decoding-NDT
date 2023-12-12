@@ -1,5 +1,4 @@
 function sdndt_Sim_LIP_dPul_NDT_decoding(dateOfRecording, target_brain_structure, target_state, labels_to_use, listOfRequiredFiles)
-% This code loads one population**.mat file and converts it to a raster_data, array 0 and 1.
 % The code converts the received raster data into binned data and then performs decoding.
 
 % HOW TO CALL THE FUNCTION?
@@ -413,10 +412,12 @@ ds = basic_DS([Binned_data_dir filename_binned_data '_smoothed.mat'], specific_l
 ds.num_times_to_repeat_each_label_per_cv_split = settings.num_times_to_repeat_each_label_per_cv_split;
 
 % optionally can specify particular sites to use
-ds.sites_to_use = find_sites_with_k_label_repetitions(binned_labels.trial_type_side, num_cv_splits, labels_to_use);
+% Take only sites with enough repetitions of each condition: 
+% for example, if num_cv_splits=20 and ds.num_times_to_repeat_each_label_per_cv_split=2 (20*2 = 40), take only the units of neurons that had 40 presentations of the stimulus: 
+ds.sites_to_use = find_sites_with_k_label_repetitions(binned_labels.trial_type_side, num_cv_splits*ds.num_times_to_repeat_each_label_per_cv_split, labels_to_use); 
+
 
 % flag, which specifies that the data was recorded at the simultaneously
-
 ds.create_simultaneously_recorded_populations = settings.create_simultaneously_recorded_populations;
 
 % can do the decoding on a subset of labels
