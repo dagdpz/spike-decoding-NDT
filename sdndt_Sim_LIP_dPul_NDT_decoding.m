@@ -30,6 +30,11 @@ run('sdndt_Sim_LIP_dPul_NDT_settings');
 if isequal(listOfRequiredFiles, 'overlapBlocksFilesAcrossSessions')
     partOfName = 'allOverlapBlocksFiles';
     dateOfRecording = 'merged_files_across_sessions';  % Set a default value for the dateOfRecording in this case
+elseif isequal(dateOfRecording, 'merged_files_across_sessions') && ...
+        (isequal(listOfRequiredFiles, 'firstBlockFiles') || ...
+        isequal(listOfRequiredFiles, 'secondBlockFiles') || ...
+        isequal(listOfRequiredFiles, 'thirdBlockFiles'))
+    partOfName = 'allOverlapBlocksFiles';
 else
     partOfName = dateOfRecording;
 end
@@ -163,6 +168,15 @@ if isfield(list_of_required_files, 'overlapBlocksFiles') && isequal(listOfRequir
     Overlap_blocks = 'Overlap_blocks/';
 elseif isfield(list_of_required_files, 'overlapBlocksFilesAcrossSessions') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFilesAcrossSessions)
     Overlap_blocks = 'overlapBlocksFilesAcrossSessions/';
+elseif isfield(list_of_required_files, 'firstBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.firstBlockFiles) && ...
+        isequal(dateOfRecording, 'merged_files_across_sessions')
+    Overlap_blocks = 'firstBlockFilesAcrossSessions/';
+elseif isfield(list_of_required_files, 'secondBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.secondBlockFiles) && ...
+        isequal(dateOfRecording, 'merged_files_across_sessions')
+    Overlap_blocks = 'secondBlockFilesAcrossSessions/';
+elseif isfield(list_of_required_files, 'thirdBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.thirdBlockFiles) && ...
+        isequal(dateOfRecording, 'merged_files_across_sessions')
+    Overlap_blocks = 'thirdBlockFilesAcrossSessions/';
 else
     Overlap_blocks = '';
 end
@@ -189,19 +203,76 @@ end
 
 % If we are interested in overlapBlocksFilesAcrossSessions, we create a folder where we will put all the files from this category
 if isfield(list_of_required_files, 'overlapBlocksFilesAcrossSessions') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFilesAcrossSessions)
-    folderForCopyingFilesAcrossSessions = [OUTPUT_PATH_raster dateOfRecording '/overlapBlocksFilesAcrossSessions/'];
+    folderForCopyingOverlapBlocksFilesAcrossSessions = [OUTPUT_PATH_raster dateOfRecording '/overlapBlocksFilesAcrossSessions/'];
     % Create the destination folder if it doesn't exist
-    if ~exist(folderForCopyingFilesAcrossSessions, 'dir')
-        mkdir(folderForCopyingFilesAcrossSessions);
+    if ~exist(folderForCopyingOverlapBlocksFilesAcrossSessions, 'dir')
+        mkdir(folderForCopyingOverlapBlocksFilesAcrossSessions);
     end
     
     for h = 1:numel(listOfRequiredFiles)
         currentFilePath = listOfRequiredFiles{h}; % Get the current file path
         [~, currentFileName, currentFileExt] = fileparts(currentFilePath); % Generate the destination path by replacing the initial part of the path
-        destinationPath = fullfile(folderForCopyingFilesAcrossSessions, [currentFileName currentFileExt]);
+        destinationPath = fullfile(folderForCopyingOverlapBlocksFilesAcrossSessions, [currentFileName currentFileExt]);
         copyfile(currentFilePath, destinationPath); % Copy the file to the destination folder
     end
 end
+
+% If we are interested in firstBlocksFilesAcrossSessions, we create a folder where we will put all the files from this category
+if isfield(list_of_required_files, 'firstBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.firstBlockFiles) && ...
+    isequal(dateOfRecording, 'merged_files_across_sessions')
+    
+    folderForCopyingFirstBlockFilesAcrossSessions = [OUTPUT_PATH_raster dateOfRecording '/firstBlockFilesAcrossSessions/'];
+    % Create the destination folder if it doesn't exist
+    if ~exist(folderForCopyingFirstBlockFilesAcrossSessions, 'dir')
+        mkdir(folderForCopyingFirstBlockFilesAcrossSessions);
+    end
+    
+    for h = 1:numel(listOfRequiredFiles)
+        currentFilePath = listOfRequiredFiles{h}; % Get the current file path
+        [~, currentFileName, currentFileExt] = fileparts(currentFilePath); % Generate the destination path by replacing the initial part of the path
+        destinationPath = fullfile(folderForCopyingFirstBlockFilesAcrossSessions, [currentFileName currentFileExt]);
+        copyfile(currentFilePath, destinationPath); % Copy the file to the destination folder
+    end
+end
+
+% If we are interested in secondBlocksFilesAcrossSessions, we create a folder where we will put all the files from this category
+if isfield(list_of_required_files, 'secondBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.secondBlockFiles) && ...
+    isequal(dateOfRecording, 'merged_files_across_sessions')
+    
+    folderForCopyingSecondBlockFilesAcrossSessions = [OUTPUT_PATH_raster dateOfRecording '/secondBlockFilesAcrossSessions/'];
+    % Create the destination folder if it doesn't exist
+    if ~exist(folderForCopyingSecondBlockFilesAcrossSessions, 'dir')
+        mkdir(folderForCopyingSecondBlockFilesAcrossSessions);
+    end
+    
+    for h = 1:numel(listOfRequiredFiles)
+        currentFilePath = listOfRequiredFiles{h}; % Get the current file path
+        [~, currentFileName, currentFileExt] = fileparts(currentFilePath); % Generate the destination path by replacing the initial part of the path
+        destinationPath = fullfile(folderForCopyingSecondBlockFilesAcrossSessions, [currentFileName currentFileExt]);
+        copyfile(currentFilePath, destinationPath); % Copy the file to the destination folder
+    end
+end
+
+% If we are interested in thirdBlocksFilesAcrossSessions, we create a folder where we will put all the files from this category
+if isfield(list_of_required_files, 'thirdBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.thirdBlockFiles) && ...
+    isequal(dateOfRecording, 'merged_files_across_sessions')
+    
+    folderForCopyingThirdBlockFilesAcrossSessions = [OUTPUT_PATH_raster dateOfRecording '/thirdBlockFilesAcrossSessions/'];
+    % Create the destination folder if it doesn't exist
+    if ~exist(folderForCopyingThirdBlockFilesAcrossSessions, 'dir')
+        mkdir(folderForCopyingThirdBlockFilesAcrossSessions);
+    end
+    
+    for h = 1:numel(listOfRequiredFiles)
+        currentFilePath = listOfRequiredFiles{h}; % Get the current file path
+        [~, currentFileName, currentFileExt] = fileparts(currentFilePath); % Generate the destination path by replacing the initial part of the path
+        destinationPath = fullfile(folderForCopyingThirdBlockFilesAcrossSessions, [currentFileName currentFileExt]);
+        copyfile(currentFilePath, destinationPath); % Copy the file to the destination folder
+    end
+end
+
+
+
 
 
 OUTPUT_PATH_raster_dateOfRecording = [OUTPUT_PATH_raster dateOfRecording '/'];
@@ -400,8 +471,14 @@ end
 specific_label_name_to_use = 'trial_type_side';
 num_cv_splits = settings.num_cv_splits; % 20 cross-validation runs
 
-if isfield(list_of_required_files, 'overlapBlocksFilesAcrossSessions') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFilesAcrossSessions)
-    settings.create_simultaneously_recorded_populations = 0;
+
+
+if isequal(dateOfRecording, 'merged_files_across_sessions')&& ...
+   isfield(list_of_required_files, 'overlapBlocksFilesAcrossSessions') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFilesAcrossSessions) || ...
+   isfield(list_of_required_files, 'firstBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.firstBlockFiles) || ...
+   isfield(list_of_required_files, 'secondBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.secondBlockFiles) || ...
+   isfield(list_of_required_files, 'thirdBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.thirdBlockFiles)
+   settings.create_simultaneously_recorded_populations = 0;
 end
 
 

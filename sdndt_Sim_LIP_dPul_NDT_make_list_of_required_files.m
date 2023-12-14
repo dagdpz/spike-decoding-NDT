@@ -20,7 +20,9 @@ if strcmp(inputArg, 'filelist_of_days_from_Simultaneous_dPul_PPC_recordings')
     
     % Create a cell array to store overlapBlocksFiles from different sessions
     allOverlapBlocksFiles = {};
-    
+    first_BlocksFiles = {};
+    second_BlocksFiles = {};
+    third_BlocksFiles = {};
     
     % Create the folder for the list of required files
     OUTPUT_PATH_list_of_required_files = [OUTPUT_PATH_raster 'merged_files_across_sessions/List_of_required_files/'];
@@ -59,11 +61,23 @@ if strcmp(inputArg, 'filelist_of_days_from_Simultaneous_dPul_PPC_recordings')
                 % Append to the cell array
                 allOverlapBlocksFiles = [allOverlapBlocksFiles; loadedData.list_of_required_files.overlapBlocksFiles];
             end
+            if isfield(loadedData.list_of_required_files, 'firstBlockFiles')
+                first_BlocksFiles = [first_BlocksFiles; loadedData.list_of_required_files.firstBlockFiles];
+            end 
+            if isfield(loadedData.list_of_required_files, 'secondBlockFiles')
+                second_BlocksFiles = [second_BlocksFiles; loadedData.list_of_required_files.secondBlockFiles];
+            end 
+            if isfield(loadedData.list_of_required_files, 'secondBlockFiles')
+                third_BlocksFiles = [third_BlocksFiles; loadedData.list_of_required_files.thirdBlockFiles];
+            end 
         end
     end
     
     % Create the variable list_of_required_files.overlapBlocksFilesAcrisSession
     list_of_required_files.overlapBlocksFilesAcrossSessions = allOverlapBlocksFiles;
+    list_of_required_files.firstBlockFiles = first_BlocksFiles;
+    list_of_required_files.secondBlockFiles = second_BlocksFiles;
+    list_of_required_files.thirdBlockFiles = third_BlocksFiles;
     
     % Save the structure to a .mat file in the specified folder
     nameOfFinalFile = ['sdndt_Sim_LIP_dPul_NDT_allOverlapBlocksFiles_list_of_required_files.mat'];
