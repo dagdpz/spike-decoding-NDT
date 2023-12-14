@@ -463,7 +463,9 @@ labels_to_use_string = strjoin(labels_to_use);
 % Determining how many times each condition was repeated
 for k = 1:150
     inds_of_sites_with_at_least_k_repeats = find_sites_with_k_label_repetitions(binned_labels.trial_type_side , k, labels_to_use);
-    num_sites_with_k_repeats(k) = length(inds_of_sites_with_at_least_k_repeats);
+    num_sites_with_k_repeats(k) = length(inds_of_sites_with_at_least_k_repeats); 
+    % number of columns - how many times the stimulus was presented (number of repetitions); 
+    % the value in each column - how many units has this number of repetitions 
 end
 
 %%  Begin the decoding analysis
@@ -472,7 +474,9 @@ specific_label_name_to_use = 'trial_type_side';
 num_cv_splits = settings.num_cv_splits; % 20 cross-validation runs
 
 
-
+% If the data is run across sessions, the data was not recorded at the simultaneously 
+%(by default, the data is recorded at the simultaneously in the sdndt_Sim_LIP_dPul_NDT_settings.m: 
+% settings.create_simultaneously_recorded_populations = 1;) 
 if isequal(dateOfRecording, 'merged_files_across_sessions')&& ...
    isfield(list_of_required_files, 'overlapBlocksFilesAcrossSessions') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFilesAcrossSessions) || ...
    isfield(list_of_required_files, 'firstBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.firstBlockFiles) || ...
@@ -491,7 +495,7 @@ ds.num_times_to_repeat_each_label_per_cv_split = settings.num_times_to_repeat_ea
 % optionally can specify particular sites to use
 % Take only sites with enough repetitions of each condition: 
 % for example, if num_cv_splits=20 and ds.num_times_to_repeat_each_label_per_cv_split=2 (20*2 = 40), take only the units of neurons that had 40 presentations of the stimulus: 
-ds.sites_to_use = find_sites_with_k_label_repetitions(binned_labels.trial_type_side, num_cv_splits*ds.num_times_to_repeat_each_label_per_cv_split, labels_to_use); 
+ds.sites_to_use = find_sites_with_k_label_repetitions(binned_labels.trial_type_side, num_cv_splits*ds.num_times_to_repeat_each_label_per_cv_split, labels_to_use); % shows how many units are taken for decoding (size, 2)
 
 
 % flag, which specifies that the data was recorded at the simultaneously
