@@ -86,14 +86,33 @@ label_names_to_use = DECODING_RESULTS.DS_PARAMETERS.label_names_to_use;
 sites_to_use = DECODING_RESULTS.DS_PARAMETERS.sites_to_use;
 
 label_counts = zeros(size(label_names_to_use)); % Initialize counters
+unique_sequences = containers.Map('KeyType', 'char', 'ValueType', 'logical'); % Map to store unique sequences
 
 for x = 1:length(sites_to_use) % Loop through sites_to_use and count occurrences of labels_names_to_use in trial_type_side
-    site_index = sites_to_use(x);    
+    site_index = sites_to_use(x);
     labels_at_site = trial_type_side{1, site_index}; % Access the_labels at the specified site_index
-    for y = 1:length(label_names_to_use) % Count occurrences of unique_labels in labels_at_site
-        label_counts(y) = label_counts(y) + sum(strcmp(labels_at_site, label_names_to_use{y}));
+    
+    % Convert cell array to a string for easy comparison
+    sequence_str = strjoin(labels_at_site, ',');
+    
+    % Check if the sequence is unique
+    if ~isKey(unique_sequences, sequence_str)
+        unique_sequences(sequence_str) = true; % Mark as seen
+        for y = 1:length(label_names_to_use)
+            % Count occurrences of unique_labels in labels_at_site
+            label_counts(y) = label_counts(y) + sum(strcmp(labels_at_site, label_names_to_use{y}));
+        end
     end
 end
+% label_counts = zeros(size(label_names_to_use)); % Initialize counters
+% 
+% for x = 1:length(sites_to_use) % Loop through sites_to_use and count occurrences of labels_names_to_use in trial_type_side
+%     site_index = sites_to_use(x);    
+%     labels_at_site = trial_type_side{1, site_index}; % Access the_labels at the specified site_index
+%     for y = 1:length(label_names_to_use) % Count occurrences of unique_labels in labels_at_site
+%         label_counts(y) = label_counts(y) + sum(strcmp(labels_at_site, label_names_to_use{y}));
+%     end
+% end
 % for k = 1:length(label_names_to_use) % Display the results
 %     fprintf('Label %s appears %d times.\n', label_names_to_use{k}, label_counts(k));
 % end
