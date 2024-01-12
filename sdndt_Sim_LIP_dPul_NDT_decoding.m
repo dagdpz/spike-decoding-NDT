@@ -7,7 +7,7 @@ function sdndt_Sim_LIP_dPul_NDT_decoding(dateOfRecording, target_brain_structure
 % sdndt_Sim_LIP_dPul_NDT_decoding('20211110', 'LIP_L', 6, 'instr_R_instr_L', 'overlapBlocksFiles');
 
 % If we decode across sessions:
-% sdndt_Sim_LIP_dPul_NDT_decoding('merged_files_across_sessions', 'dPul_L', 4, 'instr_R_instr_L', 'overlapBlocksFilesAcrossSessions');
+% sdndt_Sim_LIP_dPul_NDT_decoding('merged_files_across_sessions', 'dPul_L', 4, 'instr_R_instr_L', 'overlapBlocksFiles');
 
 % ADDITIONAL SETTINGS
 % dateOfRecording - folder name
@@ -20,21 +20,23 @@ function sdndt_Sim_LIP_dPul_NDT_decoding(dateOfRecording, target_brain_structure
 % listOfRequiredFiles - variable name, which contains the list of necessary files for decoding:
 %                       'firstBlockFiles', 'secondBlockFiles', 'thirdBlockFiles',
 %                       'allBlocksFiles', 'overlapBlocksFiles',
-%                       'overlapBlocksFilesAcrossSessions'
+
 
 
 
 run('sdndt_Sim_LIP_dPul_NDT_settings');
 %run('sdndt_Sim_LIP_dPul_NDT_make_raster');
 
-if isequal(listOfRequiredFiles, 'overlapBlocksFilesAcrossSessions')
-    partOfName = 'allOverlapBlocksFiles';
-    dateOfRecording = 'merged_files_across_sessions';  % Set a default value for the dateOfRecording in this case
-elseif isequal(dateOfRecording, 'merged_files_across_sessions') && ...
+% if isequal(listOfRequiredFiles, 'overlapBlocksFilesAcrossSessions')
+%     partOfName = 'allOverlapBlocksFiles';
+%     dateOfRecording = 'merged_files_across_sessions';  % Set a default value for the dateOfRecording in this case
+if isequal(dateOfRecording, 'merged_files_across_sessions') && ...
         (isequal(listOfRequiredFiles, 'firstBlockFiles') || ...
         isequal(listOfRequiredFiles, 'secondBlockFiles') || ...
-        isequal(listOfRequiredFiles, 'thirdBlockFiles'))
-    partOfName = 'allOverlapBlocksFiles';
+        isequal(listOfRequiredFiles, 'thirdBlockFiles') || ...
+        isequal(listOfRequiredFiles, 'overlapBlocksFiles')|| ...
+        isequal(listOfRequiredFiles, 'allBlocksFiles'))
+    partOfName = 'allSessionsBlocksFiles';
 else
     partOfName = dateOfRecording;
 end
@@ -67,8 +69,13 @@ switch listOfRequiredFiles
         listOfRequiredFiles = list_of_required_files.allBlocksFiles;
     case 'overlapBlocksFiles'
         listOfRequiredFiles = list_of_required_files.overlapBlocksFiles;
-    otherwise % 'overlapBlocksFilesAcrossSessions'
-        listOfRequiredFiles = list_of_required_files.overlapBlocksFilesAcrossSessions;
+    otherwise 
+        if isfield(list_of_required_files, 'overlapBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles) && ...
+                isequal(dateOfRecording, 'merged_files_across_sessions')
+            listOfRequiredFiles = list_of_required_files.overlapBlocksFiles;
+        else 
+            listOfRequiredFiles = list_of_required_files.allBlocksFiles;
+        end
 end
 
 switch target_state
@@ -156,7 +163,7 @@ switch targetBlock
     case 'block_3'
         targetBlockUsed_among_raster_data = 'block_3';
     otherwise
-        if isfield(list_of_required_files, 'overlapBlocksFilesAcrossSessions') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFilesAcrossSessions)
+        if isfield(list_of_required_files, 'allBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles)
             targetBlockUsed_among_raster_data = [];
         else
             targetBlockUsed_among_raster_data = targetBlockUsed;
@@ -164,26 +171,34 @@ switch targetBlock
 end
 
 
-if isfield(list_of_required_files, 'overlapBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles)
-    Overlap_blocks = 'Overlap_blocks/';
-elseif isfield(list_of_required_files, 'overlapBlocksFilesAcrossSessions') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFilesAcrossSessions)
-    Overlap_blocks = 'overlapBlocksFilesAcrossSessions/';
+if  isfield(list_of_required_files, 'overlapBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles) && ...
+        isequal(dateOfRecording, 'merged_files_across_sessions')
+    block_grouping_folder = 'overlapBlocksFilesAcrossSessions/';
+elseif isfield(list_of_required_files, 'allBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles) && ...
+        isequal(dateOfRecording, 'merged_files_across_sessions')
+    block_grouping_folder = 'allBlocksFilesAcrossSessions/';
 elseif isfield(list_of_required_files, 'firstBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.firstBlockFiles) && ...
         isequal(dateOfRecording, 'merged_files_across_sessions')
-    Overlap_blocks = 'firstBlockFilesAcrossSessions/';
+    block_grouping_folder = 'firstBlockFilesAcrossSessions/';
 elseif isfield(list_of_required_files, 'secondBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.secondBlockFiles) && ...
         isequal(dateOfRecording, 'merged_files_across_sessions')
-    Overlap_blocks = 'secondBlockFilesAcrossSessions/';
+    block_grouping_folder = 'secondBlockFilesAcrossSessions/';
 elseif isfield(list_of_required_files, 'thirdBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.thirdBlockFiles) && ...
         isequal(dateOfRecording, 'merged_files_across_sessions')
-    Overlap_blocks = 'thirdBlockFilesAcrossSessions/';
+    block_grouping_folder = 'thirdBlockFilesAcrossSessions/';
+elseif isfield(list_of_required_files, 'overlapBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles) && ...
+        ~isequal(dateOfRecording, 'merged_files_across_sessions')
+    block_grouping_folder = 'Overlap_blocks/';
+elseif isfield(list_of_required_files, 'allBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles) && ...
+        ~isequal(dateOfRecording, 'merged_files_across_sessions')
+    block_grouping_folder = 'All_blocks/';
 else
-    Overlap_blocks = '';
+    block_grouping_folder = '';
 end
 
 
 OUTPUT_PATH_binned_dateOfRecording = [OUTPUT_PATH_binned dateOfRecording '/'];
-Binned_data_dir = [OUTPUT_PATH_binned_dateOfRecording Overlap_blocks];
+Binned_data_dir = [OUTPUT_PATH_binned_dateOfRecording block_grouping_folder];
 save_prefix_name = [Binned_data_dir 'Binned_Sim_LIP_dPul__NDT_data_for_' target_brain_structure '_' target_state_name '_' targetBlockUsed];
 
 if ~exist(Binned_data_dir,'dir')
@@ -192,7 +207,7 @@ end
 
 
 
-%% Combining blocks, creating a metablock if 'commonBlocksFiles'
+%% creating folders for sorting files when running across all sessions. 
 
 % Assuming you have a cell array of groups of files
 % for h = 1:numel(listOfRequiredFiles)
@@ -201,9 +216,47 @@ end
 %     uniqueRequiredRasterFolder = unique(requiredParts);
 % end
 
+% If we are interested in allBlocksFiles, we create a folder where we will put all the files from this category
+if isfield(list_of_required_files, 'allBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles) && ...
+        ~isequal(dateOfRecording, 'merged_files_across_sessions')
+    
+    folderForCopyingAllBlocksFiles = [OUTPUT_PATH_raster dateOfRecording '/All_blocks/'];
+    % Create the destination folder if it doesn't exist
+    if ~exist(folderForCopyingAllBlocksFiles, 'dir')
+        mkdir(folderForCopyingAllBlocksFiles);
+    end
+    
+    for h = 1:numel(listOfRequiredFiles)
+        currentFilePath = listOfRequiredFiles{h}; % Get the current file path
+        [~, currentFileName, currentFileExt] = fileparts(currentFilePath); % Generate the destination path by replacing the initial part of the path
+        destinationPath = fullfile(folderForCopyingAllBlocksFiles, [currentFileName currentFileExt]);
+        copyfile(currentFilePath, destinationPath); % Copy the file to the destination folder
+    end
+end
+
 % If we are interested in overlapBlocksFilesAcrossSessions, we create a folder where we will put all the files from this category
-if isfield(list_of_required_files, 'overlapBlocksFilesAcrossSessions') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFilesAcrossSessions)
+if isfield(list_of_required_files, 'overlapBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles) && ...
+        isequal(dateOfRecording, 'merged_files_across_sessions')
+    
     folderForCopyingOverlapBlocksFilesAcrossSessions = [OUTPUT_PATH_raster dateOfRecording '/overlapBlocksFilesAcrossSessions/'];
+    % Create the destination folder if it doesn't exist
+    if ~exist(folderForCopyingOverlapBlocksFilesAcrossSessions, 'dir')
+        mkdir(folderForCopyingOverlapBlocksFilesAcrossSessions);
+    end
+    
+    for h = 1:numel(listOfRequiredFiles)
+        currentFilePath = listOfRequiredFiles{h}; % Get the current file path
+        [~, currentFileName, currentFileExt] = fileparts(currentFilePath); % Generate the destination path by replacing the initial part of the path
+        destinationPath = fullfile(folderForCopyingOverlapBlocksFilesAcrossSessions, [currentFileName currentFileExt]);
+        copyfile(currentFilePath, destinationPath); % Copy the file to the destination folder
+    end
+end
+
+% If we are interested in overlapBlocksFilesAcrossSessions, we create a folder where we will put all the files from this category
+if isfield(list_of_required_files, 'allBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles) && ...
+        isequal(dateOfRecording, 'merged_files_across_sessions')
+    
+    folderForCopyingOverlapBlocksFilesAcrossSessions = [OUTPUT_PATH_raster dateOfRecording '/allBlocksFilesAcrossSessions/'];
     % Create the destination folder if it doesn't exist
     if ~exist(folderForCopyingOverlapBlocksFilesAcrossSessions, 'dir')
         mkdir(folderForCopyingOverlapBlocksFilesAcrossSessions);
@@ -219,7 +272,7 @@ end
 
 % If we are interested in firstBlocksFilesAcrossSessions, we create a folder where we will put all the files from this category
 if isfield(list_of_required_files, 'firstBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.firstBlockFiles) && ...
-    isequal(dateOfRecording, 'merged_files_across_sessions')
+        isequal(dateOfRecording, 'merged_files_across_sessions')
     
     folderForCopyingFirstBlockFilesAcrossSessions = [OUTPUT_PATH_raster dateOfRecording '/firstBlockFilesAcrossSessions/'];
     % Create the destination folder if it doesn't exist
@@ -274,16 +327,14 @@ end
 
 
 
+%% Combining blocks, creating a metablock if 'commonBlocksFiles'
 
 OUTPUT_PATH_raster_dateOfRecording = [OUTPUT_PATH_raster dateOfRecording '/'];
 
-OUTPUT_PATH_raster_dateOfRecording_Overlap_blocks = [OUTPUT_PATH_raster_dateOfRecording Overlap_blocks];
+OUTPUT_PATH_raster_dateOfRecording_Overlap_blocks = [OUTPUT_PATH_raster_dateOfRecording block_grouping_folder];
 if ~exist(OUTPUT_PATH_raster_dateOfRecording_Overlap_blocks,'dir')
     mkdir(OUTPUT_PATH_raster_dateOfRecording_Overlap_blocks);
 end
-
-
-
 
 
 
@@ -427,7 +478,7 @@ end
 
 %%  Make Binned_data
 
-Raster_data_dir = [OUTPUT_PATH_raster_dateOfRecording Overlap_blocks];
+Raster_data_dir = [OUTPUT_PATH_raster_dateOfRecording block_grouping_folder];
 raster_data_directory_name =  [Raster_data_dir  '*' search_target_brain_structure_among_raster_data '_trial_state_' target_state_name '_' targetBlockUsed_among_raster_data '*'];
 binned_data_file_name = create_binned_data_from_raster_data(raster_data_directory_name, save_prefix_name, settings.bin_width, settings.step_size);
 
@@ -476,13 +527,14 @@ num_cv_splits = settings.num_cv_splits; % 20 cross-validation runs
 
 % If the data is run across sessions, the data was not recorded at the simultaneously 
 %(by default, the data is recorded at the simultaneously in the sdndt_Sim_LIP_dPul_NDT_settings.m: 
-% settings.create_simultaneously_recorded_populations = 1;) 
+% settings.create_simultaneously_recorded_populations = 1;)  
 if isequal(dateOfRecording, 'merged_files_across_sessions')&& ...
-   isfield(list_of_required_files, 'overlapBlocksFilesAcrossSessions') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFilesAcrossSessions) || ...
-   isfield(list_of_required_files, 'firstBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.firstBlockFiles) || ...
-   isfield(list_of_required_files, 'secondBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.secondBlockFiles) || ...
-   isfield(list_of_required_files, 'thirdBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.thirdBlockFiles)
-   settings.create_simultaneously_recorded_populations = 0;
+        isfield(list_of_required_files, 'overlapBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles) || ...
+        isfield(list_of_required_files, 'firstBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.firstBlockFiles) || ...
+        isfield(list_of_required_files, 'secondBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.secondBlockFiles) || ...
+        isfield(list_of_required_files, 'thirdBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.thirdBlockFiles) || ...
+        isfield(list_of_required_files, 'allBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles)
+    settings.create_simultaneously_recorded_populations = 0; % data are not recorded simultaneously
 end
 
 
@@ -499,6 +551,7 @@ ds.sites_to_use = find_sites_with_k_label_repetitions(binned_labels.trial_type_s
 
 
 % flag, which specifies that the data was recorded at the simultaneously
+% create_simultaneously_recorded_populations = 1; % data are recorded simultaneously
 ds.create_simultaneously_recorded_populations = settings.create_simultaneously_recorded_populations;
 
 % can do the decoding on a subset of labels
