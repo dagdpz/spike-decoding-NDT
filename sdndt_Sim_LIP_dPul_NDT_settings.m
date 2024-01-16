@@ -1,6 +1,7 @@
 % sdndt_Sim_LIP_dPul_NDT_settings
 
-base_path = 'C:/Projects/Sim_dPul_LIP/NDT/';
+base_path = 'C:/Projects/Sim_dPul_LIP/NDT/control/';
+%base_path = 'C:/Projects/Sim_dPul_LIP/NDT/injection/';
 
 % for creating raster_data
 INPUT_PATH = 'Y:/Projects/Simultaneous_dPul_PPC_recordings/ephys/';
