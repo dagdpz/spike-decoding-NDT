@@ -1,18 +1,35 @@
-function sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files(inputArg)
+function sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files(injection, mode)
 % If I plan to decode within one session:
 % sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files('20211109');
 
 % If I plan to decode across all sessions:
-% sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files('filelist_of_days_from_Simultaneous_dPul_PPC_recordings');
 % !(To do this action, you must first have filelists for each session individually)!
+% sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files('0', 'merged_files_across_sessions');
 
-% Make a list of files
-run('sdndt_Sim_LIP_dPul_NDT_settings');
 
-if strcmp(inputArg, 'filelist_of_days_from_Simultaneous_dPul_PPC_recordings')
-    % Load the dates from the filelist_of_days_from_Simultaneous_dPul_PPC_recordings.m
-    run('filelist_of_days_from_Simultaneous_dPul_PPC_recordings.m');
-    
+% injection: '0' - control, '1' - injection
+% mode: 'each_session_separately' or 'merged_files_across_sessions'
+
+
+% Check if the injection parameter is valid
+if ~ismember(injection, {'0', '1'})
+    error('Invalid value for the injection parameter. Use ''0'' or ''1'' for control or injection.');
+end
+
+if ~ismember(mode, {'each_session_separately', 'merged_files_across_sessions'})
+    error('Invalid value for the mode parameter. Use ''each_session_separately'' or ''merged_files_across_sessions''.');
+end
+
+
+% Call the function to get the dates
+dateOfRecording = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(injection);
+
+% Call the settings function with the chosen set
+[base_path, INPUT_PATH, OUTPUT_PATH_raster, OUTPUT_PATH_binned, settings] = sdndt_Sim_LIP_dPul_NDT_settings(injection);
+%run('sdndt_Sim_LIP_dPul_NDT_settings');
+
+
+if strcmp(mode, 'merged_files_across_sessions')
     
     % Initialize cell arrays for paths
     OUTPUT_PATH_raster_dateOfRecording = cell(1, numel(dateOfRecording));
@@ -22,6 +39,9 @@ if strcmp(inputArg, 'filelist_of_days_from_Simultaneous_dPul_PPC_recordings')
     first_BlocksFiles = {};
     second_BlocksFiles = {};
     third_BlocksFiles = {};
+    fourth_BlocksFiles = {};
+    fifth_BlocksFiles = {};
+    sixth_BlocksFiles = {};
     allOverlapBlocksFiles = {};
     allallBlocksFiles = {};
     
@@ -67,20 +87,32 @@ if strcmp(inputArg, 'filelist_of_days_from_Simultaneous_dPul_PPC_recordings')
             end
             if isfield(loadedData.list_of_required_files, 'firstBlockFiles')
                 first_BlocksFiles = [first_BlocksFiles; loadedData.list_of_required_files.firstBlockFiles];
-            end 
+            end
             if isfield(loadedData.list_of_required_files, 'secondBlockFiles')
                 second_BlocksFiles = [second_BlocksFiles; loadedData.list_of_required_files.secondBlockFiles];
-            end 
-            if isfield(loadedData.list_of_required_files, 'secondBlockFiles')
+            end
+            if isfield(loadedData.list_of_required_files, 'thirdBlockFiles')
                 third_BlocksFiles = [third_BlocksFiles; loadedData.list_of_required_files.thirdBlockFiles];
-            end 
+            end
+            if isfield(loadedData.list_of_required_files, 'fourthBlockFiles')
+                fourth_BlocksFiles = [fourth_BlocksFiles; loadedData.list_of_required_files.fourthBlockFiles];
+            end
+            if isfield(loadedData.list_of_required_files, 'fifthBlockFiles')
+                fifth_BlocksFiles = [fifth_BlocksFiles; loadedData.list_of_required_files.fifthBlockFiles];
+            end
+            if isfield(loadedData.list_of_required_files, 'sixthBlockFiles')
+                sixth_BlocksFiles = [sixth_BlocksFiles; loadedData.list_of_required_files.sixthBlockFiles];
+            end
         end
     end
     
-    % Create the variable list_of_required_files.overlapBlocksFilesAcrisSession    
+    % Create the variable list_of_required_files.overlapBlocksFilesAcrisSession
     list_of_required_files.firstBlockFsiles = first_BlocksFiles;
     list_of_required_files.secondBlockFiles = second_BlocksFiles;
     list_of_required_files.thirdBlockFiles = third_BlocksFiles;
+    list_of_required_files.fourthBlockFiles = fourth_BlocksFiles;
+    list_of_required_files.fifthBlockFiles = fifth_BlocksFiles;
+    list_of_required_files.sixthBlockFiles = sixth_BlocksFiles;
     list_of_required_files.overlapBlocksFiles = allOverlapBlocksFiles;
     list_of_required_files.allBlocksFiles = allallBlocksFiles;
     
@@ -90,108 +122,139 @@ if strcmp(inputArg, 'filelist_of_days_from_Simultaneous_dPul_PPC_recordings')
     
     
     
-else
+else % 'each_session_separately'
     % Use the provided date as a subfolder
-    dateOfRecording = inputArg;
-    OUTPUT_PATH_raster_dateOfRecording = [OUTPUT_PATH_raster dateOfRecording '/'];
-    OUTPUT_PATH_list_of_required_files = [OUTPUT_PATH_raster_dateOfRecording 'List_of_required_files/'];
     
-    % Create the folder for the list of required files
-    if ~exist(OUTPUT_PATH_list_of_required_files, 'dir')
-        mkdir(OUTPUT_PATH_list_of_required_files);
-    end
-    
-    
-    
-    
-    % Get a list of all .mat files in the directory
-    files = dir(fullfile(OUTPUT_PATH_raster_dateOfRecording, '*.mat'));
-    
-    % Initialize lists for each category
-    list_of_required_files.firstBlockFiles = {};
-    list_of_required_files.secondBlockFiles = {};
-    list_of_required_files.thirdBlockFiles = {};
-    list_of_required_files.allBlocksFiles = {};
-    list_of_required_files.overlapBlocksFiles = {};
-    
-    
-    % Initialize a struct to store the maximum block value and conventions for each session
-    sessionBlockInfo = struct();
-    
-    % Loop through each file
-    for i = 1:length(files)
-        
-        % Extract session ID and unit ID from the file name
-        [sessionID, unitID, ~] = extractFileInfo(files(i).name);
-        unitID = ['Unit_', unitID];
-        
-        % Load the data from the file
-        data = load(fullfile(OUTPUT_PATH_raster_dateOfRecording, files(i).name));
-        
-        % Check if the file contains information about the first block
-        if isfield(data, 'raster_site_info') && isfield(data.raster_site_info, 'block_unit') && ...
-                isfield(data, 'raster_labels') && isfield(data.raster_labels, 'block') && ...
-                isfield(data.raster_site_info, 'unit_ID')
-            
-            % Get the maximum and minimum block value for the session
-            if isfield(sessionBlockInfo, sessionID)
-                sessionBlockInfo.(sessionID).maxBlock = max(sessionBlockInfo.(sessionID).maxBlock, max(data.raster_labels.block{1}));
-                sessionBlockInfo.(sessionID).minBlock = min(sessionBlockInfo.(sessionID).minBlock, min(data.raster_labels.block{1}));
-            else
-                sessionBlockInfo.(sessionID).maxBlock = max(data.raster_labels.block{1});
-                sessionBlockInfo.(sessionID).minBlock = min(data.raster_labels.block{1});
-            end
-            
-            % Save the conventions for each unit
-            sessionBlockInfo.(sessionID).unitConventions.(unitID) = strsplit(data.raster_site_info.block_unit, ' ');
-            
-            % Check if it's the first block
-            if contains(files(i).name, 'block_1') &&  all(cellfun(@(x) all(x == 1), data.raster_labels.block))
-                list_of_required_files.firstBlockFiles = [list_of_required_files.firstBlockFiles; fullfile(files(i).folder, files(i).name)];
-                
-                
-                % Check if it's the second block
-            elseif contains(files(i).name, 'block_2') && all(cellfun(@(x) all(x == 2), data.raster_labels.block))
-                list_of_required_files.secondBlockFiles = [list_of_required_files.secondBlockFiles; fullfile(files(i).folder, files(i).name)];
-                
-                % Check if it's the third block
-            elseif contains(files(i).name, 'block_3')&& all(cellfun(@(x) all(x == 3), data.raster_labels.block))
-                list_of_required_files.thirdBlockFiles = [list_of_required_files.thirdBlockFiles; fullfile(files(i).folder, files(i).name)];
-            end
-            
-            % Check if it's all blocks
-            % Add the file to the allBlocksFiles list
-            list_of_required_files.allBlocksFiles = [list_of_required_files.allBlocksFiles; fullfile(files(i).folder, files(i).name)];
-            
+    for day = 1:length(dateOfRecording)
+        % Create the folder for the list of required files
+        OUTPUT_PATH_raster_dateOfRecording = [OUTPUT_PATH_raster dateOfRecording{day} '/'];
+        OUTPUT_PATH_list_of_required_files = [OUTPUT_PATH_raster_dateOfRecording 'List_of_required_files/'];
+        if ~exist(OUTPUT_PATH_list_of_required_files, 'dir')
+            mkdir(OUTPUT_PATH_list_of_required_files);
         end
         
-    end
-    
-    % Check if it has common blocks with the same unit designations
-    % Loop through each session
-    sessions = fieldnames(sessionBlockInfo);
-    for s = 1:numel(sessions)
-        sessionID = sessions{s};
+        %     dateOfRecording = mode;
+        %     OUTPUT_PATH_raster_dateOfRecording = [OUTPUT_PATH_raster dateOfRecording '/'];
+        %     OUTPUT_PATH_list_of_required_files = [OUTPUT_PATH_raster_dateOfRecording 'List_of_required_files/'];
+        %
+        %     % Create the folder for the list of required files
+        %     if ~exist(OUTPUT_PATH_list_of_required_files, 'dir')
+        %         mkdir(OUTPUT_PATH_list_of_required_files);
+        %     end
         
-        % Get units with the maximum number of blocks
-        unitsWithMaxBlocks = getUnitsWithMaxBlocks(sessionBlockInfo.(sessionID).unitConventions, sessionBlockInfo.(sessionID).maxBlock);
         
-        % Check if units with max blocks have the same conventions
-        if areConventionsSame(sessionBlockInfo.(sessionID).unitConventions, unitsWithMaxBlocks, sessionBlockInfo.(sessionID).maxBlock)
-            % Include files in commonBlocksFiles
-            for unitID = unitsWithMaxBlocks
-                overlapFiles = getOverlapFiles(sessionID, unitID, files, sessionBlockInfo);
-                list_of_required_files.overlapBlocksFiles = [list_of_required_files.overlapBlocksFiles; overlapFiles(:)];
+        
+        
+        % Get a list of all .mat files in the directory
+        files = dir(fullfile(OUTPUT_PATH_raster_dateOfRecording, '*.mat'));
+        
+        % Initialize lists for each category
+        list_of_required_files.firstBlockFiles = {};
+        list_of_required_files.secondBlockFiles = {};
+        list_of_required_files.thirdBlockFiles = {};
+        list_of_required_files.fourthBlockFiles = {};
+        list_of_required_files.fifthBlockFiles = {};
+        list_of_required_files.sixthBlockFiles = {};
+        list_of_required_files.allBlocksFiles = {};
+        list_of_required_files.overlapBlocksFiles = {};
+        
+        
+        % Initialize a struct to store the maximum block value and conventions for each session
+        sessionBlockInfo = struct();
+        
+        % Loop through each file
+        for i = 1:length(files)
+            
+            % Extract session ID and unit ID from the file name
+            [sessionID, unitID, ~] = extractFileInfo(files(i).name);
+            unitID = ['Unit_', unitID];
+            
+            % Load the data from the file
+            data = load(fullfile(OUTPUT_PATH_raster_dateOfRecording, files(i).name));
+            
+            % Check if the file contains information about the first block
+            if isfield(data, 'raster_site_info') && isfield(data.raster_site_info, 'block_unit') && ...
+                    isfield(data, 'raster_labels') && isfield(data.raster_labels, 'block') && ...
+                    isfield(data.raster_site_info, 'unit_ID')
+                
+                % Get the maximum and minimum block value, the unique block numbers for the session
+                if isfield(sessionBlockInfo, sessionID)
+                    sessionBlockInfo.(sessionID).maxBlock = max(sessionBlockInfo.(sessionID).maxBlock, max(data.raster_labels.block{1}));
+                    sessionBlockInfo.(sessionID).minBlock = min(sessionBlockInfo.(sessionID).minBlock, min(data.raster_labels.block{1}));
+                    sessionBlockInfo.(sessionID).uniqueBlocks = unique([sessionBlockInfo.(sessionID).uniqueBlocks, data.raster_labels.block{1}]);
+                else
+                    sessionBlockInfo.(sessionID).maxBlock = max(data.raster_labels.block{1});
+                    sessionBlockInfo.(sessionID).minBlock = min(data.raster_labels.block{1});
+                    sessionBlockInfo.(sessionID).uniqueBlocks = unique(data.raster_labels.block{1});
+                end
+                
+                % Save the conventions for each unit
+                sessionBlockInfo.(sessionID).unitConventions.(unitID) = strsplit(data.raster_site_info.block_unit); % new! Was: strsplit(data.raster_site_info.block_unit, ' ');
+                
+                % Check if it's the first block
+                if contains(files(i).name, 'block_1') &&  all(cellfun(@(x) all(x == 1), data.raster_labels.block))
+                    list_of_required_files.firstBlockFiles = [list_of_required_files.firstBlockFiles; fullfile(files(i).folder, files(i).name)];
+                    
+                    
+                    % Check if it's the second block
+                elseif contains(files(i).name, 'block_2') && all(cellfun(@(x) all(x == 2), data.raster_labels.block))
+                    list_of_required_files.secondBlockFiles = [list_of_required_files.secondBlockFiles; fullfile(files(i).folder, files(i).name)];
+                    
+                    % Check if it's the third block
+                elseif contains(files(i).name, 'block_3')&& all(cellfun(@(x) all(x == 3), data.raster_labels.block))
+                    list_of_required_files.thirdBlockFiles = [list_of_required_files.thirdBlockFiles; fullfile(files(i).folder, files(i).name)];
+                    
+                    % Check if it's the fourth block
+                elseif contains(files(i).name, 'block_4')&& all(cellfun(@(x) all(x == 4), data.raster_labels.block))
+                    list_of_required_files.fourthBlockFiles = [list_of_required_files.fourthBlockFiles; fullfile(files(i).folder, files(i).name)];
+                    
+                    % Check if it's the fifth block
+                elseif contains(files(i).name, 'block_5')&& all(cellfun(@(x) all(x == 5), data.raster_labels.block))
+                    list_of_required_files.fifthBlockFiles = [list_of_required_files.fifthBlockFiles; fullfile(files(i).folder, files(i).name)];
+                    
+                    % Check if it's the sixth block
+                elseif contains(files(i).name, 'block_6')&& all(cellfun(@(x) all(x == 6), data.raster_labels.block))
+                    list_of_required_files.sixthBlockFiles = [list_of_required_files.sixthBlockFiles; fullfile(files(i).folder, files(i).name)];
+                end
+                
+                % Check if it's all blocks
+                % Add the file to the allBlocksFiles list
+                list_of_required_files.allBlocksFiles = [list_of_required_files.allBlocksFiles; fullfile(files(i).folder, files(i).name)];
+                
+            end % isfield(data, 'raster_site_info')
+            
+        end % i = 1:length(files)
+        
+        % Check if it has common blocks with the same unit designations
+        % Loop through each session
+        sessions = fieldnames(sessionBlockInfo);
+        for s = 1:numel(sessions)
+            sessionID = sessions{s};
+            
+            uniqueBlocksLength = length(sessionBlockInfo.(sessionID).uniqueBlocks);
+            
+            % Get units with the maximum number of blocks
+            unitsWithMaxBlocks = getUnitsWithMaxBlocks(sessionBlockInfo.(sessionID).unitConventions, uniqueBlocksLength); % in old version uniqueBlocksLength was sessionBlockInfo.(sessionID).maxBlock
+            
+            % Check if units with max blocks have the same conventions
+            if areConventionsSame(sessionBlockInfo.(sessionID).unitConventions, unitsWithMaxBlocks, uniqueBlocksLength) % in old version uniqueBlocksLength was sessionBlockInfo.(sessionID).maxBlock
+                % Include files in commonBlocksFiles
+                for unitID = unitsWithMaxBlocks
+                    overlapFiles = getOverlapFiles(sessionID, unitID, files, sessionBlockInfo);
+                    list_of_required_files.overlapBlocksFiles = [list_of_required_files.overlapBlocksFiles; overlapFiles(:)];
+                end
             end
         end
-    end
-    
-    % Save the structure to a .mat file in the specified folder
-    nameOfFinalFile = ['sdndt_Sim_LIP_dPul_NDT_' dateOfRecording '_list_of_required_files.mat'];
-    save(fullfile(OUTPUT_PATH_list_of_required_files, nameOfFinalFile), 'list_of_required_files');
-    
-end
-end
+        
+        % Save the structure to a .mat file in the specified folder
+        nameOfFinalFile = ['sdndt_Sim_LIP_dPul_NDT_' dateOfRecording{day} '_list_of_required_files.mat'];
+        save(fullfile(OUTPUT_PATH_list_of_required_files, nameOfFinalFile), 'list_of_required_files');
+        
+        % Display message indicating session is done
+        fprintf('Session of %s is completed.\n', dateOfRecording{day});
+    end   % day
+end % strcmp(mode, 'merged_files_across_sessions')
+end % function
 
 % Helper function to extract session ID, unit ID, and block number from the file name
 function [sessionID, unitID, blockNumber] = extractFileInfo(fileName)
@@ -276,38 +339,81 @@ end
 % Helper function to check if units with max blocks have the same conventions
 function sameConventions = areConventionsSame(unitConventions, unitsWithMaxBlocks, maxBlock)
 sameConventions = true;
+
+disp(['Number of units with max blocks: ' num2str(numel(unitsWithMaxBlocks))]);
+% Debug statement to check the content of unitsWithMaxBlocks
+disp('Contents of unitsWithMaxBlocks:');
+disp(unitsWithMaxBlocks);
+
 if numel(unitsWithMaxBlocks) > 1
+    % Initialize the flag variable
+    continueLoop = true; %new
+    
     for p = 1:numel(unitsWithMaxBlocks)
         unitID = unitsWithMaxBlocks{p};
+
         
         % Extract the data from the cell array
         unitData = unitConventions.(unitID);
         
+        % Debug statement to print unitData for each unit
+    % Debug statement to print unitData for each unit
+    disp(['Unit data for ' unitID ':']);
+    disp(unitData);
+        
         % Filter non-empty cells and extract the letter parts
         letterParts = cellfun(@(x) extractLetterPart(x), unitData(~cellfun('isempty', unitData)), 'UniformOutput', false);
-        
+
+  % Debug statement to print letterParts for each unit
+    disp(['Letter parts for ' unitID ':']);
+    disp(letterParts);
+    
         % Count the number of non-empty cells
         nonEmptyCount = numel(letterParts);
+        
+        % Debug statement to check the value of nonEmptyCount
+    disp(['Non-empty count for unitID ' unitID ': ' num2str(nonEmptyCount)]);
+
         
         % Check if the count matches the maxBlock value
         if nonEmptyCount ~= maxBlock
             sameConventions = false;
-            break;
+            continueLoop = false;  % break;
         end
         
         % Check that the letter designations within a unit are the same
         if ~isequal(letterParts{:})
             sameConventions = false;
+            continueLoop = false; % break;
+        end
+        
+        % Check the flag variable to decide whether to continue the loop
+        if ~continueLoop
             break;
         end
-    end
-end
+
+        % Debugging output for letterParts
+        disp(['Inside loop - Iteration p = ' num2str(p)]);
+        disp(['unitID = ' unitID]);
+        disp(['letterParts = ']);
+        disp(letterParts);
+        
+               
+    end % p = 1:numel(unitsWithMaxBlocks)
+end % if numel(unitsWithMaxBlocks) > 1
 end
 
 % Helper function to extract the letter part
 function letterPart = extractLetterPart(str)
 % Extract only the letter part using regular expression
+disp(['Input to extractLetterPart: ' str]);
 letterPart = regexprep(str, '[^a-zA-Z]', '');
+disp(['Output from extractLetterPart: ' letterPart]);
+
+% Handle the case where the result is empty (e.g., if the input is numeric)
+if isempty(letterPart)
+    letterPart = '';  % Set it to an empty string or handle it according to your needs
+end
 end
 
 
@@ -325,7 +431,7 @@ for w = 1:length(files)
         numericUnitID = extractNumericUnitID(unitID);
         
         % Check if the numeric part of unitID matches fileUnitID
-        if strcmp(numericUnitID, fileUnitID) %&& fileBlockNumber <= sessionBlockInfo.(sessionID).maxBlock
+         if strcmp(numericUnitID, fileUnitID) % && fileBlockNumber <= sessionBlockInfo.(sessionID).maxBlock
             overlapFiles = [overlapFiles;  fullfile(files(w).folder, files(w).name)];
         end
     end
@@ -336,4 +442,5 @@ end
 function numericUnitID = extractNumericUnitID(unitID)
 % Extract numeric part using regular expression
 numericUnitID = regexprep(unitID, '\D', '');
+
 end

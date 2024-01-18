@@ -1,6 +1,8 @@
-function sdndt_Sim_LIP_dPul_NDT_plot_decoding_results(save_file_name)
+function sdndt_Sim_LIP_dPul_NDT_plot_decoding_results(injection, save_file_name)
 
-run('sdndt_Sim_LIP_dPul_NDT_settings');
+% Call the settings function with the chosen set
+[base_path, INPUT_PATH, OUTPUT_PATH_raster, OUTPUT_PATH_binned, settings] = sdndt_Sim_LIP_dPul_NDT_settings(injection);
+%run('sdndt_Sim_LIP_dPul_NDT_settings');
 
 load(save_file_name);
 

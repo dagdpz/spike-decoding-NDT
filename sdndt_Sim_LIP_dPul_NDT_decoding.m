@@ -1,15 +1,16 @@
-function sdndt_Sim_LIP_dPul_NDT_decoding(dateOfRecording, target_brain_structure, target_state, labels_to_use, listOfRequiredFiles)
+function sdndt_Sim_LIP_dPul_NDT_decoding(injection, dateOfRecording, target_brain_structure, target_state, labels_to_use, listOfRequiredFiles)
 % The code converts the received raster data into binned data and then performs decoding.
 
 % HOW TO CALL THE FUNCTION?
 % If we decode within a session:
-% sdndt_Sim_LIP_dPul_NDT_decoding('20211109', 'dPul_L', 4, 'instr_R_instr_L', 'firstBlockFiles');
-% sdndt_Sim_LIP_dPul_NDT_decoding('20211110', 'LIP_L', 6, 'instr_R_instr_L', 'overlapBlocksFiles');
+% sdndt_Sim_LIP_dPul_NDT_decoding('0', '20211109', 'dPul_L', 4, 'instr_R_instr_L', 'firstBlockFiles');
+% sdndt_Sim_LIP_dPul_NDT_decoding('0', '20211110', 'LIP_L', 6, 'instr_R_instr_L', 'overlapBlocksFiles');
 
 % If we decode across sessions:
 % sdndt_Sim_LIP_dPul_NDT_decoding('merged_files_across_sessions', 'dPul_L', 4, 'instr_R_instr_L', 'overlapBlocksFiles');
 
 % ADDITIONAL SETTINGS
+% injection: '0' - control, '1' - injection 
 % dateOfRecording - folder name
 % target_brain_structure = 'dPul_L', 'LIP_L', if both 'LIP_L_dPul_L'
 % target_state: 6 - cue on , 4 - target acquisition
@@ -23,8 +24,13 @@ function sdndt_Sim_LIP_dPul_NDT_decoding(dateOfRecording, target_brain_structure
 
 
 
+% Call the function to get the dates
+allDateOfRecording = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(injection);
 
-run('sdndt_Sim_LIP_dPul_NDT_settings');
+
+% Call the settings function with the chosen set
+[base_path, INPUT_PATH, OUTPUT_PATH_raster, OUTPUT_PATH_binned, settings] = sdndt_Sim_LIP_dPul_NDT_settings(injection);
+%run('sdndt_Sim_LIP_dPul_NDT_settings');
 %run('sdndt_Sim_LIP_dPul_NDT_make_raster');
 
 % if isequal(listOfRequiredFiles, 'overlapBlocksFilesAcrossSessions')
@@ -601,4 +607,4 @@ save(save_file_name, 'DECODING_RESULTS');
 
 
 % Plot decoding
-sdndt_Sim_LIP_dPul_NDT_plot_decoding_results(save_file_name);
+sdndt_Sim_LIP_dPul_NDT_plot_decoding_results(injection, save_file_name);

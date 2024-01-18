@@ -1,7 +1,19 @@
-% sdndt_Sim_LIP_dPul_NDT_settings
+function [base_path, INPUT_PATH, OUTPUT_PATH_raster, OUTPUT_PATH_binned, settings] = sdndt_Sim_LIP_dPul_NDT_settings(injection)
+% This code contains the variables needed to run all the basic codes (raster data creation, file list, decoding)
+% Will automatically run when the main codes are run
 
-base_path = 'C:/Projects/Sim_dPul_LIP/NDT/control/';
+
+% Determine the base_path based on the selected set
+    if strcmp(injection, '0')
+        base_path = 'C:/Projects/Sim_dPul_LIP/NDT/control/';
+    elseif strcmp(injection, '1')
+        base_path = 'C:/Projects/Sim_dPul_LIP/NDT/injection/';
+    else
+        error('Invalid selection. Use ''control'' or ''injection'' for selectedSet.');
+    end
+%base_path = 'C:/Projects/Sim_dPul_LIP/NDT/control/';
 %base_path = 'C:/Projects/Sim_dPul_LIP/NDT/injection/';
+
 
 % for creating raster_data
 INPUT_PATH = 'Y:/Projects/Simultaneous_dPul_PPC_recordings/ephys/';
@@ -42,5 +54,3 @@ settings.y_lim = [30 100];
 % the xline(500) function in the sdndt_Sim_LIP_dPul_NDT_plot_decoding_results.m code is used for this purpose
 
 settings.errorbar_type_to_plot = 1;
-
-
