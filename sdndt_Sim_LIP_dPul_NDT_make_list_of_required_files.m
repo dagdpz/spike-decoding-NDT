@@ -107,7 +107,7 @@ if strcmp(mode, 'merged_files_across_sessions')
     end
     
     % Create the variable list_of_required_files.overlapBlocksFilesAcrisSession
-    list_of_required_files.firstBlockFsiles = first_BlocksFiles;
+    list_of_required_files.firstBlockFiles = first_BlocksFiles;
     list_of_required_files.secondBlockFiles = second_BlocksFiles;
     list_of_required_files.thirdBlockFiles = third_BlocksFiles;
     list_of_required_files.fourthBlockFiles = fourth_BlocksFiles;
@@ -133,21 +133,11 @@ else % 'each_session_separately'
             mkdir(OUTPUT_PATH_list_of_required_files);
         end
         
-        %     dateOfRecording = mode;
-        %     OUTPUT_PATH_raster_dateOfRecording = [OUTPUT_PATH_raster dateOfRecording '/'];
-        %     OUTPUT_PATH_list_of_required_files = [OUTPUT_PATH_raster_dateOfRecording 'List_of_required_files/'];
-        %
-        %     % Create the folder for the list of required files
-        %     if ~exist(OUTPUT_PATH_list_of_required_files, 'dir')
-        %         mkdir(OUTPUT_PATH_list_of_required_files);
-        %     end
-        
-        
-        
         
         % Get a list of all .mat files in the directory
         files = dir(fullfile(OUTPUT_PATH_raster_dateOfRecording, '*.mat'));
         
+
         % Initialize lists for each category
         list_of_required_files.firstBlockFiles = {};
         list_of_required_files.secondBlockFiles = {};
@@ -161,9 +151,14 @@ else % 'each_session_separately'
         
         % Initialize a struct to store the maximum block value and conventions for each session
         sessionBlockInfo = struct();
+
+        % Call the function to get unique blocks for the day
+        uniqueBlocks = countUniqueBlocksForDay(OUTPUT_PATH_raster_dateOfRecording);
+        
         
         % Loop through each file
         for i = 1:length(files)
+            
             
             % Extract session ID and unit ID from the file name
             [sessionID, unitID, ~] = extractFileInfo(files(i).name);
@@ -177,6 +172,7 @@ else % 'each_session_separately'
                     isfield(data, 'raster_labels') && isfield(data.raster_labels, 'block') && ...
                     isfield(data.raster_site_info, 'unit_ID')
                 
+                
                 % Get the maximum and minimum block value, the unique block numbers for the session
                 if isfield(sessionBlockInfo, sessionID)
                     sessionBlockInfo.(sessionID).maxBlock = max(sessionBlockInfo.(sessionID).maxBlock, max(data.raster_labels.block{1}));
@@ -188,8 +184,9 @@ else % 'each_session_separately'
                     sessionBlockInfo.(sessionID).uniqueBlocks = unique(data.raster_labels.block{1});
                 end
                 
-                % Save the conventions for each unit
-                sessionBlockInfo.(sessionID).unitConventions.(unitID) = strsplit(data.raster_site_info.block_unit); % new! Was: strsplit(data.raster_site_info.block_unit, ' ');
+                
+                
+                
                 
                 % Check if it's the first block
                 if contains(files(i).name, 'block_1') &&  all(cellfun(@(x) all(x == 1), data.raster_labels.block))
@@ -222,29 +219,12 @@ else % 'each_session_separately'
                 list_of_required_files.allBlocksFiles = [list_of_required_files.allBlocksFiles; fullfile(files(i).folder, files(i).name)];
                 
             end % isfield(data, 'raster_site_info')
-            
         end % i = 1:length(files)
         
-        % Check if it has common blocks with the same unit designations
-        % Loop through each session
-        sessions = fieldnames(sessionBlockInfo);
-        for s = 1:numel(sessions)
-            sessionID = sessions{s};
-            
-            uniqueBlocksLength = length(sessionBlockInfo.(sessionID).uniqueBlocks);
-            
-            % Get units with the maximum number of blocks
-            unitsWithMaxBlocks = getUnitsWithMaxBlocks(sessionBlockInfo.(sessionID).unitConventions, uniqueBlocksLength); % in old version uniqueBlocksLength was sessionBlockInfo.(sessionID).maxBlock
-            
-            % Check if units with max blocks have the same conventions
-            if areConventionsSame(sessionBlockInfo.(sessionID).unitConventions, unitsWithMaxBlocks, uniqueBlocksLength) % in old version uniqueBlocksLength was sessionBlockInfo.(sessionID).maxBlock
-                % Include files in commonBlocksFiles
-                for unitID = unitsWithMaxBlocks
-                    overlapFiles = getOverlapFiles(sessionID, unitID, files, sessionBlockInfo);
-                    list_of_required_files.overlapBlocksFiles = [list_of_required_files.overlapBlocksFiles; overlapFiles(:)];
-                end
-            end
-        end
+        % Process the overlapBlocksFiles for the day
+        list_of_required_files.overlapBlocksFiles = processOverlapBlocksFiles(OUTPUT_PATH_raster_dateOfRecording, OUTPUT_PATH_list_of_required_files, uniqueBlocks);
+        
+        
         
         % Save the structure to a .mat file in the specified folder
         nameOfFinalFile = ['sdndt_Sim_LIP_dPul_NDT_' dateOfRecording{day} '_list_of_required_files.mat'];
@@ -252,195 +232,304 @@ else % 'each_session_separately'
         
         % Display message indicating session is done
         fprintf('Session of %s is completed.\n', dateOfRecording{day});
-    end   % day
+        
+    end % day = 1:length(dateOfRecording)
 end % strcmp(mode, 'merged_files_across_sessions')
-end % function
+end   % function sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files(injection, mode)
+
+
+
+
+
+
 
 % Helper function to extract session ID, unit ID, and block number from the file name
-function [sessionID, unitID, blockNumber] = extractFileInfo(fileName)
+function [sessionID, unitID, targetOfBrain, targetState, blockNumber] = extractFileInfo(fileName)
 parts = strsplit(fileName, '_');
 sessionID = strcat(parts{1}, '_', parts{2});
 unitID = parts{3};
-blockNumber = parts{8};
+targetOfBrain = strcat(parts{5}, '_', parts{6});
+targetState = parts{9};
+blockNumber = str2double(parts{11}(1:end-4));
 end
 
+function uniqueFileGroups = groupFilesByPrefix(files)
+uniqueFileGroups = struct('uniquePrefix', {}, 'files', {}, 'blocks', {});
 
-% Helper function to get units with the maximum number of blocks
-function unitsWithMaxBlocks = getUnitsWithMaxBlocks(unitConventions, maxBlock)
-unitsWithMaxBlocks = {};
-fieldNames = fieldnames(unitConventions);
-
-for idx = 1:numel(fieldNames)
-    unitID = fieldNames{idx};
+% Loop through each file
+for i = 1:length(files)
+    % Extract session ID, unit ID, targetOfBrain, targetState from the file name
+    [sessionID, unitID, targetOfBrain, targetState, blockNumber] = extractFileInfo(files(i).name);
+    prefix = strcat(sessionID, '_', unitID, '_', targetOfBrain, '_', targetState);
     
-    % Check the size of the unitConventions data for the current unit
-    unitData = unitConventions.(unitID);
+    % Check if the prefix already exists in uniqueFileGroups
+    groupIndex = find(strcmp({uniqueFileGroups.uniquePrefix}, prefix));
     
-    % Count the number of non-empty cells
-    nonEmptyCount = sum(~cellfun('isempty', unitData));
-    
-    % Check if the count matches the maxBlock value
-    if nonEmptyCount == maxBlock
-        unitsWithMaxBlocks = [unitsWithMaxBlocks, unitID];
+    % If the prefix is already in the list, add the file to the group
+    if ~isempty(groupIndex)
+        uniqueFileGroups(groupIndex).files = [uniqueFileGroups(groupIndex).files; files(i).name];
+        uniqueFileGroups(groupIndex).blocks = [uniqueFileGroups(groupIndex).blocks; blockNumber];
+    else
+        % If the prefix is not in the list, create a new entry
+        uniqueFileGroups(end + 1).uniquePrefix = prefix;
+        uniqueFileGroups(end).files = {files(i).name};
+        uniqueFileGroups(end).blocks = {blockNumber};
     end
 end
 end
 
 
-% Helper function to check if units with max blocks have the same conventions
-% function sameConventions = areConventionsSame(unitConventions, unitsWithMaxBlocks, maxBlock)
-%     sameConventions = true;
-%     if numel(unitsWithMaxBlocks) > 1
-%         for p = 1:numel(unitsWithMaxBlocks)
-%             unitID = unitsWithMaxBlocks{p};
-%
-%             % Extract the data from the cell array
-%             unitData = unitConventions.(unitID);
-%
-%             % Check if it's a cell array and has the expected number of elements
-%             if iscell(unitData) && numel(unitData) >= maxBlock
-%                 % Check that the letter designations within a unit are the same
-%                 if ~isequal(unitData{1:maxBlock})
-%                     sameConventions = false;
-%                     break;
-%                 end
-%             else
-%                 sameConventions = false;
-%                 break;
-%             end
-%         end
-%     end
-% end
+function uniqueBlocks = countUniqueBlocksForDay(OUTPUT_PATH_raster_dateOfRecording)
+% Get a list of all .mat files in the directory
+files = dir(fullfile(OUTPUT_PATH_raster_dateOfRecording, '*.mat'));
 
+uniqueBlocks = []; % Initialize a variable to store unique blocks
+maxIterations = length(files);  % Set a maximum number of iterations
 
-% Helper function to check if units with max blocks have the same conventions
-% function sameConventions = areConventionsSame(unitConventions, unitsWithMaxBlocks, maxBlock)
-%     sameConventions = true;
-%     if numel(unitsWithMaxBlocks) > 1
-%         for p = 1:numel(unitsWithMaxBlocks)
-%             unitID = unitsWithMaxBlocks{p};
-%
-%             % Extract the data from the cell array
-%             unitData = unitConventions.(unitID);
-%
-%             % Count the number of non-empty cells
-%             nonEmptyCount = sum(~cellfun('isempty', unitData));
-%
-%             % Check if the count matches the maxBlock value
-%             if nonEmptyCount ~= maxBlock
-%                 sameConventions = false;
-%                 break;
-%             end
-%         end
-%     end
-% end
-
-
-% Helper function to check if units with max blocks have the same conventions
-function sameConventions = areConventionsSame(unitConventions, unitsWithMaxBlocks, maxBlock)
-sameConventions = true;
-
-disp(['Number of units with max blocks: ' num2str(numel(unitsWithMaxBlocks))]);
-% Debug statement to check the content of unitsWithMaxBlocks
-disp('Contents of unitsWithMaxBlocks:');
-disp(unitsWithMaxBlocks);
-
-if numel(unitsWithMaxBlocks) > 1
-    % Initialize the flag variable
-    continueLoop = true; %new
+% Loop through each file
+for i = 1:length(files)
     
-    for p = 1:numel(unitsWithMaxBlocks)
-        unitID = unitsWithMaxBlocks{p};
-
+    % Load the data from the file
+    data = load(fullfile(OUTPUT_PATH_raster_dateOfRecording, files(i).name));
+   
+    % Check if the file contains information about the first block
+    if isfield(data, 'raster_site_info') && isfield(data.raster_site_info, 'block_unit') && ...
+            isfield(data, 'raster_labels') && isfield(data.raster_labels, 'block') && ...
+            isfield(data.raster_site_info, 'unit_ID')
         
-        % Extract the data from the cell array
-        unitData = unitConventions.(unitID);
-        
-        % Debug statement to print unitData for each unit
-    % Debug statement to print unitData for each unit
-    disp(['Unit data for ' unitID ':']);
-    disp(unitData);
-        
-        % Filter non-empty cells and extract the letter parts
-        letterParts = cellfun(@(x) extractLetterPart(x), unitData(~cellfun('isempty', unitData)), 'UniformOutput', false);
-
-  % Debug statement to print letterParts for each unit
-    disp(['Letter parts for ' unitID ':']);
-    disp(letterParts);
-    
-        % Count the number of non-empty cells
-        nonEmptyCount = numel(letterParts);
-        
-        % Debug statement to check the value of nonEmptyCount
-    disp(['Non-empty count for unitID ' unitID ': ' num2str(nonEmptyCount)]);
-
-        
-        % Check if the count matches the maxBlock value
-        if nonEmptyCount ~= maxBlock
-            sameConventions = false;
-            continueLoop = false;  % break;
-        end
-        
-        % Check that the letter designations within a unit are the same
-        if ~isequal(letterParts{:})
-            sameConventions = false;
-            continueLoop = false; % break;
-        end
-        
-        % Check the flag variable to decide whether to continue the loop
-        if ~continueLoop
-            break;
-        end
-
-        % Debugging output for letterParts
-        disp(['Inside loop - Iteration p = ' num2str(p)]);
-        disp(['unitID = ' unitID]);
-        disp(['letterParts = ']);
-        disp(letterParts);
-        
-               
-    end % p = 1:numel(unitsWithMaxBlocks)
-end % if numel(unitsWithMaxBlocks) > 1
-end
-
-% Helper function to extract the letter part
-function letterPart = extractLetterPart(str)
-% Extract only the letter part using regular expression
-disp(['Input to extractLetterPart: ' str]);
-letterPart = regexprep(str, '[^a-zA-Z]', '');
-disp(['Output from extractLetterPart: ' letterPart]);
-
-% Handle the case where the result is empty (e.g., if the input is numeric)
-if isempty(letterPart)
-    letterPart = '';  % Set it to an empty string or handle it according to your needs
-end
-end
-
-
-
-% Helper function to get common files for a session and unit
-function overlapFiles = getOverlapFiles(sessionID, unitID, files, sessionBlockInfo)
-overlapFiles = {};
-for w = 1:length(files)
-    [fileSessionID, fileUnitID, fileBlockNumber] = extractFileInfo(files(w).name);
-    
-    % Check if the session and unit match
-    if strcmp(sessionID, fileSessionID)
-        
-        % Extract the numeric part of unitID
-        numericUnitID = extractNumericUnitID(unitID);
-        
-        % Check if the numeric part of unitID matches fileUnitID
-         if strcmp(numericUnitID, fileUnitID) % && fileBlockNumber <= sessionBlockInfo.(sessionID).maxBlock
-            overlapFiles = [overlapFiles;  fullfile(files(w).folder, files(w).name)];
-        end
+        % Update the uniqueBlocks variable
+        uniqueBlocks = unique([uniqueBlocks, data.raster_labels.block{1}]);
+    else
+        % Handle the case where fields are missing (e.g., display a warning)
+        warning('Fields missing in file: %s', files(i).name);
+    end
+    % Break the loop if the maximum number of iterations is reached
+    if i >= maxIterations
+        warning('Maximum iterations reached. Exiting the loop.');
+        break;
     end
 end
 end
 
-% Helper function to extract the numeric part of unitID
-function numericUnitID = extractNumericUnitID(unitID)
-% Extract numeric part using regular expression
-numericUnitID = regexprep(unitID, '\D', '');
-
+function isValid = isGroupValidBlocks(fileGroup, uniqueBlocks)
+% Check if the group contains all unique block numbers
+isValid = length(fileGroup.files) == length(uniqueBlocks) && ...
+    all(cellfun(@(x) ismember(x, uniqueBlocks), fileGroup.blocks));
 end
+
+
+function overlapFiles  = processOverlapBlocksFiles(OUTPUT_PATH_raster_dateOfRecording, OUTPUT_PATH_list_of_required_files, uniqueBlocks)
+% Get a list of all .mat files in the directory
+files = dir(fullfile(OUTPUT_PATH_raster_dateOfRecording, '*.mat'));
+
+% Initialize lists for each category
+list_of_required_files.overlapBlocksFiles = {};
+
+% Group files based on common prefixes
+uniqueFileGroups = groupFilesByPrefix(files);
+
+%     % Call the function to get unique blocks for the day
+%     uniqueBlocks = countUniqueBlocksForDay(OUTPUT_PATH_raster_dateOfRecording);
+
+% Filter file groups based on valid block numbers
+validGroups = arrayfun(@(group) isGroupValidBlocks(group, uniqueBlocks), uniqueFileGroups);
+
+% Extract files from valid groups
+overlapFiles  = vertcat(uniqueFileGroups(validGroups).files);
+end
+
+% % Helper function to get units with the maximum number of blocks
+% function unitsWithMaxBlocks = getUnitsWithMaxBlocks(sessionID, sessionBlockInfo) % before: uniqueBlocksLength = maxBlock
+% unitsWithMaxBlocks = {};
+% % Check if the sessionID is present in sessionBlockInfo
+% if isfield(sessionBlockInfo, sessionID)
+%     uniqueBlocks = sessionBlockInfo.(sessionID).uniqueBlocks;
+%
+%
+%     % fieldNames = fieldnames(uniqueBlocks);
+%
+%     for idx = 1:numel(uniqueBlocks)
+%         unitID = uniqueBlocks{idx};
+%
+%         % Check the size of the unitConventions data for the current unit
+%         unitData = uniqueBlocks.(unitID);
+%
+%         %     % Count the number of non-empty cells
+%         %     nonEmptyCount = sum(~cellfun('isempty', unitData));
+%
+%         %     % Check if the count matches the maxBlock value
+%         %     if nonEmptyCount == maxBlock
+%         %         unitsWithMaxBlocks = [unitsWithMaxBlocks, unitID];
+%         %     end
+%
+%         %     % Check if the unit contains all the units specified in uniqueBlocksLength
+%         %     if numel(unitData) == uniqueBlocksLength && all(ismember(unitData, num2cell(1:uniqueBlocksLength)))
+%         %         unitsWithMaxBlocks = [unitsWithMaxBlocks, unitID];
+%         %     end
+%         % Check if the unit contains all the units specified in uniqueBlocksLength
+%         % Check if the units have the same conventions
+%         if areConventionsSame(sessionID, unitID, sessionBlockInfo)
+%             unitsWithMaxBlocks = [unitsWithMaxBlocks, unitID];
+%         end
+%     end
+% end
+% end
+%
+%
+% % Helper function to check if units with max blocks have the same conventions
+% % function sameConventions = areConventionsSame(unitConventions, unitsWithMaxBlocks, maxBlock)
+% %     sameConventions = true;
+% %     if numel(unitsWithMaxBlocks) > 1
+% %         for p = 1:numel(unitsWithMaxBlocks)
+% %             unitID = unitsWithMaxBlocks{p};
+% %
+% %             % Extract the data from the cell array
+% %             unitData = unitConventions.(unitID);
+% %
+% %             % Check if it's a cell array and has the expected number of elements
+% %             if iscell(unitData) && numel(unitData) >= maxBlock
+% %                 % Check that the letter designations within a unit are the same
+% %                 if ~isequal(unitData{1:maxBlock})
+% %                     sameConventions = false;
+% %                     break;
+% %                 end
+% %             else
+% %                 sameConventions = false;
+% %                 break;
+% %             end
+% %         end
+% %     end
+% % end
+%
+%
+% % Helper function to check if units with max blocks have the same conventions
+% % function sameConventions = areConventionsSame(unitConventions, unitsWithMaxBlocks, maxBlock)
+% %     sameConventions = true;
+% %     if numel(unitsWithMaxBlocks) > 1
+% %         for p = 1:numel(unitsWithMaxBlocks)
+% %             unitID = unitsWithMaxBlocks{p};
+% %
+% %             % Extract the data from the cell array
+% %             unitData = unitConventions.(unitID);
+% %
+% %             % Count the number of non-empty cells
+% %             nonEmptyCount = sum(~cellfun('isempty', unitData));
+% %
+% %             % Check if the count matches the maxBlock value
+% %             if nonEmptyCount ~= maxBlock
+% %                 sameConventions = false;
+% %                 break;
+% %             end
+% %         end
+% %     end
+% % end
+%
+%
+% % Helper function to check if units with max blocks have the same conventions
+% function sameConventions = areConventionsSame(unitConventions, unitsWithMaxBlocks, maxBlock)
+% sameConventions = true;
+%
+% disp(['Number of units with max blocks: ' num2str(numel(unitsWithMaxBlocks))]);
+% % Debug statement to check the content of unitsWithMaxBlocks
+% disp('Contents of unitsWithMaxBlocks:');
+% disp(unitsWithMaxBlocks);
+%
+% if numel(unitsWithMaxBlocks) > 1
+%     % Initialize the flag variable
+%     continueLoop = true; %new
+%
+%     for p = 1:numel(unitsWithMaxBlocks)
+%         unitID = unitsWithMaxBlocks{p};
+%
+%
+%         % Extract the data from the cell array
+%         unitData = unitConventions.(unitID);
+%
+%         % Debug statement to print unitData for each unit
+%     % Debug statement to print unitData for each unit
+%     disp(['Unit data for ' unitID ':']);
+%     disp(unitData);
+%
+%         % Filter non-empty cells and extract the letter parts
+%         letterParts = cellfun(@(x) extractLetterPart(x), unitData(~cellfun('isempty', unitData)), 'UniformOutput', false);
+%
+%   % Debug statement to print letterParts for each unit
+%     disp(['Letter parts for ' unitID ':']);
+%     disp(letterParts);
+%
+%         % Count the number of non-empty cells
+%         nonEmptyCount = numel(letterParts);
+%
+%         % Debug statement to check the value of nonEmptyCount
+%     disp(['Non-empty count for unitID ' unitID ': ' num2str(nonEmptyCount)]);
+%
+%
+%         % Check if the count matches the maxBlock value
+%         if nonEmptyCount ~= maxBlock
+%             sameConventions = false;
+%             continueLoop = false;  % break;
+%         end
+%
+%         % Check that the letter designations within a unit are the same
+%         if ~isequal(letterParts{:})
+%             sameConventions = false;
+%             continueLoop = false; % break;
+%         end
+%
+%         % Check the flag variable to decide whether to continue the loop
+%         if ~continueLoop
+%             break;
+%         end
+%
+%         % Debugging output for letterParts
+%         disp(['Inside loop - Iteration p = ' num2str(p)]);
+%         disp(['unitID = ' unitID]);
+%         disp(['letterParts = ']);
+%         disp(letterParts);
+%
+%
+%     end % p = 1:numel(unitsWithMaxBlocks)
+% end % if numel(unitsWithMaxBlocks) > 1
+% end
+%
+% % Helper function to extract the letter part
+% function letterPart = extractLetterPart(str)
+% % Extract only the letter part using regular expression
+% disp(['Input to extractLetterPart: ' str]);
+% letterPart = regexprep(str, '[^a-zA-Z]', '');
+% disp(['Output from extractLetterPart: ' letterPart]);
+%
+% % Handle the case where the result is empty (e.g., if the input is numeric)
+% if isempty(letterPart)
+%     letterPart = '';  % Set it to an empty string or handle it according to your needs
+% end
+% end
+%
+%
+%
+% % Helper function to get common files for a session and unit
+% function overlapFiles = getOverlapFiles(sessionID, unitID, files, sessionBlockInfo)
+% overlapFiles = {};
+% for w = 1:length(files)
+%     [fileSessionID, fileUnitID, fileBlockNumber] = extractFileInfo(files(w).name);
+%
+%     % Check if the session and unit match
+%     if strcmp(sessionID, fileSessionID)
+%
+%         % Extract the numeric part of unitID
+%         numericUnitID = extractNumericUnitID(unitID);
+%
+%         % Check if the numeric part of unitID matches fileUnitID
+%          if strcmp(numericUnitID, fileUnitID) % && fileBlockNumber <= sessionBlockInfo.(sessionID).maxBlock
+%             overlapFiles = [overlapFiles;  fullfile(files(w).folder, files(w).name)];
+%         end
+%     end
+% end
+% end
+%
+% % Helper function to extract the numeric part of unitID
+% function numericUnitID = extractNumericUnitID(unitID)
+% % Extract numeric part using regular expression
+% numericUnitID = regexprep(unitID, '\D', '');
+%
+% end
