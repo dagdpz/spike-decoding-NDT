@@ -48,7 +48,7 @@ settings.create_simultaneously_recorded_populations = 1; % flag, which specifies
 
 % plotting
 settings.time_lim = [0 1000]; % s, relative to cue onset
-settings.y_lim = [30 100];
+settings.y_lim = [20 100];
 
 % settings.significant_event_times = [0 500 1000]; % for plotting relevant trial events
 % the xline(500) function in the sdndt_Sim_LIP_dPul_NDT_plot_decoding_results.m code is used for this purpose

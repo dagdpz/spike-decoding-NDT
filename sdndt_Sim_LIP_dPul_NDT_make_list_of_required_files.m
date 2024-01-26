@@ -267,12 +267,12 @@ for i = 1:length(files)
     
     % If the prefix is already in the list, add the file to the group
     if ~isempty(groupIndex)
-        uniqueFileGroups(groupIndex).files = [uniqueFileGroups(groupIndex).files; files(i).name];
+        uniqueFileGroups(groupIndex).files = [uniqueFileGroups(groupIndex).files; [files(i).folder '\' files(i).name]];
         uniqueFileGroups(groupIndex).blocks = [uniqueFileGroups(groupIndex).blocks; blockNumber];
     else
         % If the prefix is not in the list, create a new entry
         uniqueFileGroups(end + 1).uniquePrefix = prefix;
-        uniqueFileGroups(end).files = {files(i).name};
+        uniqueFileGroups(end).files = {[files(i).folder '\' files(i).name]};
         uniqueFileGroups(end).blocks = {blockNumber};
     end
 end

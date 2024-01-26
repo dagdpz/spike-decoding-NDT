@@ -12,7 +12,7 @@ function sdndt_Sim_LIP_dPul_NDT_decoding(injection, dateOfRecording, target_brai
 % ADDITIONAL SETTINGS
 % injection: '0' - control, '1' - injection 
 % dateOfRecording - folder name
-% target_brain_structure = 'dPul_L', 'LIP_L', if both 'LIP_L_dPul_L'
+% target_brain_structure = 'dPul_L', 'LIP_L', 'LIP_R', if both 'LIP_L_dPul_L' (control) or 'LIP_L_LIP_R' (injection)
 % target_state: 6 - cue on , 4 - target acquisition
 % labels_to_use: 'instr_R_instr_L'            
 %                'choice_R_choice_L' 
@@ -20,6 +20,7 @@ function sdndt_Sim_LIP_dPul_NDT_decoding(injection, dateOfRecording, target_brai
 %                'instr_L_choice_L'
 % listOfRequiredFiles - variable name, which contains the list of necessary files for decoding:
 %                       'firstBlockFiles', 'secondBlockFiles', 'thirdBlockFiles',
+%                       'fourthBlockFiles', 'fifthBlockFiles', 'sixthBlockFiles',
 %                       'allBlocksFiles', 'overlapBlocksFiles',
 
 
@@ -40,6 +41,9 @@ if isequal(dateOfRecording, 'merged_files_across_sessions') && ...
         (isequal(listOfRequiredFiles, 'firstBlockFiles') || ...
         isequal(listOfRequiredFiles, 'secondBlockFiles') || ...
         isequal(listOfRequiredFiles, 'thirdBlockFiles') || ...
+        isequal(listOfRequiredFiles, 'fourthBlockFiles') || ...
+        isequal(listOfRequiredFiles, 'fifthBlockFiles') || ...
+        isequal(listOfRequiredFiles, 'sixthBlockFiles') || ...
         isequal(listOfRequiredFiles, 'overlapBlocksFiles')|| ...
         isequal(listOfRequiredFiles, 'allBlocksFiles'))
     partOfName = 'allSessionsBlocksFiles';
@@ -71,6 +75,12 @@ switch listOfRequiredFiles
         listOfRequiredFiles = list_of_required_files.secondBlockFiles;
     case 'thirdBlockFiles'
         listOfRequiredFiles = list_of_required_files.thirdBlockFiles;
+    case 'fourthBlockFiles'
+        listOfRequiredFiles = list_of_required_files.fourthBlockFiles;
+    case 'fifthBlockFiles'
+        listOfRequiredFiles = list_of_required_files.fifthBlockFiles;
+    case 'sixthBlockFiles'
+        listOfRequiredFiles = list_of_required_files.sixthBlockFiles;        
     case 'allBlocksFiles'
         listOfRequiredFiles = list_of_required_files.allBlocksFiles;
     case 'overlapBlocksFiles'
@@ -94,13 +104,22 @@ switch target_state
         % You might want to handle the case when target_state is neither 6 nor 4
 end
 
+
 switch target_brain_structure
     case 'dPul_L'
         target_brain_structure = 'dPul_L';
     case 'LIP_L'
         target_brain_structure = 'LIP_L';
+    case 'LIP_R'
+        target_brain_structure = 'LIP_R';
     otherwise
-        target_brain_structure = 'LIP_L_dPul_L';
+        if strcmp(injection, '0')
+            target_brain_structure = 'LIP_L_dPul_L';
+        elseif strcmp(injection, '1')
+            target_brain_structure = 'LIP_L_LIP_R';
+        else
+            error('Invalid injection parameter. Use ''0'' or ''1'' for injection.');
+        end
 end
 
 
@@ -111,7 +130,7 @@ end
 %         load(file_path);
 %     end
 
-all_target_brain_structure = {'dPul_L', 'LIP_L'};
+all_target_brain_structure = {'dPul_L', 'LIP_L', 'LIP_R'};
 
 switch target_brain_structure
     case 'dPul_L'
@@ -150,6 +169,12 @@ switch targetBlock
         targetBlockUsed = 'block_2';
     case 'block_3'
         targetBlockUsed = 'block_3';
+    case 'block_4'
+        targetBlockUsed = 'block_4';
+    case 'block_5'
+        targetBlockUsed = 'block_5';
+    case 'block_6'
+        targetBlockUsed = 'block_6';
     otherwise
         blocks = strsplit(targetBlock, ' '); % Split the targetBlock string into individual blocks
         for i = 1:numel(blocks)
@@ -159,7 +184,7 @@ switch targetBlock
 end
 
 
-all_targetBlock = {'block_1', 'block_2', 'block_3'};
+all_targetBlock = {'block_1', 'block_2', 'block_3', 'block_4', 'block_5', 'block_6'};
 
 switch targetBlock
     case 'block_1'
@@ -168,6 +193,12 @@ switch targetBlock
         targetBlockUsed_among_raster_data = 'block_2';
     case 'block_3'
         targetBlockUsed_among_raster_data = 'block_3';
+    case 'block_4'
+        targetBlockUsed_among_raster_data = 'block_4';
+    case 'block_5'
+        targetBlockUsed_among_raster_data = 'block_5';
+    case 'block_6'
+        targetBlockUsed_among_raster_data = 'block_6';
     otherwise
         if isfield(list_of_required_files, 'allBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles)
             targetBlockUsed_among_raster_data = [];
@@ -192,11 +223,21 @@ elseif isfield(list_of_required_files, 'secondBlockFiles') && isequal(listOfRequ
 elseif isfield(list_of_required_files, 'thirdBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.thirdBlockFiles) && ...
         isequal(dateOfRecording, 'merged_files_across_sessions')
     block_grouping_folder = 'thirdBlockFilesAcrossSessions/';
+elseif isfield(list_of_required_files, 'fourthBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.fourthBlockFiles) && ...
+        isequal(dateOfRecording, 'merged_files_across_sessions')
+    block_grouping_folder = 'fourthBlockFilesAcrossSessions/';
+elseif isfield(list_of_required_files, 'fifthBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.fifthBlockFiles) && ...
+        isequal(dateOfRecording, 'merged_files_across_sessions')
+    block_grouping_folder = 'fifthBlockFilesAcrossSessions/';
+elseif isfield(list_of_required_files, 'sixthBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.sixthBlockFiles) && ...
+        isequal(dateOfRecording, 'merged_files_across_sessions')
+    block_grouping_folder = 'sixthBlockFilesAcrossSessions/';
+    
 elseif isfield(list_of_required_files, 'overlapBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles) && ...
-        ~isequal(dateOfRecording, 'merged_files_across_sessions')
+        ~isequal(dateOfRecording, allDateOfRecording)
     block_grouping_folder = 'Overlap_blocks/';
 elseif isfield(list_of_required_files, 'allBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles) && ...
-        ~isequal(dateOfRecording, 'merged_files_across_sessions')
+        ~isequal(dateOfRecording, allDateOfRecording)
     block_grouping_folder = 'All_blocks/';
 else
     block_grouping_folder = '';
@@ -224,7 +265,7 @@ end
 
 % If we are interested in allBlocksFiles, we create a folder where we will put all the files from this category
 if isfield(list_of_required_files, 'allBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles) && ...
-        ~isequal(dateOfRecording, 'merged_files_across_sessions')
+        ~isequal(dateOfRecording, allDateOfRecording)
     
     folderForCopyingAllBlocksFiles = [OUTPUT_PATH_raster dateOfRecording '/All_blocks/'];
     % Create the destination folder if it doesn't exist
@@ -258,7 +299,7 @@ if isfield(list_of_required_files, 'overlapBlocksFiles') && isequal(listOfRequir
     end
 end
 
-% If we are interested in overlapBlocksFilesAcrossSessions, we create a folder where we will put all the files from this category
+% If we are interested in allBlocksFilesAcrossSessions, we create a folder where we will put all the files from this category
 if isfield(list_of_required_files, 'allBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles) && ...
         isequal(dateOfRecording, 'merged_files_across_sessions')
     
@@ -330,8 +371,59 @@ if isfield(list_of_required_files, 'thirdBlockFiles') && isequal(listOfRequiredF
     end
 end
 
+% If we are interested in fourthBlockFilesAcrossSessions, we create a folder where we will put all the files from this category
+if isfield(list_of_required_files, 'fourthBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.fourthBlockFiles) && ...
+    isequal(dateOfRecording, 'merged_files_across_sessions')
+    
+    folderForCopyingfourthBlockFilesAcrossSessions = [OUTPUT_PATH_raster dateOfRecording '/fourthBlockFilesAcrossSessions/'];
+    % Create the destination folder if it doesn't exist
+    if ~exist(folderForCopyingfourthBlockFilesAcrossSessions, 'dir')
+        mkdir(folderForCopyingfourthBlockFilesAcrossSessions);
+    end
+    
+    for h = 1:numel(listOfRequiredFiles)
+        currentFilePath = listOfRequiredFiles{h}; % Get the current file path
+        [~, currentFileName, currentFileExt] = fileparts(currentFilePath); % Generate the destination path by replacing the initial part of the path
+        destinationPath = fullfile(folderForCopyingfourthBlockFilesAcrossSessions, [currentFileName currentFileExt]);
+        copyfile(currentFilePath, destinationPath); % Copy the file to the destination folder
+    end
+end
 
+% If we are interested in fifthBlockFilesAcrossSessions, we create a folder where we will put all the files from this category
+if isfield(list_of_required_files, 'fifthBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.fifthBlockFiles) && ...
+    isequal(dateOfRecording, 'merged_files_across_sessions')
+    
+    folderForCopyingfifthBlockFilesAcrossSessions = [OUTPUT_PATH_raster dateOfRecording '/fifthBlockFilesAcrossSessions/'];
+    % Create the destination folder if it doesn't exist
+    if ~exist(folderForCopyingfifthBlockFilesAcrossSessions, 'dir')
+        mkdir(folderForCopyingfifthBlockFilesAcrossSessions);
+    end
+    
+    for h = 1:numel(listOfRequiredFiles)
+        currentFilePath = listOfRequiredFiles{h}; % Get the current file path
+        [~, currentFileName, currentFileExt] = fileparts(currentFilePath); % Generate the destination path by replacing the initial part of the path
+        destinationPath = fullfile(folderForCopyingfifthBlockFilesAcrossSessions, [currentFileName currentFileExt]);
+        copyfile(currentFilePath, destinationPath); % Copy the file to the destination folder
+    end
+end
 
+% If we are interested in sixthBlockFilesAcrossSessions, we create a folder where we will put all the files from this category
+if isfield(list_of_required_files, 'sixthBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.sixthBlockFiles) && ...
+    isequal(dateOfRecording, 'merged_files_across_sessions')
+    
+    folderForCopyingsixthBlockFilesAcrossSessions = [OUTPUT_PATH_raster dateOfRecording '/sixthBlockFilesAcrossSessions/'];
+    % Create the destination folder if it doesn't exist
+    if ~exist(folderForCopyingsixthBlockFilesAcrossSessions, 'dir')
+        mkdir(folderForCopyingsixthBlockFilesAcrossSessions);
+    end
+    
+    for h = 1:numel(listOfRequiredFiles)
+        currentFilePath = listOfRequiredFiles{h}; % Get the current file path
+        [~, currentFileName, currentFileExt] = fileparts(currentFilePath); % Generate the destination path by replacing the initial part of the path
+        destinationPath = fullfile(folderForCopyingsixthBlockFilesAcrossSessions, [currentFileName currentFileExt]);
+        copyfile(currentFilePath, destinationPath); % Copy the file to the destination folder
+    end
+end
 
 %% Combining blocks, creating a metablock if 'commonBlocksFiles'
 
@@ -347,7 +439,8 @@ end
 % Assuming list_of_required_files.commonBlocksFiles is already defined
 
 % Extract unique prefixes from the filenames
-if isfield(list_of_required_files, 'overlapBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles)   % if isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles)
+if isfield(list_of_required_files, 'overlapBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles)&& ...
+        ismember(dateOfRecording, allDateOfRecording)   % if isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles)
     
     unique_prefixes = {};
     for idx = 1:length(list_of_required_files.overlapBlocksFiles)
@@ -539,7 +632,10 @@ if isequal(dateOfRecording, 'merged_files_across_sessions')&& ...
         isfield(list_of_required_files, 'firstBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.firstBlockFiles) || ...
         isfield(list_of_required_files, 'secondBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.secondBlockFiles) || ...
         isfield(list_of_required_files, 'thirdBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.thirdBlockFiles) || ...
-        isfield(list_of_required_files, 'allBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles)
+       isfield(list_of_required_files, 'fourthBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.fourthBlockFiles) || ...
+        isfield(list_of_required_files, 'fifthBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.fifthBlockFiles) || ...
+        isfield(list_of_required_files, 'sixthBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.sixthBlockFiles) || ...
+    isfield(list_of_required_files, 'allBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles)
     settings.create_simultaneously_recorded_populations = 0; % data are not recorded simultaneously
 end
 
