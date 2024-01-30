@@ -1,7 +1,9 @@
-% Assuming population is your data structure
+% To run the code, it is necessary to load the population file
+
+%% Ammount of particular blocks 
+% checking that the number of units in the final picture after decoding is correctly counted for different targets (e.g. LIP_L and LIP_R)
 
 numPopulations = length(population);% Calculate the total number of populations
-
 uniqueUnitsCell = cell(numPopulations, 1); % Initialize a cell array to store unique units for each population
 
 % Loop through each population and count unique units for each trial
@@ -35,3 +37,20 @@ ammount_of_block_3 = sum(uniqueUnitsMatrix == 3, 'all');
 ammount_of_block_4 = sum(uniqueUnitsMatrix == 4, 'all');
 ammount_of_block_5 = sum(uniqueUnitsMatrix == 5, 'all');
 ammount_of_block_6 = sum(uniqueUnitsMatrix == 6, 'all');
+
+
+%% Number of Trials (for choice and instracted) 
+idx_block_1 = find([population(1).trial.block]==1); % indices for trial 1, block 3
+num_of_success_trials_block_1 = sum([population(1).trial(idx_block_1).success])
+num_of_choice_trials_block_1 = sum([population(1).trial(idx_block_1).success] == 1 & [population(1).trial(idx_block_1).choice] == 1)
+num_of_instr_trials_block_1 = sum([population(1).trial(idx_block_1).success] == 1 & [population(1).trial(idx_block_1).choice] == 0)
+
+idx_block_3 = find([population(1).trial.block]==3); % indices for trial 1, block 3
+num_of_success_trials_block_3 = sum([population(1).trial(idx_block_3).success])
+num_of_choice_trials_block_3 = sum([population(1).trial(idx_block_3).success] == 1 & [population(1).trial(idx_block_3).choice] == 1)
+num_of_instr_trials_block_3 = sum([population(1).trial(idx_block_3).success] == 1 & [population(1).trial(idx_block_3).choice] == 0)
+
+idx_block_4 = find([population(1).trial.block]==4); % indices for trial 1, block 4
+num_of_success_trials_block_4 = sum([population(1).trial(idx_block_4).success])
+num_of_choice_trials_block_4 = sum([population(1).trial(idx_block_4).success] == 1 & [population(1).trial(idx_block_4).choice] == 1)
+num_of_instr_trials_block_4 = sum([population(1).trial(idx_block_4).success] == 1 & [population(1).trial(idx_block_4).choice] == 0)
