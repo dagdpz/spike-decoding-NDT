@@ -60,3 +60,12 @@ picture:
 
 # sdndt_Sim_LIP_dPul_NDT_plot_decoding_results.m                   
 The function contains additional settings for plotting decoding results.                    
+
+
+# sdndt_Sim_LIP_dPul_check_number_of_blocks_in_population_file.m
+1) help to find unique block numbers for each unit, 
+2) calculate the number of certain blocks (number of blocks 1, number of blocks 2, number of blocks 3, etc.). 
+
+Input:                                                                                                                                                                                                         
+mat-file: 
+- like population_Linus_20211109.mat, which contains variable population
