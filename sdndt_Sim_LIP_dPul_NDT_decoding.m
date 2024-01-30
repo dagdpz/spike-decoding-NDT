@@ -439,8 +439,8 @@ end
 % Assuming list_of_required_files.commonBlocksFiles is already defined
 
 % Extract unique prefixes from the filenames
-if isfield(list_of_required_files, 'overlapBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles)&& ...
-        ismember(dateOfRecording, allDateOfRecording)   % if isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles)
+if isfield(list_of_required_files, 'overlapBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles) % && ...
+        %ismember(dateOfRecording, allDateOfRecording)   % if isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles)
     
     unique_prefixes = {};
     for idx = 1:length(list_of_required_files.overlapBlocksFiles)

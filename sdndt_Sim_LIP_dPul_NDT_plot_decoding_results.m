@@ -74,7 +74,8 @@ block_info = regexp(save_file_name, 'block_\d+', 'match');
 
 
 % Number of units
-numOfUnits = size(DECODING_RESULTS.DS_PARAMETERS.sites_to_use, 2);
+numOfUnits = size(binned_site_info.unit_ID, 2);
+% numOfUnits = size(DECODING_RESULTS.DS_PARAMETERS.sites_to_use, 2);
 
 
 
@@ -123,7 +124,7 @@ numOfTrials = sum(label_counts);
 
 
 
-% search Number of trials
+% search target_brain_structure from the file name
 path_parts = strsplit(save_file_name, '_'); % Split the file path
 required_parts =  path_parts(10:end-9);
 index_containing_O = find(cellfun(@(x) any(contains(x, 'O')), required_parts), 1); % Find a cell that contains an "O": 
@@ -154,6 +155,7 @@ end
 %     end
 % end
 % load(matching_files{1});
+
 
 
 %numOfUnits_and_numOfTrials_info = ['Num of Units: ' numOfUnits, 'Num of Trials: ' numOfTrials];
