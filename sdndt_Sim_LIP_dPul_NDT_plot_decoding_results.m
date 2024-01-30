@@ -77,6 +77,8 @@ block_info = regexp(save_file_name, 'block_\d+', 'match');
 numOfUnits = size(binned_site_info.unit_ID, 2);
 % numOfUnits = size(DECODING_RESULTS.DS_PARAMETERS.sites_to_use, 2);
 
+% need to use actual variable from DECODING_RESULTS
+
 
 
 
