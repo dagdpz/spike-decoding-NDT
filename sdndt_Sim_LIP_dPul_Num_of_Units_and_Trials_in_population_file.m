@@ -1,5 +1,5 @@
-function sdndt_Sim_LIP_dPul_check_number_of_blocks_in_population_file(injection, dateOfRecording)
-% sdndt_Sim_LIP_dPul_check_number_of_blocks_in_population_file('1', '20210520');
+function sdndt_Sim_LIP_dPul_check_number_of_Units_Trials_in_population_file(injection, dateOfRecording)
+% sdndt_Sim_LIP_dPul_Num_of_Units_and_Trials_in_population_file('1', '20210520');
 
 %% call additional functions
 
@@ -40,7 +40,7 @@ load(input_population_file);
 
 
 
-%% Ammount of particular blocks
+%% Ammount of Units
 % checking that the number of units in the final picture after decoding is correctly counted for different targets (e.g. LIP_L and LIP_R)
 
 numPopulations = length(population);% Calculate the total number of populations
@@ -71,12 +71,12 @@ for n = 1:numPopulations
 end
 
 
-ammount_of_blocks.block_1 = sum(matrixUniqueBlocksForEachUnit == 1, 'all'); % number of units that contain block 1
-ammount_of_blocks.block_2 = sum(matrixUniqueBlocksForEachUnit == 2, 'all'); % number of units that contain block 2
-ammount_of_blocks.block_3 = sum(matrixUniqueBlocksForEachUnit == 3, 'all'); % number of units that contain block 3
-ammount_of_blocks.block_4 = sum(matrixUniqueBlocksForEachUnit == 4, 'all');
-ammount_of_blocks.block_5 = sum(matrixUniqueBlocksForEachUnit == 5, 'all');
-ammount_of_blocks.block_6 = sum(matrixUniqueBlocksForEachUnit == 6, 'all');
+ammount_of_units.block_1 = sum(matrixUniqueBlocksForEachUnit == 1, 'all'); % number of units that contain block 1
+ammount_of_units.block_2 = sum(matrixUniqueBlocksForEachUnit == 2, 'all'); % number of units that contain block 2
+ammount_of_units.block_3 = sum(matrixUniqueBlocksForEachUnit == 3, 'all'); % number of units that contain block 3
+ammount_of_units.block_4 = sum(matrixUniqueBlocksForEachUnit == 4, 'all');
+ammount_of_units.block_5 = sum(matrixUniqueBlocksForEachUnit == 5, 'all');
+ammount_of_units.block_6 = sum(matrixUniqueBlocksForEachUnit == 6, 'all');
 
 
 %% Number of Trials (for choice and instracted)
