@@ -64,7 +64,9 @@ The function contains additional settings for plotting decoding results.
 
 # sdndt_Sim_LIP_dPul_check_number_of_blocks_in_population_file.m
 1) help to find unique block numbers for each unit, 
-2) calculate the number of certain blocks (number of blocks 1, number of blocks 2, number of blocks 3, etc.). 
+2) calculate the number of certain blocks (number of blocks 1, number of blocks 2, number of blocks 3, etc.),
+3) finds the number of successful trials for a particular block, 
+4) finds the number of choice and instructed among successful trials for a certain block.
 
 Input:                                                                                                                                                                                                         
 mat-file: 
