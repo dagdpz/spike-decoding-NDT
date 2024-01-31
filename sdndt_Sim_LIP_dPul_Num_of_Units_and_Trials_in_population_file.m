@@ -40,7 +40,7 @@ load(input_population_file);
 
 
 
-%% Ammount of Units
+%% Number of Units and Trials 
 % checking that the number of units in the final picture after decoding is correctly counted for different targets (e.g. LIP_L and LIP_R)
 
 numPopulations = length(population);% Calculate the total number of populations
@@ -58,65 +58,40 @@ for n = 1:numPopulations
     
     % Combine unique units across all trials for the current population
     uniqueUnitsCell{n} = unique([uniqueUnitsForPopulation{:}]);
+end
+
+% Initialize variables for each unique block
+uniqueBlocks = unique([uniqueUnitsCell{:}]);
+
+for blockNum = uniqueBlocks
+    blockStr = ['block_' num2str(blockNum)];
     
-     % Combine unique units across all trials for the current population
-    uniqueUnitsCell{n} = unique([uniqueUnitsForPopulation{:}]);
-end
+    % Initialize variables for ammount_of_units and success_trials
+    ammount_of_units.(blockStr) = 0;
+    num_of_success_trials.(blockStr) = 0;
+    num_of_choice_trials.(blockStr) = 0;
+    num_of_instr_trials.(blockStr) = 0;
+    
+    for unitNum = 1:numPopulations
+        % Check the trials within the current population for the specified block
+        blockTrials = [population(unitNum).trial.block] == blockNum;
+        
+        % Increment variables based on the presence of blockNum in trials
+        ammount_of_units.(blockStr) = ammount_of_units.(blockStr) + sum(ismember(uniqueUnitsCell{unitNum}, blockNum));
 
-maxUniqueUnits = max(cellfun(@length, uniqueUnitsCell)); % Find the maximum number of unique units across all populations
-matrixUniqueBlocksForEachUnit = zeros(numPopulations, maxUniqueUnits); % Initialize a matrix to store unique units for each population
+    end
+    
+        % ONLY IF DATA WAS RECORDED SIMULTENEOUSLY !
+        % otherwise it's impossible to sum up only for the first trial 
+        % Increment variables based on the presence of blockNum in trials for success, choice, and instructed
+        num_of_success_trials.(blockStr) = sum([population(1).trial.block] == blockNum & [population(1).trial.success]);
+        num_of_choice_trials.(blockStr) = sum([population(1).trial.block] == blockNum & [population(1).trial.success] == 1 & [population(1).trial.choice] == 1);
+        num_of_instr_trials.(blockStr) = sum([population(1).trial.block] == blockNum & [population(1).trial.success] == 1 & [population(1).trial.choice] == 0);
+  end
 
-% Fill the matrix with unique units for each population
-for n = 1:numPopulations
-    uniqueUnitsForPopulation = uniqueUnitsCell{n};
-    [~, colIndices] = ismember(uniqueUnitsForPopulation, uniqueUnitsForPopulation); % Assign column indices for each unique unit
-    matrixUniqueBlocksForEachUnit(n, colIndices) = uniqueUnitsForPopulation; % Fill the matrix with unique units for the current population
-end
-
-
-ammount_of_units.block_1 = sum(matrixUniqueBlocksForEachUnit == 1, 'all'); % number of units that contain block 1
-ammount_of_units.block_2 = sum(matrixUniqueBlocksForEachUnit == 2, 'all'); % number of units that contain block 2
-ammount_of_units.block_3 = sum(matrixUniqueBlocksForEachUnit == 3, 'all'); % number of units that contain block 3
-ammount_of_units.block_4 = sum(matrixUniqueBlocksForEachUnit == 4, 'all');
-ammount_of_units.block_5 = sum(matrixUniqueBlocksForEachUnit == 5, 'all');
-ammount_of_units.block_6 = sum(matrixUniqueBlocksForEachUnit == 6, 'all');
-
-
-%% Number of Trials (for choice and instracted)
-% Excluding sides: right and left
-% can only be checked for the first trial for data recorded simultaneously (!)
-% If the data are not recorded at the simultaneously, check for the other triels as well
-
-idx_block_1 = find([population(1).trial.block]==1); % indices for trial 1, block 1
-num_of_success_trials.block_1 = sum([population(1).trial(idx_block_1).success]); % including instr and choice
-num_of_choice_trials.block_1 = sum([population(1).trial(idx_block_1).success] == 1 & [population(1).trial(idx_block_1).choice] == 1);
-num_of_instr_trials.block_1 = sum([population(1).trial(idx_block_1).success] == 1 & [population(1).trial(idx_block_1).choice] == 0);
-
-idx_block_2 = find([population(1).trial.block]==2); % indices for trial 1, block 2
-num_of_success_trials.block_2 = sum([population(1).trial(idx_block_2).success]); % including instr and choice
-num_of_choice_trials.block_2 = sum([population(1).trial(idx_block_2).success] == 1 & [population(1).trial(idx_block_2).choice] == 1);
-num_of_instr_trials.block_2 = sum([population(1).trial(idx_block_2).success] == 1 & [population(1).trial(idx_block_2).choice] == 0);
-
-idx_block_3 = find([population(1).trial.block]==3); % indices for trial 1, block 3
-num_of_success_trials.block_3 = sum([population(1).trial(idx_block_3).success]); % including instr and choice
-num_of_choice_trials.block_3 = sum([population(1).trial(idx_block_3).success] == 1 & [population(1).trial(idx_block_3).choice] == 1);
-num_of_instr_trials.block_3 = sum([population(1).trial(idx_block_3).success] == 1 & [population(1).trial(idx_block_3).choice] == 0);
-
-idx_block_4 = find([population(1).trial.block]==4); % indices for trial 1, block 4
-num_of_success_trials.block_4 = sum([population(1).trial(idx_block_4).success]); % including instr and choice
-num_of_choice_trials.block_4 = sum([population(1).trial(idx_block_4).success] == 1 & [population(1).trial(idx_block_4).choice] == 1);
-num_of_instr_trials.block_4 = sum([population(1).trial(idx_block_4).success] == 1 & [population(1).trial(idx_block_4).choice] == 0);
-
-idx_block_5 = find([population(1).trial.block]==5); % indices for trial 1, block 5
-num_of_success_trials.block_5 = sum([population(1).trial(idx_block_5).success]); % including instr and choice
-num_of_choice_trials.block_5 = sum([population(1).trial(idx_block_5).success] == 1 & [population(1).trial(idx_block_5).choice] == 1);
-num_of_instr_trials.block_5 = sum([population(1).trial(idx_block_5).success] == 1 & [population(1).trial(idx_block_5).choice] == 0);
-
-idx_block_6 = find([population(1).trial.block]==6); % indices for trial 1, block 6
-num_of_success_trials.block_6 = sum([population(1).trial(idx_block_6).success]); % including instr and choice
-num_of_choice_trials.block_6 = sum([population(1).trial(idx_block_6).success] == 1 & [population(1).trial(idx_block_6).choice] == 1);
-num_of_instr_trials.block_6 = sum([population(1).trial(idx_block_6).success] == 1 & [population(1).trial(idx_block_6).choice] == 0);
-
+    
+    
+%% Display
 uniqueTargets = unique({population.target}); % Extract unique targets from the entire population
 uniqueTargetsStr = ['(' strjoin(uniqueTargets, ', ') ')']; % Create a string of unique targets in round brackets
 parts = strsplit(population(1).unit_ID, '_');
@@ -124,10 +99,10 @@ nameOfSession = strcat(parts{1}, '_', parts{2});
 disp(['Number of Units for both targets ' uniqueTargetsStr ':']);
 disp(nameOfSession);
 % Display the number of units for each block
-for blockNum = 1:length(fieldnames(ammount_of_units))
+for blockNum = uniqueBlocks
     field = ['block_' num2str(blockNum)];
     if isfield(ammount_of_units, field)
-        disp([num2str(ammount_of_units.(field)) ' units from ' num2str(numPopulations) ' contain block_' num2str(blockNum)]);
+        disp([num2str(ammount_of_units.(field)) ' units from ' num2str(numPopulations) ' contain ' field]);
     end
 end
 
