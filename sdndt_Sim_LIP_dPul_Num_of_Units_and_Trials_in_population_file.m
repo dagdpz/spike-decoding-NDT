@@ -119,7 +119,7 @@ parts = strsplit(population(1).unit_ID, '_');
 nameOfSession = strcat(parts{1}, '_', parts{2});
 disp('Amount of Blocks for Session:');
 disp(nameOfSession);
-disp(ammount_of_blocks);
+disp(ammount_of_units);
 
 disp('Number of Success Trials:');
 disp(num_of_success_trials);
