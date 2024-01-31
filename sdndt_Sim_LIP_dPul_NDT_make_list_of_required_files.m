@@ -221,9 +221,15 @@ else % 'each_session_separately'
             end % isfield(data, 'raster_site_info')
         end % i = 1:length(files)
         
-        % Process the overlapBlocksFiles for the day
-        list_of_required_files.overlapBlocksFiles = processOverlapBlocksFiles(OUTPUT_PATH_raster_dateOfRecording, OUTPUT_PATH_list_of_required_files, uniqueBlocks);
-        
+        switch injection
+            case '0'
+                % Process the overlapBlocksFiles for the day
+                list_of_required_files.overlapBlocksFiles = processOverlapBlocksFiles(OUTPUT_PATH_raster_dateOfRecording, OUTPUT_PATH_list_of_required_files, uniqueBlocks);
+                list_of_required_files.overlapBlocksFilesInjection = {};
+            case '1'
+                list_of_required_files.overlapBlocksFiles = {};
+                list_of_required_files.overlapBlocksFilesInjection = processSpecificOverlapBlocksFiles(OUTPUT_PATH_raster_dateOfRecording, OUTPUT_PATH_list_of_required_files);
+        end
         
         
         % Save the structure to a .mat file in the specified folder
@@ -318,6 +324,7 @@ isValid = length(fileGroup.files) == length(uniqueBlocks) && ...
 end
 
 
+
 function overlapFiles  = processOverlapBlocksFiles(OUTPUT_PATH_raster_dateOfRecording, OUTPUT_PATH_list_of_required_files, uniqueBlocks)
 % Get a list of all .mat files in the directory
 files = dir(fullfile(OUTPUT_PATH_raster_dateOfRecording, '*.mat'));
@@ -336,6 +343,35 @@ validGroups = arrayfun(@(group) isGroupValidBlocks(group, uniqueBlocks), uniqueF
 
 % Extract files from valid groups
 overlapFiles  = vertcat(uniqueFileGroups(validGroups).files);
+end
+
+
+
+
+
+
+
+function specificOverlapFiles = processSpecificOverlapBlocksFiles(OUTPUT_PATH_raster_dateOfRecording, OUTPUT_PATH_list_of_required_files)
+    % Get a list of all .mat files in the directory
+    files = dir(fullfile(OUTPUT_PATH_raster_dateOfRecording, '*.mat'));
+
+    % Initialize lists for each category
+    specificOverlapFiles = {};
+
+    % Group files based on common prefixes
+    uniqueFileGroups = groupFilesByPrefix(files);
+
+    % Filter file groups based on valid block numbers (3, 4, 5, 6)
+    validGroups = arrayfun(@(group) isSpecificBlockValid(group, [3, 4, 5, 6]), uniqueFileGroups);
+
+    % Extract files from valid groups
+    specificOverlapFiles = vertcat(uniqueFileGroups(validGroups).files);
+end
+
+function isValid = isSpecificBlockValid(fileGroup, validBlocks)
+    % Check if the group contains all valid block numbers
+    isValid = length(fileGroup.files) == length(validBlocks) && ...
+        all(cellfun(@(x) ismember(x, validBlocks), fileGroup.blocks));
 end
 
 % % Helper function to get units with the maximum number of blocks

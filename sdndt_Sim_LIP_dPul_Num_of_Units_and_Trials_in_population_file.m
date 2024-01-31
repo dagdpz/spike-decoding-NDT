@@ -58,6 +58,9 @@ for n = 1:numPopulations
     
     % Combine unique units across all trials for the current population
     uniqueUnitsCell{n} = unique([uniqueUnitsForPopulation{:}]);
+    
+     % Combine unique units across all trials for the current population
+    uniqueUnitsCell{n} = unique([uniqueUnitsForPopulation{:}]);
 end
 
 maxUniqueUnits = max(cellfun(@length, uniqueUnitsCell)); % Find the maximum number of unique units across all populations
@@ -114,12 +117,19 @@ num_of_success_trials.block_6 = sum([population(1).trial(idx_block_6).success]);
 num_of_choice_trials.block_6 = sum([population(1).trial(idx_block_6).success] == 1 & [population(1).trial(idx_block_6).choice] == 1);
 num_of_instr_trials.block_6 = sum([population(1).trial(idx_block_6).success] == 1 & [population(1).trial(idx_block_6).choice] == 0);
 
-
+uniqueTargets = unique({population.target}); % Extract unique targets from the entire population
+uniqueTargetsStr = ['(' strjoin(uniqueTargets, ', ') ')']; % Create a string of unique targets in round brackets
 parts = strsplit(population(1).unit_ID, '_');
 nameOfSession = strcat(parts{1}, '_', parts{2});
-disp('Amount of Blocks for Session:');
+disp(['Number of Units for both targets ' uniqueTargetsStr ':']);
 disp(nameOfSession);
-disp(ammount_of_units);
+% Display the number of units for each block
+for blockNum = 1:length(fieldnames(ammount_of_units))
+    field = ['block_' num2str(blockNum)];
+    if isfield(ammount_of_units, field)
+        disp([num2str(ammount_of_units.(field)) ' units from ' num2str(numPopulations) ' contain block_' num2str(blockNum)]);
+    end
+end
 
 disp('Number of Success Trials:');
 disp(num_of_success_trials);
