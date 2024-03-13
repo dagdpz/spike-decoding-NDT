@@ -1,6 +1,6 @@
 function sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files(injection, mode)
 % If I plan to decode within one session:
-% sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files('20211109');
+% sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files('1', 'each_session_separately');
 
 % If I plan to decode across all sessions:
 % !(To do this action, you must first have filelists for each session individually)!
@@ -42,8 +42,11 @@ if strcmp(mode, 'merged_files_across_sessions')
     fourth_BlocksFiles = {};
     fifth_BlocksFiles = {};
     sixth_BlocksFiles = {};
-    allOverlapBlocksFiles = {};
     allallBlocksFiles = {};
+    allOverlapBlocksFiles = {};
+    allOverlapBlocksFiles_AfterInjection = {}; 
+    allOverlapBlocksFiles_BeforeInjection = {}; 
+    
     
     % Create the folder for the list of required files
     OUTPUT_PATH_list_of_required_files = [OUTPUT_PATH_raster 'merged_files_across_sessions/List_of_required_files/'];
@@ -82,9 +85,19 @@ if strcmp(mode, 'merged_files_across_sessions')
                 % Append to the cell array
                 allOverlapBlocksFiles = [allOverlapBlocksFiles; loadedData.list_of_required_files.overlapBlocksFiles];
             end
+            if isfield(loadedData.list_of_required_files, 'overlapBlocksFiles_AfterInjection')
+                % Append to the cell array
+                allOverlapBlocksFiles_AfterInjection = [allOverlapBlocksFiles_AfterInjection; loadedData.list_of_required_files.overlapBlocksFiles_AfterInjection];
+            end
+            if isfield(loadedData.list_of_required_files, 'overlapBlocksFiles_BeforeInjection')
+                % Append to the cell array
+                allOverlapBlocksFiles_BeforeInjection = [allOverlapBlocksFiles_BeforeInjection; loadedData.list_of_required_files.overlapBlocksFiles_BeforeInjection];
+            end
+            
             if isfield(loadedData.list_of_required_files, 'allBlocksFiles')
                 allallBlocksFiles = [allallBlocksFiles; loadedData.list_of_required_files.allBlocksFiles];
             end
+            
             if isfield(loadedData.list_of_required_files, 'firstBlockFiles')
                 first_BlocksFiles = [first_BlocksFiles; loadedData.list_of_required_files.firstBlockFiles];
             end
@@ -103,6 +116,7 @@ if strcmp(mode, 'merged_files_across_sessions')
             if isfield(loadedData.list_of_required_files, 'sixthBlockFiles')
                 sixth_BlocksFiles = [sixth_BlocksFiles; loadedData.list_of_required_files.sixthBlockFiles];
             end
+            
         end
     end
     
@@ -115,6 +129,11 @@ if strcmp(mode, 'merged_files_across_sessions')
     list_of_required_files.sixthBlockFiles = sixth_BlocksFiles;
     list_of_required_files.overlapBlocksFiles = allOverlapBlocksFiles;
     list_of_required_files.allBlocksFiles = allallBlocksFiles;
+    
+    if strcmp(injection, '1')
+        list_of_required_files.overlapBlocksFiles_AfterInjection = allOverlapBlocksFiles_AfterInjection;
+        list_of_required_files.overlapBlocksFiles_BeforeInjection = allOverlapBlocksFiles_BeforeInjection;
+    end
     
     % Save the structure to a .mat file in the specified folder
     nameOfFinalFile = ['sdndt_Sim_LIP_dPul_NDT_allSessionsBlocksFiles_list_of_required_files.mat'];
@@ -137,7 +156,7 @@ else % 'each_session_separately'
         % Get a list of all .mat files in the directory
         files = dir(fullfile(OUTPUT_PATH_raster_dateOfRecording, '*.mat'));
         
-
+        
         % Initialize lists for each category
         list_of_required_files.firstBlockFiles = {};
         list_of_required_files.secondBlockFiles = {};
@@ -151,7 +170,7 @@ else % 'each_session_separately'
         
         % Initialize a struct to store the maximum block value and conventions for each session
         sessionBlockInfo = struct();
-
+        
         % Call the function to get unique blocks for the day
         uniqueBlocks = countUniqueBlocksForDay(OUTPUT_PATH_raster_dateOfRecording);
         
@@ -221,16 +240,17 @@ else % 'each_session_separately'
             end % isfield(data, 'raster_site_info')
         end % i = 1:length(files)
         
+       
         switch injection
             case '0'
                 % Process the overlapBlocksFiles for the day
                 list_of_required_files.overlapBlocksFiles = processOverlapBlocksFiles(OUTPUT_PATH_raster_dateOfRecording, OUTPUT_PATH_list_of_required_files, uniqueBlocks);
-                list_of_required_files.overlapBlocksFilesInjection = {};
+                
             case '1'
-                list_of_required_files.overlapBlocksFiles = {};
-                list_of_required_files.overlapBlocksFilesInjection = processSpecificOverlapBlocksFiles(OUTPUT_PATH_raster_dateOfRecording, OUTPUT_PATH_list_of_required_files);
+                list_of_required_files.overlapBlocksFiles = processOverlapBlocksFiles(OUTPUT_PATH_raster_dateOfRecording, OUTPUT_PATH_list_of_required_files, uniqueBlocks);
+                list_of_required_files.overlapBlocksFiles_AfterInjection = processAfterInjectionOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles); % select only files recorded after injection from overlapBlocksFiles
+                list_of_required_files.overlapBlocksFiles_BeforeInjection = processBeforeInjectionOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles);
         end
-        
         
         % Save the structure to a .mat file in the specified folder
         nameOfFinalFile = ['sdndt_Sim_LIP_dPul_NDT_' dateOfRecording{day} '_list_of_required_files.mat'];
@@ -297,7 +317,7 @@ for i = 1:length(files)
     
     % Load the data from the file
     data = load(fullfile(OUTPUT_PATH_raster_dateOfRecording, files(i).name));
-   
+    
     % Check if the file contains information about the first block
     if isfield(data, 'raster_site_info') && isfield(data.raster_site_info, 'block_unit') && ...
             isfield(data, 'raster_labels') && isfield(data.raster_labels, 'block') && ...
@@ -349,30 +369,74 @@ end
 
 
 
+function overlapBlocksFilesAfterInjection = processAfterInjectionOverlapBlocksFiles(overlapBlocksFiles)
+% The function selects only files that were recorded after injection based on the already generated list of overlapBlocksFiles
+% Initialize the output variable
+overlapBlocksFilesAfterInjection = overlapBlocksFiles;
 
-
-function specificOverlapFiles = processSpecificOverlapBlocksFiles(OUTPUT_PATH_raster_dateOfRecording, OUTPUT_PATH_list_of_required_files)
-    % Get a list of all .mat files in the directory
-    files = dir(fullfile(OUTPUT_PATH_raster_dateOfRecording, '*.mat'));
-
-    % Initialize lists for each category
-    specificOverlapFiles = {};
-
-    % Group files based on common prefixes
-    uniqueFileGroups = groupFilesByPrefix(files);
-
-    % Filter file groups based on valid block numbers (3, 4, 5, 6)
-    validGroups = arrayfun(@(group) isSpecificBlockValid(group, [3, 4, 5, 6]), uniqueFileGroups);
-
-    % Extract files from valid groups
-    specificOverlapFiles = vertcat(uniqueFileGroups(validGroups).files);
+% Loop through each file in overlapBlocksFiles
+for i = numel(overlapBlocksFilesAfterInjection):-1:1
+    % Check if the file name contains 'block_1'
+    if contains(overlapBlocksFilesAfterInjection{i}, 'block_1')
+        overlapBlocksFilesAfterInjection(i) = []; % Remove files containing 'block_1'
+    else
+        % Load data and check if all perturbation values are 0
+        data = load(overlapBlocksFilesAfterInjection{i}); % Assuming each file contains data.raster_labels.perturbation
+        if all(cellfun(@(x) x == 0, data.raster_labels.perturbation))
+            overlapBlocksFilesAfterInjection(i) = []; % Remove files with all perturbation values equal to 0
+        end
+    end
+end
 end
 
-function isValid = isSpecificBlockValid(fileGroup, validBlocks)
-    % Check if the group contains all valid block numbers
-    isValid = length(fileGroup.files) == length(validBlocks) && ...
-        all(cellfun(@(x) ismember(x, validBlocks), fileGroup.blocks));
+function overlapBlocksFilesBeforeInjection = processBeforeInjectionOverlapBlocksFiles(overlapBlocksFiles)
+% The function selects only files that were recorded before injection based on the already generated list of overlapBlocksFiles
+% Initialize the output variable
+overlapBlocksFilesBeforeInjection = {};
+
+% Loop through each file in overlapBlocksFiles
+for i = 1:numel(overlapBlocksFiles)
+    % Check if the file name contains 'block_1'
+    if contains(overlapBlocksFiles{i}, 'block_1')
+        % Load the file
+        data = load(overlapBlocksFiles{i});
+        % Check if all perturbation values are 0
+        if all(cellfun(@(x) x == 0, data.raster_labels.perturbation))
+            % Add the file to overlapBlocksFilesBeforeInjection
+  overlapBlocksFilesBeforeInjection = [overlapBlocksFilesBeforeInjection; overlapBlocksFiles{i}];
+        end
+    end
 end
+end
+
+
+
+% function specificOverlapFiles = processSpecificOverlapBlocksFiles(OUTPUT_PATH_raster_dateOfRecording, OUTPUT_PATH_list_of_required_files)
+%     % Get a list of all .mat files in the directory
+%     files = dir(fullfile(OUTPUT_PATH_raster_dateOfRecording, '*.mat'));
+%
+%     % Initialize lists for each category
+%     specificOverlapFiles = {};
+%
+%     % Group files based on common prefixes
+%     uniqueFileGroups = groupFilesByPrefix(files);
+%
+%     % Filter file groups based on valid block numbers (3, 4, 5, 6)
+%     validGroups = arrayfun(@(group) isSpecificBlockValid(group, [3, 4, 5, 6]), uniqueFileGroups);
+%
+%     % Extract files from valid groups
+%     specificOverlapFiles = vertcat(uniqueFileGroups(validGroups).files);
+% end
+
+% function isValid = isSpecificBlockValid(fileGroup, validBlocks)
+%     % Check if the group contains all valid block numbers
+%     isValid = length(fileGroup.files) == length(validBlocks) && ...
+%         all(cellfun(@(x) ismember(x, validBlocks), fileGroup.blocks));
+% end
+
+
+
+
 
 % % Helper function to get units with the maximum number of blocks
 % function unitsWithMaxBlocks = getUnitsWithMaxBlocks(sessionID, sessionBlockInfo) % before: uniqueBlocksLength = maxBlock
