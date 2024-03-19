@@ -2,7 +2,7 @@ function dateOfRecording = filelist_of_days_from_Simultaneous_dPul_PPC_recording
 % Choose which set of dates to use: 'control' or 'injection'
 
 % for the 1 experiment: Functrional interactions between dPul and LIP
-if strcmp(injection , '2')
+if strcmp(injection , '0') % '0' means experiment 1 
     % Control dates
     dateOfRecording = {
         '20211109'
@@ -18,19 +18,19 @@ if strcmp(injection , '2')
 % for the 2 experiment: inactivation of dPul
 elseif strcmp(injection, '1') % '1' means 'injection'
     % Injection dates
-    dateOfRecording = {
-        '20210520' % - these files are missing in the population-file format in the : \dPul_control_LIP_Lin_8sL
-        '20210610'
-        '20210616'
-        '20210709'
-        '20210901'
-        '20211006'
-        '20211021'
-        '20211126'
-        '20211201'
-        '20211208'
+    dateOfRecording = { % - these files are missing in the population-file format in the : \dPul_control_LIP_Lin_8sL
+        '20210520' % - right dPul inj
+        '20210610' % - right dPul inj
+        '20210616' % - right dPul inj
+        '20210709' % - right dPul inj
+        '20210901' % - right dPul inj
+        '20211006' % - right dPul inj
+        '20211021' % - right dPul inj
+%         '20211126' % - left dPul inj
+%         '20211201' % - left dPul inj
+%         '20211208' % - left dPul inj
         };
-elseif strcmp(injection, '0') % '0' means 'control'
+elseif strcmp(injection, '2') % '0' means 'control'
     % Injection dates
     dateOfRecording = {
         '20210623'
@@ -46,38 +46,3 @@ else
     error('Invalid selection. Use ''control'' or ''injection'' for selectedSet.');
 end
 end
-
-% % filelist_of_days_from_Simultaneous_dPul_PPC_recordings
-%
-% %% control
-% % dateOfRecording = {
-% %     '20211109'
-% %     '20211110'
-% %     '20211111'
-% %     '20211112'
-% %     '20211117'
-% %     '20211118'
-% %     '20211119'
-% %     '20211124'
-% %     };
-% % '20211111'
-% % '20211112'
-% % '20211117'
-% % '20211118'
-% % '20211119'
-% % '20211124'
-%
-%
-% %% injection
-% dateOfRecording = {
-%     '20210520'
-%     '20210610'
-%     '20210616'
-%     '20210709'
-%     '20210901'
-%     '20211006'
-%     '20211021'
-%     '20211126'
-%     '20211201'
-%     '20211208'
-%     };
