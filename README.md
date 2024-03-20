@@ -54,7 +54,10 @@ mat-files:
 - like Binned_Sim_LIP_dPul__NDT_data_for_dPul_L_cueON_block_1_100ms_bins_25ms_sampled.mat, which contains variables binned_data, binned_labels, binned_site_info.
 - like Binned_Sim_LIP_dPul__NDT_data_for_dPul_L_cueON_block_1_100ms_bins_25ms_sampled_smoothed.mat, which contains smooth the binned data                                                    
 - like Binned_Sim_LIP_dPul__NDT_data_for_dPul_L_cueON_block_1_100ms_bins_25ms_sampled_instr_R instr_L_DECODING_RESULTS.mat which contains results of decoding                                             
-
+                                                                                                                                                                                                                           
+txt-file:                                                                                                                                                                                                                           
+like num_sites_with_k_repeats_for_LIP_R_cueON_block_4_choice_R choice_L.txt,  which contains information about the number of units and repetitions of each stimulus for these units  
+                                                                                                                                                                                                                                    
 picture:                                                                                                                                                                                                             
 - like Binned_Sim_LIP_dPul__NDT_data_for_dPul_L_cueON_block_1_100ms_bins_25ms_sampled_instr_R instr_L_DECODING_RESULTS_DA_as_a_function_of_time.png, which shows the decoding accuracy 
 
