@@ -73,22 +73,28 @@ block_info = regexp(save_file_name, 'block_\d+', 'match');
 
 
 
-% Number of units
-numOfUnits = size(binned_site_info.unit_ID, 2);
+%% Number of units
+% To honestly count the number of units that were used in decoding, it is best to use the sites_to_use variable,
+% because only the size of this variable reflects the actual number of units used during decoding. 
+
+% Example: on running decoding, we find out from variable num_sites_with_k_repeats that 
+% 320 units had 9 stimulus repetitions,300 units had 12 stimulus repetitions, 268 units had 16 stimulus repetitions and etc. 
+% If num_cv_splits = 4 (assuming ds.num_times_to_repeat_each_label_per_cv_split = 2 
+% and num_cv_splits * ds.num_times_to_repeat_each_label_per_cv_split = 8), then only 320 units are used in decoding. 
+% If num_cv_splits = 6 (6*2=12), then only 300 units are used in decoding. 
+% If num_cv_splits = 8 (8*2=16), then only 268 units are used in decoding.
+
+sites_to_use = DECODING_RESULTS.DS_PARAMETERS.sites_to_use;
+numOfUnits = size(sites_to_use, 2); 
+%numOfUnits = size(binned_site_info.unit_ID, 2);
 % numOfUnits = size(DECODING_RESULTS.DS_PARAMETERS.sites_to_use, 2);
 
 % need to use actual variable from DECODING_RESULTS
 
 
-
-
-
-
-
-% Number of trials
+%% Number of trials
 trial_type_side = binned_labels.trial_type_side;
 label_names_to_use = DECODING_RESULTS.DS_PARAMETERS.label_names_to_use;
-sites_to_use = DECODING_RESULTS.DS_PARAMETERS.sites_to_use;
 
 label_counts = zeros(size(label_names_to_use)); % Initialize counters
 unique_sequences = containers.Map('KeyType', 'char', 'ValueType', 'logical'); % Map to store unique sequences
@@ -109,6 +115,7 @@ for x = 1:length(sites_to_use) % Loop through sites_to_use and count occurrences
         end
     end
 end
+
 % label_counts = zeros(size(label_names_to_use)); % Initialize counters
 % 
 % for x = 1:length(sites_to_use) % Loop through sites_to_use and count occurrences of labels_names_to_use in trial_type_side
@@ -126,7 +133,7 @@ numOfTrials = sum(label_counts);
 
 
 
-% search target_brain_structure from the file name
+%% search target_brain_structure from the file name
 path_parts = strsplit(save_file_name, '_'); % Split the file path
 required_parts =  path_parts(10:end-9);
 index_containing_O = find(cellfun(@(x) any(contains(x, 'O')), required_parts), 1); % Find a cell that contains an "O": 
@@ -160,6 +167,7 @@ end
 
 
 
+%% Display
 %numOfUnits_and_numOfTrials_info = ['Num of Units: ' numOfUnits, 'Num of Trials: ' numOfTrials];
 numOfUnits_and_numOfTrials_info = sprintf('Num of Units: %s\nNum of Trials: %s\n', num2str(numOfUnits), num2str(numOfTrials));
 % Display the label counts information

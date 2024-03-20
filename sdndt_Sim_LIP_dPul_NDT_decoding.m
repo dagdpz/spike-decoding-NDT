@@ -1,4 +1,4 @@
-function sdndt_Sim_LIP_dPul_NDT_decoding(injection, dateOfRecording, target_brain_structure, target_state, labels_to_use, listOfRequiredFiles)
+function sdndt_Sim_LIP_dPul_NDT_decoding(injection, dateOfRecording, target_brain_structure, labels_to_use, listOfRequiredFiles)
 % The code converts the received raster data into binned data and then performs decoding.
 
 % HOW TO CALL THE FUNCTION?
@@ -26,6 +26,45 @@ function sdndt_Sim_LIP_dPul_NDT_decoding(injection, dateOfRecording, target_brai
 %                                         'overlapBlocksFiles_AfterInjection'
 
 
+
+ %% Define target_state parameters
+    targetParams = struct();
+
+    % Define target_state parameters
+    targetParams.cueON = 6;
+    targetParams.GOSignal = 4;
+    % Add more target_state parameters as needed
+
+    %% Loop through each target_state parameter
+    fieldNames = fieldnames(targetParams);
+    for i = 1:numel(fieldNames)
+        target_state_name = fieldNames{i};
+        target_state = targetParams.(target_state_name);
+
+        % Call your main function
+        sdndt_Sim_LIP_dPul_NDT_decoding_internal(injection, dateOfRecording, target_brain_structure, target_state, labels_to_use, listOfRequiredFiles);
+    end
+    
+    
+% After all cycles are finished, close the existing figure
+close(gcf); % Close the current figure
+% Display the green image in a new figure
+green_image = zeros(100, 100, 3); % Create a green image (100x100 pixels)
+green_image(:,:,2) = 1; % Set the green channel to 1
+figure; % Create a new figure window
+imshow(green_image); % Display the green image
+% Add the text "Done" in the center of the square
+text_location_x = size(green_image, 2) / 2; % X coordinate of the center
+text_location_y = size(green_image, 1) / 2; % Y coordinate of the center
+text(text_location_x, text_location_y, 'Done!', 'Color', 'black', 'FontSize', 14, 'HorizontalAlignment', 'center');
+
+% Optional: Add a pause to keep the image displayed for some time
+pause(5); % Display the image for 5 seconds (adjust as needed)
+end    
+    
+
+
+  function sdndt_Sim_LIP_dPul_NDT_decoding_internal(injection, dateOfRecording, target_brain_structure, target_state, labels_to_use, listOfRequiredFiles)  
 %% Checking for mistakes while calling the function 
 
 if contains(injection, '0') && (contains(listOfRequiredFiles, 'overlapBlocksFiles_AfterInjection') || contains(listOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection'))
@@ -274,33 +313,36 @@ end
 % create block_grouping_folder:
 block_grouping_folder = '';
 
-if isequal(dateOfRecording, 'merged_files_across_sessions')
-    if isfield(list_of_required_files, 'allBlocksFiles')  && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles)
-        block_grouping_folder = 'allBlocksFilesAcrossSessions/';
+if isequal(dateOfRecording, 'merged_files_across_sessions')      
         
-    elseif isfield(list_of_required_files, 'overlapBlocksFiles')
+   % Define block file names
+    block_file_names = {'firstBlockFiles', 'secondBlockFiles', 'thirdBlockFiles', 'fourthBlockFiles', 'fifthBlockFiles', 'sixthBlockFiles'};
+    for i = 1:numel(block_file_names) % Loop through block file names
+        if isfield(list_of_required_files, block_file_names{i}) && isequal(listOfRequiredFiles, list_of_required_files.(block_file_names{i}))
+            block_grouping_folder = [block_file_names{i} 'AcrossSessions/'];
+            break;
+        end
+    end
+    
+    % Check for 'allBlocksFiles'
+    if isempty(block_grouping_folder) && isfield(list_of_required_files, 'allBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles)
+        block_grouping_folder = 'allBlocksFilesAcrossSessions/';
+    end
+        
+    % Check for 'overlapBlocksFiles'
+    if isempty(block_grouping_folder) && isfield(list_of_required_files, 'overlapBlocksFiles')
         if isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles)
             block_grouping_folder = 'overlapBlocksFilesAcrossSessions/';
         elseif isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles_AfterInjection)
             block_grouping_folder = 'overlapBlocksFilesAcrossSessions_AfterInjection/';
-        elseif isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles_BeforeInjection) 
+        elseif isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles_BeforeInjection)
             block_grouping_folder = 'overlapBlocksFilesAcrossSessions_BeforeInjection/';
         end
-        
-    else
-        % Check for specific block files
-        block_field_names = fieldnames(list_of_required_files);
-        for i = 1:numel(block_field_names)
-            if isfield(list_of_required_files, block_field_names{i}) && ...
-                    isequal(listOfRequiredFiles, list_of_required_files.(block_field_names{i}))
-                block_grouping_folder = [block_field_names{i} 'AcrossSessions/'];
-                break;
-            end
-        end
     end
+        
 elseif ismember(dateOfRecording, allDateOfRecording) && isfield(list_of_required_files, 'overlapBlocksFiles_BeforeInjection') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles_BeforeInjection)
     block_grouping_folder = 'Overlap_blocks_BeforeInjection/';
-
+    
 elseif ismember(dateOfRecording, allDateOfRecording) && isfield(list_of_required_files, 'overlapBlocksFiles_AfterInjection') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles_AfterInjection)
     block_grouping_folder = 'Overlap_blocks_AfterInjection/';
     
@@ -320,7 +362,11 @@ end
 % create prefix to save binned data
 % (prefix will contain info about all blocks)
 OUTPUT_PATH_binned_dateOfRecording = [OUTPUT_PATH_binned dateOfRecording '/'];
-Binned_data_dir = [OUTPUT_PATH_binned_dateOfRecording block_grouping_folder];
+
+% Create num_cv_splits_folder
+num_cv_splits_folder = sprintf('num_cv_splits_%d(%d)', settings.num_cv_splits, settings.num_cv_splits * settings.num_times_to_repeat_each_label_per_cv_split);
+
+Binned_data_dir = [OUTPUT_PATH_binned_dateOfRecording block_grouping_folder num_cv_splits_folder '/'];
 save_prefix_name = [Binned_data_dir 'Binned_Sim_LIP_dPul__NDT_data_for_' target_brain_structure '_' target_state_name '_' targetBlockUsed];
 
 if ~exist(Binned_data_dir,'dir')
@@ -428,6 +474,59 @@ for k = 1:150
     % the value in each column - how many units has this number of repetitions
 end
 
+
+% % Define the prefix for the file
+% prefix_for_file_with_num_sites_with_k_repeats = ['num_sites_with_k_repeats_for_' target_brain_structure '_' target_state_name '_' targetBlockUsed];
+% 
+% % Create a string to store the phrases
+% phrases = '';
+% 
+% % Iterate over num_sites_with_k_repeats variable
+% for i = 1:numel(num_sites_with_k_repeats)
+%     % Get the value from num_sites_with_k_repeats
+%     num_neurons = num_sites_with_k_repeats(i);
+%     
+%     % Check if the value is non-zero
+%     if num_neurons > 0
+%         % Append the phrase to the string
+%         phrases = [phrases num2str(num_neurons) ' neurons have ' num2str(i) ' repetitions\n'];
+%     end
+% end
+% 
+% % Create the full file path
+% file_path = fullfile(Binned_data_dir, [prefix_for_file_with_num_sites_with_k_repeats '.txt']);
+% 
+% % Write the phrases to the text file
+% fid = fopen(file_path, 'w');
+% fprintf(fid, phrases);
+% fclose(fid);
+
+
+
+% Define the prefix for the file name
+prefix_for_file_with_num_sites_with_k_repeats = ['num_sites_with_k_repeats_for_' target_brain_structure '_' target_state_name '_' targetBlockUsed '_' labels_to_use_string];
+
+% Define the file name
+file_name = fullfile(Binned_data_dir, [prefix_for_file_with_num_sites_with_k_repeats '.txt']);
+fileID = fopen(file_name, 'w'); % Open the file for writing
+lines = {}; % Initialize a cell array to store lines
+
+% Iterate over each neuron group
+for group = unique(num_sites_with_k_repeats)
+    last_occurrence = find(num_sites_with_k_repeats == group, 1, 'last'); % Find the last occurrence of the current neuron group
+    if ~isempty(last_occurrence) % Check if the last occurrence is not empty
+        lines{end+1} = sprintf('%d units has %d repetitions of each stimulus', group, last_occurrence); % Add the line to the cell array
+    end
+end
+lines = flip(lines); % Reverse the order of lines
+
+% Write the lines to the file
+for i = 1:numel(lines)
+    fprintf(fileID, '%s\n', lines{i});
+end
+fclose(fileID); % Close the file
+
+
 %%  Begin the decoding analysis
 %  6.  Create a datasource object
 specific_label_name_to_use = 'trial_type_side';
@@ -516,6 +615,7 @@ save(save_file_name, 'DECODING_RESULTS');
 
 % Plot decoding
 sdndt_Sim_LIP_dPul_NDT_plot_decoding_results(injection, save_file_name);
+  
 end
 
 
@@ -680,4 +780,4 @@ else
     block_number = ''; % Handle case where block number is not found
 end
 end
-
+ 
