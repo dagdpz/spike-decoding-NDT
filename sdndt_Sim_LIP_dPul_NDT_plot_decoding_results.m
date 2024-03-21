@@ -1,7 +1,7 @@
-function sdndt_Sim_LIP_dPul_NDT_plot_decoding_results(injection, save_file_name)
+function sdndt_Sim_LIP_dPul_NDT_plot_decoding_results(injection, typeOfSessions, save_file_name)
 
 % Call the settings function with the chosen set
-[base_path, INPUT_PATH, OUTPUT_PATH_raster, OUTPUT_PATH_binned, settings] = sdndt_Sim_LIP_dPul_NDT_settings(injection);
+[base_path, INPUT_PATH, OUTPUT_PATH_raster, OUTPUT_PATH_binned, settings] = sdndt_Sim_LIP_dPul_NDT_settings(injection, typeOfSessions);
 %run('sdndt_Sim_LIP_dPul_NDT_settings');
 
 load(save_file_name);
@@ -207,4 +207,6 @@ set(gca,'Xlim',settings.time_lim, 'Ylim',settings.y_lim);
 
 
 saveas(gcf, [save_file_name(1:end-4) '_DA_as_a_function_of_time.png']);
+
+close(gcf);
 

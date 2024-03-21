@@ -1,29 +1,49 @@
-function [base_path, INPUT_PATH, OUTPUT_PATH_raster, OUTPUT_PATH_binned, settings] = sdndt_Sim_LIP_dPul_NDT_settings(injection)
+function [base_path, INPUT_PATH, OUTPUT_PATH_raster, OUTPUT_PATH_binned, settings] = sdndt_Sim_LIP_dPul_NDT_settings(injection, typeOfSessions)
 % This code contains the variables needed to run all the basic codes (raster data creation, file list, decoding)
 % Will automatically run when the main codes are run
 
 
-% Determine the base_path based on the selected set
-    if strcmp(injection, '0')
-        base_path = 'C:/Projects/Sim_dPul_LIP/NDT/control/';
-    elseif strcmp(injection, '1')
-        base_path = 'C:/Projects/Sim_dPul_LIP/NDT/injection/';
-    else
-        error('Invalid selection. Use ''control'' or ''injection'' for selectedSet.');
-    end
-%base_path = 'C:/Projects/Sim_dPul_LIP/NDT/control/';
-%base_path = 'C:/Projects/Sim_dPul_LIP/NDT/injection/';
+%% Determine the base_path based on the selected set
+
+% Experiment: Functional interactions between the dorsal pulvinar and LIP during spatial target selection and oculomotor planning
+if strcmp(injection, '2') 
+    base_path = 'C:/Projects/Sim_dPul_LIP/NDT/Functional_interaction_experiment_dPul_LIP/';
+    
+% Experiment: The effect of unilateral dorsal pulvinar inactivation on bi-hemispheric LIP activity
+elseif strcmp(injection, '1')
+    base_path = 'C:/Projects/Sim_dPul_LIP/NDT/Inactivation_experiment/inactivation_sessions/';
+elseif strcmp(injection, '0')
+    base_path = 'C:/Projects/Sim_dPul_LIP/NDT/Inactivation_experiment/control_sessions/';
+    
+else
+    error('Invalid selection. Use ''control'' or ''injection'' for selectedSet.');
+end
 
 
-% for creating raster_data
+
+%% for creating raster_data and binned_data output path
 INPUT_PATH = 'Y:/Projects/Simultaneous_dPul_PPC_recordings/ephys/';
-OUTPUT_PATH_raster = [base_path 'raster/']; 
  
-% for creating binned_data
-OUTPUT_PATH_binned = [base_path 'binned/'];
+if strcmp(injection, '1') % For injection sessions
+    if strcmp(typeOfSessions, 'left')
+        typeOfSessions_folder = 'left_dPul_injection/';
+    elseif strcmp(typeOfSessions, 'right')
+        typeOfSessions_folder = 'right_dPul_injection/';
+    elseif strcmp(typeOfSessions, 'all')
+        typeOfSessions_folder = 'both_R_and_L_dPul_injection/';
+    else
+        error('Invalid typeOfSessions. Use ''left'', ''right'', or ''all''.');
+    end
+    OUTPUT_PATH_raster = [base_path 'raster/' typeOfSessions_folder];
+    OUTPUT_PATH_binned = [base_path 'binned/' typeOfSessions_folder];
+else % For control sessions (Inactivation experiment) and Functional interaction experiment (dPul and LIP)
+    OUTPUT_PATH_raster = [base_path 'raster/'];
+    OUTPUT_PATH_binned = [base_path 'binned/'];
+end
 
 
 
+%% settings
 settings.windowAroundEvent = 0.5; % s:  epoch to take around the trigger event
 
 % data preparation to create binned_data

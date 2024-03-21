@@ -7,13 +7,17 @@ function sdndt_Sim_LIP_dPul_NDT_decoding(injection, dateOfRecording, target_brai
 % sdndt_Sim_LIP_dPul_NDT_decoding('0', '20211110', 'LIP_L', 6, 'instr_R_instr_L', 'overlapBlocksFiles');
 
 % If we decode across sessions:
-% sdndt_Sim_LIP_dPul_NDT_decoding('0', 'merged_files_across_sessions', 'dPul_L', 4, 'instr_R_instr_L', 'overlapBlocksFiles');
+% sdndt_Sim_LIP_dPul_NDT_decoding('0', 'merged_files_across_sessions', 'dPul_L', 'instr_R_instr_L', 'overlapBlocksFiles');
 
 % ADDITIONAL SETTINGS
-% injection: '0' - control, '1' - injection
+% injection: '0' - control sessions, '1' - inactivation sessions (for inactivation experiment),
+%            '2' - for functional interaction experiment
+% typeOfSessions: 'all' - all sessions,
+%                 'right' - right dPul injection (7 sessions) for mokey L
+%                 'left' - left dPul injection (3 sessions) for mokey L
 % dateOfRecording - folder name
-% target_brain_structure = 'dPul_L', 'LIP_L', 'LIP_R', if both 'LIP_L_dPul_L' (control) or 'LIP_L_LIP_R' (injection)
-% target_state: 6 - cue on , 4 - target acquisition
+% target_brain_structure = 'dPul_L', 'LIP_L', 'LIP_R', 
+%                  if both 'LIP_L_dPul_L' (functional interaction experiment) or 'LIP_L_LIP_R' (inactivation experiment)
 % labels_to_use: 'instr_R_instr_L'
 %                'choice_R_choice_L'
 %                'instr_R_choice_R'
@@ -27,24 +31,52 @@ function sdndt_Sim_LIP_dPul_NDT_decoding(injection, dateOfRecording, target_brai
 
 
 
- %% Define target_state parameters
-    targetParams = struct();
+ %% Define typeOfSessions
+ % Calculate typeOfSessions based on the injection parameter
+if strcmp(injection, '1')
+    typeOfSessions = {'left', 'right', 'all'}; % For control and injection experiments
+elseif strcmp(injection, '0') || strcmp(injection, '2')
+    typeOfSessions = {''}; % For the functional interaction experiment
+else
+    error('Invalid injection value. Use ''0'', ''1'', or ''2''.');
+end
 
-    % Define target_state parameters
-    targetParams.cueON = 6;
-    targetParams.GOSignal = 4;
-    % Add more target_state parameters as needed
+%% Define target_state parameters
+% target_state: 6 - cue on , 4 - target acquisition
+targetParams = struct();
 
-    %% Loop through each target_state parameter
-    fieldNames = fieldnames(targetParams);
-    for i = 1:numel(fieldNames)
-        target_state_name = fieldNames{i};
-        target_state = targetParams.(target_state_name);
+% Define target_state parameters
+targetParams.cueON = 6;
+targetParams.GOSignal = 4;
+% Add more target_state parameters as needed
 
-        % Call your main function
-        sdndt_Sim_LIP_dPul_NDT_decoding_internal(injection, dateOfRecording, target_brain_structure, target_state, labels_to_use, listOfRequiredFiles);
-    end
+%% Loop through each target_state parameter
+fieldNames = fieldnames(targetParams);
+numFieldNames = numel(fieldNames);
+numTypesOfSessions = numel(typeOfSessions);
+
+h = waitbar(0, 'Processing...'); % Initialize progress bar
+
+
+for i = 1:numFieldNames
+    target_state_name = fieldNames{i};
+    target_state = targetParams.(target_state_name);
     
+    % Call your main function for each typeOfSession
+    for j = 1:numTypesOfSessions
+        % Call the main decoding function
+        sdndt_Sim_LIP_dPul_NDT_decoding_internal(injection, typeOfSessions{j}, dateOfRecording, target_brain_structure, target_state, labels_to_use, listOfRequiredFiles);
+ 
+        % Update progress bar
+        progress = ((i - 1) * numTypesOfSessions + j) / (numFieldNames * numTypesOfSessions);
+        waitbar(progress, h, sprintf('Processing... %.2f%%', progress * 100));
+    end
+    %         % Call your main function
+    %         sdndt_Sim_LIP_dPul_NDT_decoding_internal(injection, typeOfSessions, dateOfRecording, target_brain_structure, target_state, labels_to_use, listOfRequiredFiles);
+end
+ 
+% After all cycles are finished, close the progress bar
+close(h);
     
 % After all cycles are finished, close the existing figure
 close(gcf); % Close the current figure
@@ -64,8 +96,13 @@ end
     
 
 
-  function sdndt_Sim_LIP_dPul_NDT_decoding_internal(injection, dateOfRecording, target_brain_structure, target_state, labels_to_use, listOfRequiredFiles)  
-%% Checking for mistakes while calling the function 
+  function sdndt_Sim_LIP_dPul_NDT_decoding_internal(injection, typeOfSessions, dateOfRecording, target_brain_structure, target_state, labels_to_use, listOfRequiredFiles)  
+% ADDITIONAL SETTINGS
+% The same as for sdndt_Sim_LIP_dPul_NDT_decoding function, except : 
+% target_state: 6 - cue on , 4 - target acquisition
+  
+  
+  %% Checking for mistakes while calling the function 
 
 if contains(injection, '0') && (contains(listOfRequiredFiles, 'overlapBlocksFiles_AfterInjection') || contains(listOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection'))
     error("Injection data is not available for mode '0'.");
@@ -108,11 +145,11 @@ end
     
 %% Path
 % Call the function to get the dates
-allDateOfRecording = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(injection);
+allDateOfRecording = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(injection, typeOfSessions);
 
 
 % Call the settings function with the chosen set
-[base_path, INPUT_PATH, OUTPUT_PATH_raster, OUTPUT_PATH_binned, settings] = sdndt_Sim_LIP_dPul_NDT_settings(injection);
+[base_path, INPUT_PATH, OUTPUT_PATH_raster, OUTPUT_PATH_binned, settings] = sdndt_Sim_LIP_dPul_NDT_settings(injection, typeOfSessions);
 %run('sdndt_Sim_LIP_dPul_NDT_settings');
 %run('sdndt_Sim_LIP_dPul_NDT_make_raster');
 
@@ -467,7 +504,7 @@ string_to_add_to_filename = '';
 labels_to_use_string = strjoin(labels_to_use);
 
 % Determining how many times each condition was repeated
-for k = 1:150
+for k = 1:250
     inds_of_sites_with_at_least_k_repeats = find_sites_with_k_label_repetitions(binned_labels.trial_type_side , k, labels_to_use);
     num_sites_with_k_repeats(k) = length(inds_of_sites_with_at_least_k_repeats);
     % number of columns - how many times the stimulus was presented (number of repetitions);
@@ -515,7 +552,7 @@ lines = {}; % Initialize a cell array to store lines
 for group = unique(num_sites_with_k_repeats)
     last_occurrence = find(num_sites_with_k_repeats == group, 1, 'last'); % Find the last occurrence of the current neuron group
     if ~isempty(last_occurrence) % Check if the last occurrence is not empty
-        lines{end+1} = sprintf('%d units has %d repetitions of each stimulus', group, last_occurrence); % Add the line to the cell array
+        lines{end+1} = sprintf('%d units has %d repetitions of the stimuli', group, last_occurrence); % Add the line to the cell array
     end
 end
 lines = flip(lines); % Reverse the order of lines
@@ -614,7 +651,7 @@ save(save_file_name, 'DECODING_RESULTS');
 
 
 % Plot decoding
-sdndt_Sim_LIP_dPul_NDT_plot_decoding_results(injection, save_file_name);
+sdndt_Sim_LIP_dPul_NDT_plot_decoding_results(injection, typeOfSessions, save_file_name);
   
 end
 

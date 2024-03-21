@@ -7,13 +7,14 @@ function sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files(injection, mode)
 % sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files('0', 'merged_files_across_sessions');
 
 
-% injection: '0' - control, '1' - injection
+% injection: '0' - control, '1' - injection (Inactivation experiment)
+%            '2' - Functional interaction experiment (dPul and LIP)
 % mode: 'each_session_separately' or 'merged_files_across_sessions'
 
 
-% Check if the injection parameter is valid
-if ~ismember(injection, {'0', '1'})
-    error('Invalid value for the injection parameter. Use ''0'' or ''1'' for control or injection.');
+%% Check if the injection parameter is valid
+if ~ismember(injection, {'0', '1', '2'})
+    error('Invalid value for the injection parameter. Use ''0'', ''1'' or ''2'' for control or injection.');
 end
 
 if ~ismember(mode, {'each_session_separately', 'merged_files_across_sessions'})
@@ -21,14 +22,60 @@ if ~ismember(mode, {'each_session_separately', 'merged_files_across_sessions'})
 end
 
 
+%% Define the session types based on the injection value
+if strcmp(injection, '1')
+    typeOfSessions = {'left', 'right', 'all'}; % For control and injection experiments
+elseif  strcmp(injection, '0') || strcmp(injection, '2')
+    typeOfSessions = {''}; % For the functional interaction experiment
+else
+    error('Invalid injection value. Use ''0'', ''1'', or ''2''.');
+end
+
+% Initialize progress bar
+h = waitbar(0, 'Processing Sessions...');
+numTypesOfSessions = numel(typeOfSessions); % Get the total number of session types
+
+% Loop through each session type if injection is '1'
+if strcmp(injection, '1')
+    for k = 1:numTypesOfSessions
+        currentType = typeOfSessions{k};
+        % Call the function to generate lists of required files for the current session type
+        dateOfRecording = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(injection, currentType);
+        
+        % Call additional functions and process the data for each session type
+        sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files_inner(injection, mode, currentType, dateOfRecording);
+               
+        % Calculate progress
+        progress = k / numTypesOfSessions;
+        waitbar(progress, h, sprintf('Processing... %.2f%%', progress * 100)); % Update progress bar
+    end
+else
+    % Call the function to generate lists of required files
+    dateOfRecording = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(injection, typeOfSessions);
+    
+    % Call additional functions and process the data
+    sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files_inner(injection, mode, currentType, dateOfRecording); % !! check: (currentType) or ('') will work
+ 
+    waitbar(1, h, 'Processing Completed.');   % Update progress bar
+end
+
+close(h); % Close progress bar
+end   % function sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files(injection, mode)
+
+
+
+
+
+function sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files_inner(injection, mode, currentType, dateOfRecording)
+%% Call the additional functions
 % Call the function to get the dates
-dateOfRecording = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(injection);
 
 % Call the settings function with the chosen set
-[base_path, INPUT_PATH, OUTPUT_PATH_raster, OUTPUT_PATH_binned, settings] = sdndt_Sim_LIP_dPul_NDT_settings(injection);
+[base_path, INPUT_PATH, OUTPUT_PATH_raster, OUTPUT_PATH_binned, settings] = sdndt_Sim_LIP_dPul_NDT_settings(injection, currentType);
 %run('sdndt_Sim_LIP_dPul_NDT_settings');
 
 
+%% Run getting lists of files depending on mods
 if strcmp(mode, 'merged_files_across_sessions')
     
     % Initialize cell arrays for paths
@@ -44,8 +91,8 @@ if strcmp(mode, 'merged_files_across_sessions')
     sixth_BlocksFiles = {};
     allallBlocksFiles = {};
     allOverlapBlocksFiles = {};
-    allOverlapBlocksFiles_AfterInjection = {}; 
-    allOverlapBlocksFiles_BeforeInjection = {}; 
+    allOverlapBlocksFiles_AfterInjection = {};
+    allOverlapBlocksFiles_BeforeInjection = {};
     
     
     % Create the folder for the list of required files
@@ -240,7 +287,7 @@ else % 'each_session_separately'
             end % isfield(data, 'raster_site_info')
         end % i = 1:length(files)
         
-       
+        
         switch injection
             case '0'
                 % Process the overlapBlocksFiles for the day
@@ -261,7 +308,7 @@ else % 'each_session_separately'
         
     end % day = 1:length(dateOfRecording)
 end % strcmp(mode, 'merged_files_across_sessions')
-end   % function sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files(injection, mode)
+end   % function sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files_inner(injection, mode)
 
 
 
@@ -403,7 +450,7 @@ for i = 1:numel(overlapBlocksFiles)
         % Check if all perturbation values are 0
         if all(cellfun(@(x) x == 0, data.raster_labels.perturbation))
             % Add the file to overlapBlocksFilesBeforeInjection
-  overlapBlocksFilesBeforeInjection = [overlapBlocksFilesBeforeInjection; overlapBlocksFiles{i}];
+            overlapBlocksFilesBeforeInjection = [overlapBlocksFilesBeforeInjection; overlapBlocksFiles{i}];
         end
     end
 end
