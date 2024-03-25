@@ -3,19 +3,19 @@ function sdndt_Sim_LIP_dPul_NDT_decoding(injection, dateOfRecording, target_brai
 
 % HOW TO CALL THE FUNCTION?
 % If we decode within a session:
-% sdndt_Sim_LIP_dPul_NDT_decoding('0', '20211109', 'dPul_L', 4, 'instr_R_instr_L', 'firstBlockFiles');
-% sdndt_Sim_LIP_dPul_NDT_decoding('0', '20211110', 'LIP_L', 6, 'instr_R_instr_L', 'overlapBlocksFiles');
+% sdndt_Sim_LIP_dPul_NDT_decoding('0', 'each_session_separately', 'dPul_L', 'instr_R_instr_L', 'overlapBlocksFiles');
 
 % If we decode across sessions:
 % sdndt_Sim_LIP_dPul_NDT_decoding('0', 'merged_files_across_sessions', 'dPul_L', 'instr_R_instr_L', 'overlapBlocksFiles');
 
-% ADDITIONAL SETTINGS
+
+
+
+%% MODIFIABLE PARAMETERS 
 % injection: '0' - control sessions, '1' - inactivation sessions (for inactivation experiment),
 %            '2' - for functional interaction experiment
-% typeOfSessions: 'all' - all sessions,
-%                 'right' - right dPul injection (7 sessions) for mokey L
-%                 'left' - left dPul injection (3 sessions) for mokey L
-% dateOfRecording - folder name
+
+% dateOfRecording: 'each_session_separately', 'merged_files_across_sessions'
 % target_brain_structure = 'dPul_L', 'LIP_L', 'LIP_R', 
 %                  if both 'LIP_L_dPul_L' (functional interaction experiment) or 'LIP_L_LIP_R' (inactivation experiment)
 % labels_to_use: 'instr_R_instr_L'
@@ -26,8 +26,16 @@ function sdndt_Sim_LIP_dPul_NDT_decoding(injection, dateOfRecording, target_brai
 %                       'firstBlockFiles', 'secondBlockFiles', 'thirdBlockFiles',
 %                       'fourthBlockFiles', 'fifthBlockFiles', 'sixthBlockFiles',
 %                       'allBlocksFiles', 'overlapBlocksFiles',
-%                                         'overlapBlocksFiles_BeforeInjection'
-%                                         'overlapBlocksFiles_AfterInjection'
+%                       'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection'
+%                       'allBlocksFiles_BeforeInjection', 'allBlocksFiles_AfterInjection'
+                                        
+
+%% PARAMETERS that RUN AUTOMATICALLY (are in the internal function)
+% typeOfSessions: 'all' - all sessions,
+%                 'right' - right dPul injection (7 sessions) for mokey L
+%                 'left' - left dPul injection (3 sessions) for mokey L
+% target_state: 6 - cue on , 4 - target acquisition
+
 
 
 
@@ -41,16 +49,37 @@ else
     error('Invalid injection value. Use ''0'', ''1'', or ''2''.');
 end
 
+
+%% Check if decoding should be performed for each session separately
+if strcmp(dateOfRecording, 'each_session_separately')
+    datesForSessions = {};
+    if strcmp(injection, '1') 
+         % Initialize datesForSessions as an empty cell array
+%         datesForSessions = {};
+        for type = 1:numel(typeOfSessions)
+            % Get the dates for the corresponding injection and session types
+            datesForSessions{end+1} = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(injection, typeOfSessions{type});
+        end
+    elseif  strcmp(injection, '0') || strcmp(injection, '2')
+        datesForSessions = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(injection, typeOfSessions);
+    end
+else % strcmp(dateOfRecording, 'merged_files_across_sessions')
+    datesForSessions = []; 
+end
+
+
+
 %% Define target_state parameters
-% target_state: 6 - cue on , 4 - target acquisition
 targetParams = struct();
 
 % Define target_state parameters
 targetParams.cueON = 6;
 targetParams.GOSignal = 4;
-% Add more target_state parameters as needed
+
+
 
 %% Loop through each target_state parameter
+
 fieldNames = fieldnames(targetParams);
 numFieldNames = numel(fieldNames);
 numTypesOfSessions = numel(typeOfSessions);
@@ -78,6 +107,7 @@ end
 % After all cycles are finished, close the progress bar
 close(h);
     
+    
 % After all cycles are finished, close the existing figure
 close(gcf); % Close the current figure
 % Display the green image in a new figure
@@ -96,7 +126,9 @@ end
     
 
 
-  function sdndt_Sim_LIP_dPul_NDT_decoding_internal(injection, typeOfSessions, dateOfRecording, target_brain_structure, target_state, labels_to_use, listOfRequiredFiles)  
+
+
+  function sdndt_Sim_LIP_dPul_NDT_decoding_internal(injection, typeOfSessions, dateOfRecording, target_brain_structure, target_state, given_labels_to_use, givenListOfRequiredFiles)  
 % ADDITIONAL SETTINGS
 % The same as for sdndt_Sim_LIP_dPul_NDT_decoding function, except : 
 % target_state: 6 - cue on , 4 - target acquisition
@@ -104,7 +136,7 @@ end
   
   %% Checking for mistakes while calling the function 
 
-if contains(injection, '0') && (contains(listOfRequiredFiles, 'overlapBlocksFiles_AfterInjection') || contains(listOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection'))
+if contains(injection, '0') && (contains(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection') || contains(givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection'))
     error("Injection data is not available for mode '0'.");
 end
 
@@ -128,15 +160,17 @@ end
 
 % Check if labels_to_use is one of the allowed values
 allowed_labels = {'instr_R_instr_L', 'choice_R_choice_L', 'instr_R_choice_R', 'instr_L_choice_L'};
-if ~ismember(labels_to_use, allowed_labels)
+if ~ismember(given_labels_to_use, allowed_labels)
     error('Invalid labels to use. Use ''instr_R_instr_L'', ''choice_R_choice_L'', ''instr_R_choice_R'' or ''instr_L_choice_L''');
 end
 
 % Check if listOfRequiredFiles contains the required fields
 allowed_blocks = {'firstBlockFiles', 'secondBlockFiles', 'thirdBlockFiles', ...
     'fourthBlockFiles', 'fifthBlockFiles', 'sixthBlockFiles', ...
-    'allBlocksFiles', 'overlapBlocksFiles', 'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection'};
-if ~ismember(listOfRequiredFiles, allowed_blocks) % Check if the provided block name is in the list of allowed blocks
+    'allBlocksFiles', 'overlapBlocksFiles',  ...
+    'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection'  ...
+    'allBlocksFiles_BeforeInjection', 'allBlocksFiles_AfterInjection'};
+if ~ismember(givenListOfRequiredFiles, allowed_blocks) % Check if the provided block name is in the list of allowed blocks
     error(['The specified block name is not correct. ', ...
         'You have to use one of the following: ', strjoin(allowed_blocks, ', ')]);
 else
@@ -148,6 +182,7 @@ end
 allDateOfRecording = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(injection, typeOfSessions);
 
 
+
 % Call the settings function with the chosen set
 [base_path, INPUT_PATH, OUTPUT_PATH_raster, OUTPUT_PATH_binned, settings] = sdndt_Sim_LIP_dPul_NDT_settings(injection, typeOfSessions);
 %run('sdndt_Sim_LIP_dPul_NDT_settings');
@@ -156,31 +191,35 @@ allDateOfRecording = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(inje
 % if isequal(listOfRequiredFiles, 'overlapBlocksFilesAcrossSessions')
 %     partOfName = 'allOverlapBlocksFiles';
 %     dateOfRecording = 'merged_files_across_sessions';  % Set a default value for the dateOfRecording in this case
-if isequal(dateOfRecording, 'merged_files_across_sessions') && ...
-        (isequal(listOfRequiredFiles, 'firstBlockFiles') || ...
-        isequal(listOfRequiredFiles, 'secondBlockFiles') || ...
-        isequal(listOfRequiredFiles, 'thirdBlockFiles') || ...
-        isequal(listOfRequiredFiles, 'fourthBlockFiles') || ...
-        isequal(listOfRequiredFiles, 'fifthBlockFiles') || ...
-        isequal(listOfRequiredFiles, 'sixthBlockFiles') || ...
-        isequal(listOfRequiredFiles, 'overlapBlocksFiles')|| ...
-        isequal(listOfRequiredFiles, 'allBlocksFiles')|| ...
-        isequal(listOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection')|| ...
-        isequal(listOfRequiredFiles, 'overlapBlocksFiles_AfterInjection'))
-    partOfName = 'allSessionsBlocksFiles';
-else
-    partOfName = dateOfRecording;
-end
+
+
+
+for numDays = 1:numel(allDateOfRecording)
+    current_date = allDateOfRecording{numDays};
+    
+    if strcmp(dateOfRecording, 'each_session_separately')
+        partOfName = current_date;
+    elseif  strcmp(dateOfRecording, 'merged_files_across_sessions')
+        partOfName = 'allSessionsBlocksFiles';
+    else
+        partOfName = dateOfRecording;
+    end
+
 
 
 % Check if dateOfRecording is valid
-if ~strcmp(dateOfRecording, 'merged_files_across_sessions') && ~any(strcmp(dateOfRecording, allDateOfRecording))
-    error('Invalid dateOfRecording. It must be ''merged_files_across_sessions'' or one of the dates from variable allDateOfRecording.');
+if ~strcmp(dateOfRecording, 'merged_files_across_sessions') && ~strcmp(dateOfRecording, 'each_session_separately')
+    error('Invalid dateOfRecording. It must be ''merged_files_across_sessions'' or ''each_session_separately''.');
 end
 
-
-OUTPUT_PATH_list_of_required_files = [OUTPUT_PATH_raster dateOfRecording '/List_of_required_files/sdndt_Sim_LIP_dPul_NDT_' partOfName '_list_of_required_files.mat'];
+% Load required files for each session or merged files
+if strcmp(dateOfRecording, 'merged_files_across_sessions')
+    OUTPUT_PATH_list_of_required_files = [OUTPUT_PATH_raster dateOfRecording '/List_of_required_files/sdndt_Sim_LIP_dPul_NDT_' partOfName '_list_of_required_files.mat'];
+else % strcmp(dateOfRecording, 'each_session_separately')
+    OUTPUT_PATH_list_of_required_files = [OUTPUT_PATH_raster current_date '/List_of_required_files/sdndt_Sim_LIP_dPul_NDT_' partOfName '_list_of_required_files.mat'];
+end
 load(OUTPUT_PATH_list_of_required_files);
+
 
 %% Prepearing for Binned_data
 % Add the path to the NDT so add_ndt_paths_and_init_rand_generator can be called
@@ -192,7 +231,7 @@ add_ndt_paths_and_init_rand_generator;
 
 % target_brain_structure = all_brain_structures; % all structures from which neurons were recorded can be found in the variable brain_structures_present
 
-switch listOfRequiredFiles
+switch givenListOfRequiredFiles % givenListOfRequiredFiles
     case 'firstBlockFiles'
         listOfRequiredFiles = list_of_required_files.firstBlockFiles;
     case 'secondBlockFiles'
@@ -210,19 +249,23 @@ switch listOfRequiredFiles
     case 'overlapBlocksFiles'
         listOfRequiredFiles = list_of_required_files.overlapBlocksFiles;
     case 'overlapBlocksFiles_AfterInjection' % Add a case for 'overlapBlocksFilesInjection'
-        if isfield(list_of_required_files, 'overlapBlocksFiles_AfterInjection') && ...
-                (isequal(dateOfRecording, 'merged_files_across_sessions') || ismember(dateOfRecording, allDateOfRecording))
-            listOfRequiredFiles = list_of_required_files.overlapBlocksFiles_AfterInjection;
-        else
-            error('overlapBlocksFiles_AfterInjection not found or dateOfRecording mismatch');
-        end
+        %         if isfield(list_of_required_files, 'overlapBlocksFiles_AfterInjection') && ...
+        %                 (isequal(dateOfRecording, 'merged_files_across_sessions') || ismember(dateOfRecording, allDateOfRecording))
+        listOfRequiredFiles = list_of_required_files.overlapBlocksFiles_AfterInjection;
+        %         else
+        %             error('overlapBlocksFiles_AfterInjection not found or dateOfRecording mismatch');
+        %         end
     case 'overlapBlocksFiles_BeforeInjection' % Add a case for 'overlapBlocksFilesBeforeInjection'
-        if isfield(list_of_required_files, 'overlapBlocksFiles_BeforeInjection') && ...
-                (isequal(dateOfRecording, 'merged_files_across_sessions') || ismember(dateOfRecording, allDateOfRecording))
-            listOfRequiredFiles = list_of_required_files.overlapBlocksFiles_BeforeInjection;
-        else
-            error('overlapBlocksFiles_BeforeInjection not found or dateOfRecording mismatch');
-        end
+        %         if isfield(list_of_required_files, 'overlapBlocksFiles_BeforeInjection') && ...
+        %                 (isequal(dateOfRecording, 'merged_files_across_sessions') || ismember(dateOfRecording, allDateOfRecording))
+        listOfRequiredFiles = list_of_required_files.overlapBlocksFiles_BeforeInjection;
+        %         else
+        %             error('overlapBlocksFiles_BeforeInjection not found or dateOfRecording mismatch');
+        %         end
+    case 'allBlocksFiles_AfterInjection'
+        listOfRequiredFiles = list_of_required_files.allBlocksFiles_AfterInjection;
+    case 'allBlocksFiles_BeforeInjection'
+        listOfRequiredFiles = list_of_required_files.allBlocksFiles_BeforeInjection;
     otherwise
         error('Unknown list of required files.');
 end
@@ -338,7 +381,8 @@ switch targetBlock
     otherwise
         if (isfield(list_of_required_files, 'allBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles))||...
                 ((isfield(list_of_required_files, 'overlapBlocksFiles') && strcmp(dateOfRecording, 'merged_files_across_sessions') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles)) || ...
-                (isfield(list_of_required_files, 'overlapBlocksFiles_AfterInjection') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles_AfterInjection))) %  && strcmp(dateOfRecording, 'merged_files_across_sessions')
+                (isfield(list_of_required_files, 'overlapBlocksFiles_AfterInjection') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles_AfterInjection)) || ... %  && strcmp(dateOfRecording, 'merged_files_across_sessions')
+                (isfield(list_of_required_files, 'allBlocksFiles_AfterInjection') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles_AfterInjection)))
             targetBlockUsed_among_raster_data = [];
         else
             targetBlockUsed_among_raster_data = targetBlockUsed;
@@ -362,8 +406,14 @@ if isequal(dateOfRecording, 'merged_files_across_sessions')
     end
     
     % Check for 'allBlocksFiles'
-    if isempty(block_grouping_folder) && isfield(list_of_required_files, 'allBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles)
-        block_grouping_folder = 'allBlocksFilesAcrossSessions/';
+    if isempty(block_grouping_folder) && isfield(list_of_required_files, 'allBlocksFiles')
+        if isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles)
+            block_grouping_folder = 'allBlocksFilesAcrossSessions/';
+        elseif isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles_AfterInjection)
+            block_grouping_folder = 'allBlocksFilesAcrossSessions_AfterInjection/';
+        elseif isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles_BeforeInjection)
+            block_grouping_folder = 'allBlocksFilesAcrossSessions_BeforeInjection/';
+        end
     end
         
     % Check for 'overlapBlocksFiles'
@@ -377,19 +427,25 @@ if isequal(dateOfRecording, 'merged_files_across_sessions')
         end
     end
         
-elseif ismember(dateOfRecording, allDateOfRecording) && isfield(list_of_required_files, 'overlapBlocksFiles_BeforeInjection') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles_BeforeInjection)
+elseif ismember(current_date, allDateOfRecording) && isfield(list_of_required_files, 'overlapBlocksFiles_BeforeInjection') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles_BeforeInjection)
     block_grouping_folder = 'Overlap_blocks_BeforeInjection/';
     
-elseif ismember(dateOfRecording, allDateOfRecording) && isfield(list_of_required_files, 'overlapBlocksFiles_AfterInjection') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles_AfterInjection)
+elseif ismember(current_date, allDateOfRecording) && isfield(list_of_required_files, 'overlapBlocksFiles_AfterInjection') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles_AfterInjection)
     block_grouping_folder = 'Overlap_blocks_AfterInjection/';
     
-elseif ~isequal(dateOfRecording, allDateOfRecording)
+elseif ismember(current_date, allDateOfRecording) && isfield(list_of_required_files, 'allBlocksFiles_BeforeInjection') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles_BeforeInjection)
+    block_grouping_folder = 'All_blocks_BeforeInjection/';
+    
+elseif ismember(current_date, allDateOfRecording) && isfield(list_of_required_files, 'allpBlocksFiles_AfterInjection') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles_AfterInjection)
+    block_grouping_folder = 'All_blocks_AfterInjection/';
+    
+elseif ~isequal(current_date, allDateOfRecording)
     % Handle different date recordings
     if isfield(list_of_required_files, 'overlapBlocksFiles')&& isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles) && ...
-            ~isequal(dateOfRecording, allDateOfRecording)
+            ~isequal(current_date, allDateOfRecording)
         block_grouping_folder = 'Overlap_blocks/';
     elseif isfield(list_of_required_files, 'allBlocksFiles')&& isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles) && ...
-            ~isequal(dateOfRecording, allDateOfRecording)
+            ~isequal(current_date, allDateOfRecording)
         block_grouping_folder = 'All_blocks/';
     end
 end
@@ -398,7 +454,11 @@ end
 
 % create prefix to save binned data
 % (prefix will contain info about all blocks)
-OUTPUT_PATH_binned_dateOfRecording = [OUTPUT_PATH_binned dateOfRecording '/'];
+if strcmp(dateOfRecording, 'merged_files_across_sessions')
+    OUTPUT_PATH_binned_dateOfRecording = [OUTPUT_PATH_binned dateOfRecording '/'];
+else % strcmp(dateOfRecording, 'each_session_separately')
+    OUTPUT_PATH_binned_dateOfRecording = [OUTPUT_PATH_binned current_date '/'];
+end
 
 % Create num_cv_splits_folder
 num_cv_splits_folder = sprintf('num_cv_splits_%d(%d)', settings.num_cv_splits, settings.num_cv_splits * settings.num_times_to_repeat_each_label_per_cv_split);
@@ -409,7 +469,7 @@ save_prefix_name = [Binned_data_dir 'Binned_Sim_LIP_dPul__NDT_data_for_' target_
 if ~exist(Binned_data_dir,'dir')
     mkdir(Binned_data_dir);
 end
-
+ 
 
 %% creating folders for sorting files when running across all sessions.
 % Call the function for each category
@@ -425,10 +485,15 @@ if strcmp(dateOfRecording, 'merged_files_across_sessions')
     copyFilesForCategory('sixthBlockFiles', [OUTPUT_PATH_raster dateOfRecording '/sixthBlockFilesAcrossSessions/'], listOfRequiredFiles, list_of_required_files);
     copyFilesForCategory('overlapBlocksFiles_AfterInjection', [OUTPUT_PATH_raster dateOfRecording '/overlapBlocksFilesAcrossSessions_AfterInjection/'], listOfRequiredFiles, list_of_required_files);
     copyFilesForCategory('overlapBlocksFiles_BeforeInjection', [OUTPUT_PATH_raster dateOfRecording '/overlapBlocksFilesAcrossSessions_BeforeInjection/'], listOfRequiredFiles, list_of_required_files);
-elseif ismember(dateOfRecording, allDateOfRecording)
-    copyFilesForCategory('overlapBlocksFiles_AfterInjection', [OUTPUT_PATH_raster dateOfRecording '/Overlap_blocks_AfterInjection/'], listOfRequiredFiles, list_of_required_files);
-    copyFilesForCategory('overlapBlocksFiles_BeforeInjection', [OUTPUT_PATH_raster dateOfRecording '/Overlap_blocks_BeforeInjection/'], listOfRequiredFiles, list_of_required_files);
+    copyFilesForCategory('allBlocksFiles_AfterInjection', [OUTPUT_PATH_raster dateOfRecording '/allBlocksFilesAcrossSessions_AfterInjection/'], listOfRequiredFiles, list_of_required_files);
+    copyFilesForCategory('allBlocksFiles_BeforeInjection', [OUTPUT_PATH_raster dateOfRecording '/allBlocksFilesAcrossSessions_BeforeInjection/'], listOfRequiredFiles, list_of_required_files);
+elseif ismember(current_date, allDateOfRecording)
+    copyFilesForCategory('overlapBlocksFiles_AfterInjection', [OUTPUT_PATH_raster current_date '/Overlap_blocks_AfterInjection/'], listOfRequiredFiles, list_of_required_files);
+    copyFilesForCategory('overlapBlocksFiles_BeforeInjection', [OUTPUT_PATH_raster current_date '/Overlap_blocks_BeforeInjection/'], listOfRequiredFiles, list_of_required_files);
+    copyFilesForCategory('allBlocksFiles_AfterInjection', [OUTPUT_PATH_raster current_date '/All_blocks_AfterInjection/'], listOfRequiredFiles, list_of_required_files);
+    copyFilesForCategory('allBlocksFiles_BeforeInjection', [OUTPUT_PATH_raster current_date '/All_blocks_BeforeInjection/'], listOfRequiredFiles, list_of_required_files);
 end
+
 
 
 %% Combining blocks, creating a metablock if 'overlapBlocksFiles'
@@ -437,11 +502,21 @@ end
 % Create meta_block_folder if block_grouping_folder meets the conditions
 meta_block_folder = '';  % Initialize meta_block_folder
 if isequal(block_grouping_folder, 'overlapBlocksFilesAcrossSessions/') || ...
-        isequal(block_grouping_folder, 'overlapBlocksFilesAcrossSessions_AfterInjection/') || ...
-        isequal(block_grouping_folder, 'Overlap_blocks_AfterInjection/')
+        isequal(block_grouping_folder, 'overlapBlocksFilesAcrossSessions_AfterInjection/') 
     
     % Construct paths
     OUTPUT_PATH_raster_dateOfRecording = [OUTPUT_PATH_raster dateOfRecording '/'];
+    OUTPUT_PATH_raster_dateOfRecording_Overlap_blocks = [OUTPUT_PATH_raster_dateOfRecording block_grouping_folder];
+    
+        % Modify "metaFiles" folder creation as needed
+    meta_block_folder = [OUTPUT_PATH_raster_dateOfRecording_Overlap_blocks, 'metaFiles/'];
+    if ~exist(meta_block_folder, 'dir')
+        mkdir(meta_block_folder);
+    end
+    
+elseif isequal(block_grouping_folder, 'Overlap_blocks_AfterInjection/')
+     % Construct paths
+    OUTPUT_PATH_raster_dateOfRecording = [OUTPUT_PATH_raster current_date '/'];
     OUTPUT_PATH_raster_dateOfRecording_Overlap_blocks = [OUTPUT_PATH_raster_dateOfRecording block_grouping_folder];
     
     % Modify "metaFiles" folder creation as needed
@@ -451,24 +526,27 @@ if isequal(block_grouping_folder, 'overlapBlocksFilesAcrossSessions/') || ...
     end
 else
     % Construct paths without creating meta_block_folder
-    OUTPUT_PATH_raster_dateOfRecording = [OUTPUT_PATH_raster dateOfRecording '/'];
+    OUTPUT_PATH_raster_dateOfRecording = [OUTPUT_PATH_raster current_date '/'];
     OUTPUT_PATH_raster_dateOfRecording_Overlap_blocks = [OUTPUT_PATH_raster_dateOfRecording block_grouping_folder];
 end
 
-
+ 
 
 
 if (isfield(list_of_required_files, 'overlapBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles)) || ...
         (isfield(list_of_required_files, 'overlapBlocksFiles_AfterInjection') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles_AfterInjection))
-    mergeFilesInBlockGroup(list_of_required_files, listOfRequiredFiles, target_state_name, search_target_brain_structure_among_raster_data, target_brain_structure, OUTPUT_PATH_raster_dateOfRecording_Overlap_blocks, meta_block_folder);   
+    mergeFilesInBlockGroup(listOfRequiredFiles, target_state_name, search_target_brain_structure_among_raster_data, target_brain_structure, OUTPUT_PATH_raster_dateOfRecording_Overlap_blocks, meta_block_folder);   
 end
 
 %%  Make Binned_data
 
 if isempty(meta_block_folder)
-    Raster_data_dir = [OUTPUT_PATH_raster, dateOfRecording '/' block_grouping_folder];
-else
-    
+    if strcmp(dateOfRecording, 'merged_files_across_sessions')
+        Raster_data_dir = [OUTPUT_PATH_raster, dateOfRecording '/' block_grouping_folder];
+    else % strcmp(dateOfRecording, 'each_session_separately')
+        Raster_data_dir = [OUTPUT_PATH_raster, current_date '/' block_grouping_folder];
+    end  
+else 
     Raster_data_dir = meta_block_folder;
 end
 
@@ -488,7 +566,7 @@ save([Binned_data_dir filename_binned_data '_smoothed.mat'],'binned_data','binne
 %% Prepearing for decoding
 
 
-switch labels_to_use
+switch given_labels_to_use
     case 'instr_R_instr_L'
         labels_to_use = {'instr_R', 'instr_L'};
     case 'choice_R_choice_L'
@@ -573,19 +651,22 @@ num_cv_splits = settings.num_cv_splits; % 20 cross-validation runs
 % If the data is run across sessions, the data was not recorded at the simultaneously
 %(by default, the data is recorded at the simultaneously in the sdndt_Sim_LIP_dPul_NDT_settings.m:
 % settings.create_simultaneously_recorded_populations = 1;)
-if isequal(dateOfRecording, 'merged_files_across_sessions')&& ...
-        isfield(list_of_required_files, 'overlapBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles) || ...
-        isfield(list_of_required_files, 'firstBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.firstBlockFiles) || ...
-        isfield(list_of_required_files, 'secondBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.secondBlockFiles) || ...
-        isfield(list_of_required_files, 'thirdBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.thirdBlockFiles) || ...
-        isfield(list_of_required_files, 'fourthBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.fourthBlockFiles) || ...
-        isfield(list_of_required_files, 'fifthBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.fifthBlockFiles) || ...
-        isfield(list_of_required_files, 'sixthBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.sixthBlockFiles) || ...
-        isfield(list_of_required_files, 'allBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles) || ...
-        isfield(list_of_required_files, 'overlapBlocksFiles_BeforeInjection') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles_BeforeInjection) || ...
-        isfield(list_of_required_files, 'overlapBlocksFiles_AfterInjection') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles_AfterInjection)
+if isequal(dateOfRecording, 'merged_files_across_sessions')%&& ...
+%         isfield(list_of_required_files, 'overlapBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles) || ...
+%         isfield(list_of_required_files, 'firstBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.firstBlockFiles) || ...
+%         isfield(list_of_required_files, 'secondBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.secondBlockFiles) || ...
+%         isfield(list_of_required_files, 'thirdBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.thirdBlockFiles) || ...
+%         isfield(list_of_required_files, 'fourthBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.fourthBlockFiles) || ...
+%         isfield(list_of_required_files, 'fifthBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.fifthBlockFiles) || ...
+%         isfield(list_of_required_files, 'sixthBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.sixthBlockFiles) || ...
+%         isfield(list_of_required_files, 'allBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles) || ...
+%         isfield(list_of_required_files, 'overlapBlocksFiles_BeforeInjection') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles_BeforeInjection) || ...
+%         isfield(list_of_required_files, 'overlapBlocksFiles_AfterInjection') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles_AfterInjection) || ...
+%         isfield(list_of_required_files, 'allBlocksFiles_BeforeInjection') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles_BeforeInjection) || ...
+%         isfield(list_of_required_files, 'allBlocksFiles_AfterInjection') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles_AfterInjection)
     settings.create_simultaneously_recorded_populations = 0; % data are not recorded simultaneously
 end
+
 
 
 % Create a datasource that takes our binned data, and specifies that we want to decode
@@ -652,6 +733,7 @@ save(save_file_name, 'DECODING_RESULTS');
 
 % Plot decoding
 sdndt_Sim_LIP_dPul_NDT_plot_decoding_results(injection, typeOfSessions, save_file_name);
+end
   
 end
 
@@ -676,15 +758,15 @@ if isfield(list_of_required_files, categoryName) && isequal(listOfRequiredFiles,
 end
 end
 
-function mergeFilesInBlockGroup(list_of_required_files, listOfRequiredFiles, target_state_name, search_target_brain_structure_among_raster_data, target_brain_structure, OUTPUT_PATH_raster_dateOfRecording_Overlap_blocks, meta_block_folder)
+function mergeFilesInBlockGroup(listOfRequiredFiles, target_state_name, search_target_brain_structure_among_raster_data, target_brain_structure, OUTPUT_PATH_raster_dateOfRecording_Overlap_blocks, meta_block_folder)
 
 % Extract unique prefixes from the filenames
-if (isfield(list_of_required_files, 'overlapBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles)) || ...
-        (isfield(list_of_required_files, 'overlapBlocksFiles_AfterInjection') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles_AfterInjection))
+% if (isfield(list_of_required_files, 'overlapBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles)) || ...
+%         (isfield(list_of_required_files, 'overlapBlocksFiles_AfterInjection') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles_AfterInjection))
     
     unique_prefixes = {};
-    for idx = 1:length(list_of_required_files.overlapBlocksFiles)
-        current_file_parts = strsplit(list_of_required_files.overlapBlocksFiles{idx}, '_');
+    for idx = 1:length(listOfRequiredFiles)
+        current_file_parts = strsplit(listOfRequiredFiles{idx}, '_');
         current_prefix = strjoin(current_file_parts(1:9), '_');
         
         % Check if the current_prefix is not already in unique_prefixes
@@ -697,8 +779,8 @@ if (isfield(list_of_required_files, 'overlapBlocksFiles') && isequal(listOfRequi
         current_prefix = unique_prefixes{prefix_idx};
         
         % Filter files based on the target_brain_structure, target_state, and listOfRequiredFiles
-        current_group_files = list_of_required_files.overlapBlocksFiles(startsWith(list_of_required_files.overlapBlocksFiles, current_prefix) ...
-            & contains(list_of_required_files.overlapBlocksFiles, target_state_name));
+        current_group_files = listOfRequiredFiles(startsWith(listOfRequiredFiles, current_prefix) ...
+            & contains(listOfRequiredFiles, target_state_name));
         
         if ~isempty(search_target_brain_structure_among_raster_data)
             % Filter files based on the target_brain_structure
@@ -790,10 +872,10 @@ if (isfield(list_of_required_files, 'overlapBlocksFiles') && isequal(listOfRequi
                 % Construct the merged filename with block numbers
                 if isempty(meta_block_folder)
                     % If meta_block_folder is empty, use OUTPUT_PATH_raster_dateOfRecording_Overlap_blocks
-                    merged_filename = fullfile(OUTPUT_PATH_raster_dateOfRecording_Overlap_blocks, [erase(base_name, '_block_1') '_' strjoin(block_numbers, '_') '.mat']);
+                    merged_filename = fullfile(OUTPUT_PATH_raster_dateOfRecording_Overlap_blocks, [regexprep(base_name, '_block_\d+', '') '_' strjoin(block_numbers, '_') '.mat']);
                 else
                     % Otherwise, use meta_block_folder
-                    merged_filename = fullfile(meta_block_folder, [erase(base_name, '_block_1') '_' strjoin(block_numbers, '_') '.mat']);
+                    merged_filename = fullfile(meta_block_folder, [regexprep(base_name, '_block_\d+', '') '_' strjoin(block_numbers, '_') '.mat']);
                 end
                 
                 % Save the merged data to a new file
@@ -801,9 +883,10 @@ if (isfield(list_of_required_files, 'overlapBlocksFiles') && isequal(listOfRequi
             end
         end
     end
-else
-    disp('The cell arrays are not equal.');
-end
+% else
+%     disp('The cell arrays are not equal.');
+% end  % if (isfield(list_of_required_files, 'overlapBlocksFiles')
+%  
 end
 
 function block_number = extractBlockNumber(filename)
