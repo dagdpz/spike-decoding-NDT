@@ -60,7 +60,7 @@ settings.smoothing_method = 'gaussian'; % movmean / gaussian, see smoothdata
 
 
 % Decoding
-settings.num_cv_splits = 16; % because size of curr_trial_to_use from baisic_DS function is 35x1 (num_cv_splits*num_times_to_repeat_each_label_per_cv_split = 34) 
+settings.num_cv_splits = 6; % because size of curr_trial_to_use from baisic_DS function is 35x1 (num_cv_splits*num_times_to_repeat_each_label_per_cv_split = 34) 
 settings.num_resample_runs = 50;
 % additiobal
 settings.num_times_to_repeat_each_label_per_cv_split = 2; % can have multiple repetitions of each label in each cross-validation split (which is a faster way to run the code that uses most of the data)
