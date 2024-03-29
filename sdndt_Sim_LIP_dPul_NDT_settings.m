@@ -7,13 +7,13 @@ function [base_path, INPUT_PATH, OUTPUT_PATH_raster, OUTPUT_PATH_binned, setting
 
 % Experiment: Functional interactions between the dorsal pulvinar and LIP during spatial target selection and oculomotor planning
 if strcmp(injection, '2') 
-    base_path = 'C:/Projects/Sim_dPul_LIP/NDT/Functional_interaction_experiment_dPul_LIP/';
+    base_path = 'Y:\Personal\Masha/Sim_dPul_LIP/NDT/Functional_interaction_experiment_dPul_LIP/';
     
 % Experiment: The effect of unilateral dorsal pulvinar inactivation on bi-hemispheric LIP activity
 elseif strcmp(injection, '1')
-    base_path = 'C:/Projects/Sim_dPul_LIP/NDT/Inactivation_experiment/inactivation_sessions/';
+    base_path = 'Y:\Personal\Masha/Sim_dPul_LIP/NDT/Inactivation_experiment/inactivation_sessions/';
 elseif strcmp(injection, '0')
-    base_path = 'C:/Projects/Sim_dPul_LIP/NDT/Inactivation_experiment/control_sessions/';
+    base_path = 'Y:\Personal\Masha/Sim_dPul_LIP/NDT/Inactivation_experiment/control_sessions/';
     
 else
     error('Invalid selection. Use ''control'' or ''injection'' for selectedSet.');
@@ -60,7 +60,7 @@ settings.smoothing_method = 'gaussian'; % movmean / gaussian, see smoothdata
 
 
 % Decoding
-settings.num_cv_splits = 6; % because size of curr_trial_to_use from baisic_DS function is 35x1 (num_cv_splits*num_times_to_repeat_each_label_per_cv_split = 34) 
+settings.num_cv_splits = 4; % because size of curr_trial_to_use from baisic_DS function is 35x1 (num_cv_splits*num_times_to_repeat_each_label_per_cv_split = 34) 
 settings.num_resample_runs = 50;
 % additiobal
 settings.num_times_to_repeat_each_label_per_cv_split = 2; % can have multiple repetitions of each label in each cross-validation split (which is a faster way to run the code that uses most of the data)
