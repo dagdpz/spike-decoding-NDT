@@ -24,21 +24,38 @@ if strcmp(injection, '1')
 elseif  strcmp(injection, '0') || strcmp(injection, '2')
     datesForSessions = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(injection, typeOfSessions);
 end
-%%
+
+
+%% Iterate over typeOfSessions and datesForSessions
 numTypesOfSessions = numel(typeOfSessions);
 
+totalCycles = numel(datesForSessions); % Calculate total number of cycles based on the datesForSessions
+totalIterations = sum(cellfun(@numel, datesForSessions)); % Calculate the total number of iterations
+progress = 0; % Initialize the progress
+h = waitbar(0, 'Processing... 0%'); % Initialize the waitbar
 
 for j = 1:numTypesOfSessions
     current_type_of_session = typeOfSessions{j}
     current_set_of_date = datesForSessions{j}; % Get the corresponding set of dates !!!!!
     
-    for numDays = 1:numel(current_set_of_date)
+    % Calculate total number of days for the current type of session
+    totalDays = numel(current_set_of_date);
+    
+    for numDays = 1:totalDays
         current_date = current_set_of_date{numDays};
+        
         sdndt_Sim_LIP_dPul_Num_of_Units_and_Trials_internal(injection, current_type_of_session, current_date)
+        
+        progress = progress + 1;  % Update progress
+        currentProgress = progress / totalIterations * 100; % Calculate the current progress percentage
+        waitbar(currentProgress / 100, h, sprintf('Processing... %.2f%%', currentProgress)); % Update waitbar
     end
-
+    
 end
-end 
+
+% Close waitbar after completion
+close(h);
+end
 
 
 function sdndt_Sim_LIP_dPul_Num_of_Units_and_Trials_internal(injection, typeOfSessions, dateOfRecording)
@@ -120,7 +137,6 @@ end
 
 
 
-
 % Check if any cell contains more than one meaning
 if any(cellfun(@(x) numel(unique(x)) > 1, uniqueUnitsCell))
     
@@ -158,16 +174,37 @@ if any(cellfun(@(x) numel(unique(x)) > 1, uniqueUnitsCell))
         num_of_choice_trials.(blockStr) = 0;
         num_of_instr_trials.(blockStr) = 0;
         
+        % Initialize counts for Choice L and Choice R trials
+        num_of_choice_L_trials.(blockStr) = 0;
+        num_of_choice_R_trials.(blockStr) = 0;
+        num_of_instr_L_trials.(blockStr) = 0;
+        num_of_instr_R_trials.(blockStr) = 0;
+        
         % Loop through each trial in the selected population
         for trial = selectedOneUnit.trial
             if trial.block == blockNum
                 
                 if trial.success
                     num_of_success_trials.(blockStr) = num_of_success_trials.(blockStr) + 1;
+                    
                     if trial.choice == 1
                         num_of_choice_trials.(blockStr) = num_of_choice_trials.(blockStr) + 1;
+                        
+                        if real(trial.tar_pos) > 0 % Check if the trial was to the left or right
+                            num_of_choice_R_trials.(blockStr) = num_of_choice_R_trials.(blockStr) + 1;
+                        else
+                            num_of_choice_L_trials.(blockStr) = num_of_choice_L_trials.(blockStr) + 1;
+                        end
+                        
                     else
                         num_of_instr_trials.(blockStr) = num_of_instr_trials.(blockStr) + 1;
+                        
+                        if real(trial.tar_pos) > 0 % Check if the trial was to the left or right
+                            num_of_instr_R_trials.(blockStr) = num_of_instr_R_trials.(blockStr) + 1;
+                        else
+                            num_of_instr_L_trials.(blockStr) = num_of_instr_L_trials.(blockStr) + 1;
+                        end
+                        
                     end
                 end
             end
@@ -208,7 +245,11 @@ else
     % Initialize variables for amount_of_units and success_trials
     num_of_success_trials = struct();
     num_of_choice_trials = struct();
+    num_of_choice_L_trials = struct(); % Initialize for left choice trials
+    num_of_choice_R_trials = struct(); % Initialize for right choice trials
     num_of_instr_trials = struct();
+    num_of_instr_L_trials = struct(); % Initialize for left choice trials
+    num_of_instr_R_trials = struct(); % Initialize for right choice trials
     
     % Loop through each block
     for blockNum = uniqueBlocks
@@ -217,7 +258,11 @@ else
         % Initialize counts for the current block
         num_of_success_trials.(blockStr) = 0;
         num_of_choice_trials.(blockStr) = 0;
+        num_of_choice_L_trials.(blockStr) = 0; % Initialize count for left choice trials
+        num_of_choice_R_trials.(blockStr) = 0; % Initialize count for right choice trials
         num_of_instr_trials.(blockStr) = 0;
+        num_of_instr_L_trials.(blockStr) = 0; % Initialize count for left choice trials
+        num_of_instr_R_trials.(blockStr) = 0;
         
         % Get the trials for the current block
         blockTrials = selectedUnit{blockNum};
@@ -229,10 +274,25 @@ else
             % Check if the trial is successful
             if trial.success
                 num_of_success_trials.(blockStr) = num_of_success_trials.(blockStr) + 1;
+                
                 if trial.choice == 1
                     num_of_choice_trials.(blockStr) = num_of_choice_trials.(blockStr) + 1;
+                    
+                    if real(trial.tar_pos) > 0 % Check if the trial was to the left or right
+                        num_of_choice_R_trials.(blockStr) = num_of_choice_R_trials.(blockStr) + 1;
+                    else
+                        num_of_choice_L_trials.(blockStr) = num_of_choice_L_trials.(blockStr) + 1;
+                    end
+                    
                 else
                     num_of_instr_trials.(blockStr) = num_of_instr_trials.(blockStr) + 1;
+                    
+                    if real(trial.tar_pos) > 0 % Check if the trial was to the left or right
+                        num_of_instr_R_trials.(blockStr) = num_of_instr_R_trials.(blockStr) + 1;
+                    else
+                        num_of_instr_L_trials.(blockStr) = num_of_instr_L_trials.(blockStr) + 1;
+                    end
+                    
                 end
             end
         end
@@ -243,15 +303,15 @@ end
 
 
 %% Display
- uniqueTargets = unique({population.target}); % Extract unique targets from the entire population
- uniqueTargetsStr = ['(' strjoin(uniqueTargets, ', ') ')']; % Create a string of unique targets in round brackets
- parts = strsplit(population(1).unit_ID, '_');
- nameOfSession = strcat(parts{1}, '_', parts{2});
+uniqueTargets = unique({population.target}); % Extract unique targets from the entire population
+uniqueTargetsStr = ['(' strjoin(uniqueTargets, ', ') ')']; % Create a string of unique targets in round brackets
+parts = strsplit(population(1).unit_ID, '_');
+nameOfSession = strcat(parts{1}, '_', parts{2});
 % disp(' '); % Display an empty line
 % disp(['Number of Units for both targets ' uniqueTargetsStr ':']);
 % disp(nameOfSession);
 % disp(' '); % Display an empty line
-% 
+%
 % % Display the number of units for each block
 % for blockNum = uniqueBlocks
 %     field = ['block_' num2str(blockNum)];
@@ -259,20 +319,20 @@ end
 %         disp([num2str(ammount_of_units.(field)) ' units from ' num2str(numPopulations) ' contain ' field]);
 %     end
 % end
-% 
+%
 % disp(' '); % Display an empty line
 % disp('Number of Success Trials:');
 % disp(num_of_success_trials);
-% 
+%
 % disp('Number of Choice Trials:');
 % disp(num_of_choice_trials);
-% 
+%
 % disp('Number of Instructed Trials:');
 % disp(num_of_instr_trials);
 
-    
-    
-    
+
+
+
 % Prepare data for writing to file
 fileContent = sprintf('Number of Units for both targets %s:\n%s\n\n', uniqueTargetsStr, nameOfSession);
 
@@ -294,6 +354,7 @@ for blockNum = uniqueBlocks
     end
 end
 
+% Number of Choice Trials
 fileContent = [fileContent sprintf('\nNumber of Choice Trials:\n')];
 for blockNum = uniqueBlocks
     field = ['block_' num2str(blockNum)];
@@ -302,11 +363,46 @@ for blockNum = uniqueBlocks
     end
 end
 
+% Append counts for Choice L and Choice R trials
+fileContent = [fileContent sprintf('\nNumber of Choice L:\n')];
+for blockNum = uniqueBlocks
+    field = ['block_' num2str(blockNum)];
+    if isfield(num_of_choice_L_trials, field)
+        fileContent = [fileContent sprintf('    %s: %d\n', field, num_of_choice_L_trials.(field))];
+    end
+end
+
+fileContent = [fileContent sprintf('\nNumber of Choice R:\n')];
+for blockNum = uniqueBlocks
+    field = ['block_' num2str(blockNum)];
+    if isfield(num_of_choice_R_trials, field)
+        fileContent = [fileContent sprintf('    %s: %d\n', field, num_of_choice_R_trials.(field))];
+    end
+end
+
+% Number of Instructed Trials
 fileContent = [fileContent sprintf('\nNumber of Instructed Trials:\n')];
 for blockNum = uniqueBlocks
     field = ['block_' num2str(blockNum)];
     if isfield(num_of_instr_trials, field)
         fileContent = [fileContent sprintf('    %s: %d\n', field, num_of_instr_trials.(field))];
+    end
+end
+
+% Append counts for Instructed L and Instructed R trials
+fileContent = [fileContent sprintf('\nNumber of Instructed L:\n')];
+for blockNum = uniqueBlocks
+    field = ['block_' num2str(blockNum)];
+    if isfield(num_of_instr_L_trials, field)
+        fileContent = [fileContent sprintf('    %s: %d\n', field, num_of_instr_L_trials.(field))];
+    end
+end
+
+fileContent = [fileContent sprintf('\nNumber of Instructed R:\n')];
+for blockNum = uniqueBlocks
+    field = ['block_' num2str(blockNum)];
+    if isfield(num_of_instr_R_trials, field)
+        fileContent = [fileContent sprintf('    %s: %d\n', field, num_of_instr_R_trials.(field))];
     end
 end
 
@@ -322,4 +418,4 @@ file_name = fullfile(path_folderNameForFile, ['num_of_units_and_trials_for_' dat
 fileID = fopen(file_name, 'w'); % Open the file for writing
 fprintf(fileID, fileContent);
 fclose(fileID); % Close the file
-end 
+end
