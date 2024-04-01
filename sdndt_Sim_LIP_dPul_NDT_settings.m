@@ -73,4 +73,4 @@ settings.y_lim = [20 100];
 % settings.significant_event_times = [0 500 1000]; % for plotting relevant trial events
 % the xline(500) function in the sdndt_Sim_LIP_dPul_NDT_plot_decoding_results.m code is used for this purpose
 
-settings.errorbar_type_to_plot = 2; % 1 - decoding 
+settings.errorbar_type_to_plot = 1; % 1 -If this is set to 1, then the standard deviations over resample runs (i.e., stdev.over_resamples) is used. 

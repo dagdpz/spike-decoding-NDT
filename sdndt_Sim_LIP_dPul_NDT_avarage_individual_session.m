@@ -39,7 +39,8 @@ targetParams.GOSignal = 'GOsignal';
 
 
 %% Define labels_to_use as a cell array containing both values
-labels_to_use = {'instr_R_instr_L', 'choice_R_choice_L'};
+labels_to_use = {%'instr_R_instr_L', ...
+    'choice_R_choice_L'};
 
 
 %% Define valid combinations of injection and target_brain_structure
@@ -229,18 +230,22 @@ allDateOfRecording = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(inje
 %% find grouping_folder
 if isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection')
     block_grouping_folder = 'Overlap_blocks_BeforeInjection/';
+    block_grouping_folder_for_saving = 'overlapBlocksFilesAcrossSessions_BeforeInjection'
     
     % elseif ismember(current_date, allDateOfRecording) && isfield(list_of_required_files, 'overlapBlocksFiles_AfterInjection') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles_AfterInjection)
 elseif isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection')
     block_grouping_folder = 'Overlap_blocks_AfterInjection/';
+    block_grouping_folder_for_saving = 'overlapBlocksFilesAcrossSessions_AfterInjection'
     
     % elseif ismember(current_date, allDateOfRecording) && isfield(list_of_required_files, 'allBlocksFiles_BeforeInjection') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles_BeforeInjection)
 elseif isequal(givenListOfRequiredFiles, 'allBlocksFiles_BeforeInjection')
     block_grouping_folder = 'All_blocks_BeforeInjection/';
+    block_grouping_folder_for_saving = 'allBlocksFilesAcrossSessions_BeforeInjection'
     
     % elseif ismember(current_date, allDateOfRecording) && isfield(list_of_required_files, 'allpBlocksFiles_AfterInjection') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles_AfterInjection)
 elseif isequal(givenListOfRequiredFiles, 'allBlocksFiles_AfterInjection')
     block_grouping_folder = 'All_blocks_AfterInjection/';
+    block_grouping_folder_for_saving = 'allBlocksFilesAcrossSessions_AfterInjection'
     
     % elseif ~isequal(dateOfRecording, allDateOfRecording)
     %     % Handle different date recordings
@@ -270,9 +275,19 @@ if  strcmp(typeOfDecoding, 'merged_files_across_sessions')
     
     % Initialize decodingResultsFilePath
     decodingResultsFilePath = '';  % Initialize as an empty string
-       
-    % Initialize cell array to store mean decoding results
-    all_mean_decoding_results = {};
+    
+    % Initialize cell array ...
+    all_mean_decoding_results = {}; % to store mean decoding results
+    sites_to_use = {};
+    numOfUnits = {};
+    numOfTrials = {};
+    label_counts_cell = cell(1, numel(dateOfRecording)); % Initialize a cell array to store label_counts for each day
+    
+    totalNumOfUnits = 0; % Initialize the total number of units
+    totalNumOfTrials = 0; % Initialize the total number of trials
+    
+    sum_first_numbers = 0; % Initialize variables to store sums of the first and second numbers
+    sum_second_numbers = 0;
     
     for numOfData = 1:numel(dateOfRecording)
         current_dateOfRecording = dateOfRecording{numOfData}
@@ -328,46 +343,259 @@ if  strcmp(typeOfDecoding, 'merged_files_across_sessions')
                 end
             end
             
-            if ~isempty(decodingResultsFilePath)
-                % Load the file
-                loadedData = load(decodingResultsFilePath);
-                
-                % Now you can access the data from the loaded file using the appropriate fields or variables
-                % For example, if there is a variable named 'results' in the loaded file, you can access it as follows:
-                mean_decoding_results = loadedData.DECODING_RESULTS.NORMALIZED_RANK_RESULTS.mean_decoding_results;
-                
-                % Append mean decoding results to the cell array
-                all_mean_decoding_results{end+1} = mean_decoding_results;
-                
-                % Process the loaded data as needed
-            else
-                % Handle the case when the file was not found
-                disp('ERROR: The decoding results file was not found.');
-            end
             
+            
+            % If the file is still not found and there are alternative folders to check
+            if isempty(decodingResultsFilePath) && numel(cvSplitsFolders) > 1
+                % Extract the values within parentheses and outside parentheses for each folder
+                values_in_parentheses = zeros(1, numel(cvSplitsFolders));
+                values_outside_parentheses = zeros(1, numel(cvSplitsFolders));
+                for idx = 1:numel(cvSplitsFolders)
+                    cvSplitFolderName = cvSplitsFolders(idx).name;
+                    parenthesesIdx = strfind(cvSplitFolderName, '(');
+                    values_in_parentheses(idx) = str2double(cvSplitFolderName(parenthesesIdx+1:end-1));
+                    values_outside_parentheses(idx) = str2double(extractBetween(cvSplitFolderName, 'num_cv_splits_', '('));
+                end
+                
+                % Sort folders based on values outside parentheses (in descending order)
+                [~, sorted_idx] = sort(values_outside_parentheses, 'descend');
+                
+                % Iterate over sorted folders and check for the file
+                for idx = sorted_idx
+                    
+                    % Skip the folder with the highest value if it has already been considered
+                    if strcmp(cvSplitsFolders(idx).name, highestFolder)
+                        continue;
+                    end
+                    cvSplitFolderName = cvSplitsFolders(idx).name;
+                    cvSplitFolderPath = fullfile(OUTPUT_PATH_binned_data, cvSplitFolderName);
+                    
+                    % List the contents of the current folder
+                    decodingResultsFiles = dir(fullfile(cvSplitFolderPath, '*_DECODING_RESULTS.mat'));
+                    
+                    % Check if the required file exists in this folder
+                    for fileIndex = 1:numel(decodingResultsFiles)
+                        decodingResultsFilename = decodingResultsFiles(fileIndex).name;
+                        
+                        % Check if the file name contains the desired target structure, state, and label
+                        if contains(decodingResultsFilename, target_brain_structure) && ...
+                                contains(decodingResultsFilename, target_state) && ...
+                                contains(decodingResultsFilename, combinedLabel)
+                            % Construct the full path to the DECODING_RESULTS.mat file
+                            decodingResultsFilePath = fullfile(cvSplitFolderPath, decodingResultsFilename);
+                            
+                            % Now you have the path to the suitable DECODING_RESULTS.mat file
+                            % You can process or load this file as needed
+                            break; % Exit the loop once the file is found
+                        end
+                    end
+                    
+                    % Exit the loop if the file is found
+                    if ~isempty(decodingResultsFilePath)
+                        break;
+                    end
+                end
+            end
+            %%%%%%%%%%%%%%%%%%%%%%%%%%
         end
         
+        if ~isempty(decodingResultsFilePath)
+            % Load the file
+            loadedData = load(decodingResultsFilePath);
+            
+            % Now you can access the data from the loaded file using the appropriate fields or variables
+            % For example, if there is a variable named 'results' in the loaded file, you can access it as follows:
+            mean_decoding_results = loadedData.DECODING_RESULTS.NORMALIZED_RANK_RESULTS.mean_decoding_results;
+            
+            % Append mean decoding results to the cell array
+            all_mean_decoding_results{end+1} = mean_decoding_results;
+            
+            % Process the loaded data as needed
+        else
+            % Handle the case when the file was not found
+            disp('ERROR: The decoding results file was not found.');
+        end
         
+        [filepath, filename, fileext] = fileparts(decodingResultsFilePath); % Get the path and filename components
+        desired_part = fullfile(filepath, filename); % Concatenate the path and filename without the extension
+        binned_file_name = [desired_part '.mat']; % Add '.mat' to the desired part
+        % Specify substrings to remove
+        substrings_to_remove = {'_instr_R instr_L_DECODING_RESULTS', '_choice_R choice_L_DECODING_RESULTS', '_instr_R choice_R_DECODING_RESULTS', '_instr_L choice_L_DECODING_RESULTS'}; % Add more patterns as needed
+        for substring = substrings_to_remove % Remove specified substrings using strrep
+            binned_file_name = strrep(binned_file_name, substring{1}, '');
+        end
+        load(binned_file_name);
+        
+        
+        % end
+        
+        %% Number of units
+        sites_to_use{end+1} = loadedData.DECODING_RESULTS.DS_PARAMETERS.sites_to_use;
+        numOfUnits{end+1} = size(sites_to_use{end}, 2);  % Calculate the number of units
+        
+        
+        unitsForCurrentDay = size(sites_to_use{end}, 2); % Calculate the number of units for the current day
+        totalNumOfUnits = totalNumOfUnits + unitsForCurrentDay;  % Add the units for the current day to the total
+        
+        %% Number of trials
+        trial_type_side = binned_labels.trial_type_side;
+        label_names_to_use = loadedData.DECODING_RESULTS.DS_PARAMETERS.label_names_to_use;
+        
+        label_counts = zeros(size(label_names_to_use)); % Initialize counters
+        unique_sequences = containers.Map('KeyType', 'char', 'ValueType', 'logical'); % Map to store unique sequences
+        
+        for x = 1:length(sites_to_use{end}) % Loop through sites_to_use and count occurrences of labels_names_to_use in trial_type_side
+            % site_index = sites_to_use{:, x};
+            site_index = sites_to_use{end}(x); % Access the site index directly
+            labels_at_site = trial_type_side{1, site_index}; % Access the_labels at the specified site_index
+            
+            % Convert cell array to a string for easy comparison
+            sequence_str = strjoin(labels_at_site, ',');
+            
+            % Check if the sequence is unique
+            if ~isKey(unique_sequences, sequence_str)
+                unique_sequences(sequence_str) = true; % Mark as seen
+                for y = 1:length(label_names_to_use)
+                    % Count occurrences of unique_labels in labels_at_site
+                    label_counts(y) = label_counts(y) + sum(strcmp(labels_at_site, label_names_to_use{y}));
+                end
+            end
+        end
+        
+        numOfTrials{end+1} = sum(label_counts);
+        label_counts_cell{numOfData} = label_counts; % Store label_counts for the current day
+        
+        
+        % Accumulate the trial counts for the current day to the total
+        totalNumOfTrials = totalNumOfTrials + numOfTrials{end};
+        
+        % After processing each day, accumulate the sums of the first and second numbers
+        sum_first_numbers = sum_first_numbers + label_counts_cell{numOfData}(1);
+        sum_second_numbers = sum_second_numbers + label_counts_cell{numOfData}(2);
+        first_second_numbers = [sum_first_numbers sum_second_numbers]
+        
+        %% prepearing fot the plotting numOfTrials and numOfUnits
+        
+        % Sum up the values in the cell array numOfUnits
+        numOfUnits_and_numOfTrials_info = sprintf('Num of Units: %s\nNum of Trials: %s\n', num2str(totalNumOfUnits), num2str(totalNumOfTrials));
+        
+        % Display the label counts information
+        labelCountsInfo = '';
+        for g = 1:length(label_names_to_use)
+            % Concatenate the label name and the total count
+            labelCountsInfo = [labelCountsInfo, sprintf('\nNum of %s: %d', label_names_to_use{g}, first_second_numbers(g))];
+        end
+        
+        % to display the complete information
+        numOfUnits_and_numOfTrials_info_labelsAppears = [numOfUnits_and_numOfTrials_info, labelCountsInfo];
+        %numOfUnits_and_numOfTrials_info_labelsAppears = sprintf('%s%s', numOfUnits_and_numOfTrials_info, labelCountsInfo);
+        
+        %% location of the curve on the graph
+        
+        % Concatenate mean decoding results from all days into one variable
+        mean_decoding_results = horzcat(all_mean_decoding_results{:});
+        mean_decoding_results_100 = mean_decoding_results*100
+        %  plot(mean_decoding_results_100)
+        
+        
+        % Calculate the total number of time points
+        numTimePoints = size(mean_decoding_results_100, 1);
+        median_value = (numTimePoints + 1) / 2; % Median value
+        
+        % Calculate the bin duration in milliseconds
+        step_size = loadedData.DECODING_RESULTS.DS_PARAMETERS.binned_site_info.binning_parameters.sampling_interval; % milliseconds
+        
+        % Calculate the offset to center the graph around the median
+        offset = 500 - median_value * step_size;
+        
+        % Generate the time values for each bin centered around the median
+        timeValues = (1:numTimePoints) * step_size + offset;
+        
+        
+        %% Plot the results
+        
+        lightBlueColor = [0.5, 0.5, 1.0]; % RGB triplet representing a lighter shade of blue
+        plot(timeValues, mean_decoding_results_100, 'LineWidth', 1, 'Color', lightBlueColor);
+        
+        tickPositions = 0:200:1000; % Calculate the tick positions every 200 ms
+        xticks(tickPositions);  % Set the tick positions on the X-axis
+        
+        xlabel('Time (ms)', 'FontSize', 18); % Set the font size to 14 for the xlabel
+        ylabel('Classification Accuracy', 'FontSize', 18); % Set the font size to 14 for the ylabel
+        
+        
+        box off;  % Remove the box around the axes
+        ax = gca; % Display only the X and Y axes
+        ax.YAxis.Visible = 'on';  % Show Y-axis
+        ax.XAxis.Visible = 'on';  % Show X-axis
+        
+        xline(500); % draw a vertical line at 500
+        yline(50); % draw a horizontal line at 50
+        set(gca,'Xlim',settings.time_lim, 'Ylim',settings.y_lim); % limitation of the X (from 0 to 1000) and Y (from 20 to 100) axes
+        
+        % change the size of the figure
+        set(gcf,'position',[450,400,700,500]) % [x0,y0,width,height]
+        
+        %         % Add text using the annotation function
+        %         positionOfAnnotation = [0.76, 0.5, 0.26, 0.26]; % [x position, y position, size x, size y]
+        %         annotation('textbox', positionOfAnnotation, 'String', numOfUnits_and_numOfTrials_info_labelsAppears, ...
+        %             'FontSize', 10, 'HorizontalAlignment', 'left','FitBoxToText','on');
+        %         set(gca, 'Position', [0.1, 0.13, 0.65, 0.72] ) % change the position of the axes to fit the annotation into the figure too.
+        
+        % create a title
+        block_info = char(regexp(decodingResultsFilePath, 'block_\d+', 'match'));
+        target_and_block_info = [target_brain_structure '; ' block_info '; ' target_state];
+        
+        combinedLabel_for_Title = rearrangeCombinedLabel(combinedLabel);
+        
+        [t,s] = title(combinedLabel_for_Title, target_and_block_info);
+        t.FontSize = 15;
+        s.FontSize = 12;
+        
+        % Draw annotation window only on the last iteration
+        if numOfData == numel(dateOfRecording)
+            positionOfAnnotation = [0.76, 0.5, 0.26, 0.26]; % [x position, y position, size x, size y]
+            annotation('textbox', positionOfAnnotation, 'String', numOfUnits_and_numOfTrials_info_labelsAppears, ...
+                'FontSize', 10, 'HorizontalAlignment', 'left','FitBoxToText','on');
+            set(gca, 'Position', [0.1, 0.13, 0.65, 0.72] ) % change the position of the axes to fit the annotation into the figure too.
+            
+            
+            % changing file name
+            meanResultsFilename = generateMeanFilename(decodingResultsFilename)
+            
+            % Calculate the average dynamics by day
+            average_dynamics_by_day = mean(mean_decoding_results_100, 2);
+            
+            % Calculate the standard error of the mean (SEM)
+            sem = std(mean_decoding_results_100, 0, 2) / sqrt(size(mean_decoding_results_100, 2));
+            
+            % Define a darker shade of blue
+            darkBlueColor = [0, 0, 0.5];
+            
+            % Plot the average dynamics with error bars on the same figure
+            hold on; % Add the new plot to the existing one
+            plot_average_dynamics = errorbar(timeValues, average_dynamics_by_day, sem, 'LineWidth', 2, 'Color', darkBlueColor); % Use a thicker line and blue color for the average dynamics with error bars
+            plot_average_dynamics.LineWidth = 1;
+            
+            plot(timeValues, average_dynamics_by_day, 'LineWidth', 3, 'Color', darkBlueColor);
+            hold off;
+            
+            if isempty(highestFolder)
+                cvSplitFolder_to_save = cvSplitFolderName; 
+            elseif ~isempty(highestFolder)
+                cvSplitFolder_to_save = highestFolder;
+            end 
+            
+            % save
+            OUTPUT_PATH_binned_data_for_saving = fullfile(OUTPUT_PATH_binned, typeOfDecoding, block_grouping_folder_for_saving, cvSplitFolder_to_save, meanResultsFilename);
+            saveas(gcf, [OUTPUT_PATH_binned_data_for_saving(1:end-4) '_AverageDynamics.png']);
+            
+            close(gcf);
+        end
         
     end
-        % Concatenate mean decoding results from all days into one variable
-    mean_decoding_results = horzcat(all_mean_decoding_results{:});
-    mean_decoding_results_100 = mean_decoding_results*100
-     plot(mean_decoding_results_100) 
-  
-     
-    % Calculate the total number of time points
-numTimePoints = size(mean_decoding_results_100, 1);
-
-% Calculate the bin duration in milliseconds
-binDuration = 25; % milliseconds
-
-% Calculate the total duration of the time window
-totalDuration = numTimePoints * binDuration; % milliseconds
-
-% Generate the time values for each bin starting from 25 ms
-timeValues = linspace(25, totalDuration + 25, numTimePoints);
-
+    
+    
 else
     partOfName = dateOfRecording;
 end
@@ -380,9 +608,34 @@ end
 end
 
 
+
+
+
 function combinedLabel = combine_label_segments(labelSegments)
 % Combine segments 1 and 2, and segments 3 and 4
 combinedSegments = {strjoin(labelSegments(1:2), '_'), strjoin(labelSegments(3:4), '_')};
-% Join the combined segments with a space
-combinedLabel = strjoin(combinedSegments, ' ');
+combinedLabel = strjoin(combinedSegments, ' '); % Join the combined segments with a space
+end
+
+function combinedLabel_for_Title = rearrangeCombinedLabel(combinedLabel)
+% Split the combinedLabel string into individual labels
+labels = strsplit(combinedLabel, ' ');
+sortedLabels = sort(labels); % Sort the labels alphabetically
+combinedLabel_for_Title = strjoin(sortedLabels, ' '); % Concatenate the sorted labels into a single string
+end
+
+function meanResultsFilename = generateMeanFilename(decodingResultsFilename)
+% Extract filename parts
+[~, filename, ext] = fileparts(decodingResultsFilename);
+parts = strsplit(filename, '_');
+
+% Remove parts related to decoding results
+parts_to_keep = parts(~contains(parts, {'DECODING', 'RESULTS'}));
+
+% Replace NDT with MEAN
+parts = strrep(parts_to_keep, 'NDT', 'MEAN');
+
+% Construct new filename
+meanResultsFilename = strjoin(parts, '_');
+meanResultsFilename = [meanResultsFilename, ext];
 end
