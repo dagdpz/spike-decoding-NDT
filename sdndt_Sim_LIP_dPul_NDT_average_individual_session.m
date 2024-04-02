@@ -1,7 +1,7 @@
-function sdndt_Sim_LIP_dPul_NDT_avarage_individual_session(injection, typeOfDecoding)
+function sdndt_Sim_LIP_dPul_NDT_average_individual_session(injection, typeOfDecoding)
 
 % For across session analysis, you just need to average individual session
-% sdndt_Sim_LIP_dPul_NDT_avarage_individual_session('1', 'merged_files_across_sessions')
+% sdndt_Sim_LIP_dPul_NDT_average_individual_session('1', 'merged_files_across_sessions')
 
 
 %%
@@ -14,7 +14,8 @@ listOfRequiredFiles = {%'firstBlockFiles', 'secondBlockFiles', 'thirdBlockFiles'
     %'fourthBlockFiles', 'fifthBlockFiles', 'sixthBlockFiles'%, ...
     %     'allBlocksFiles', 'overlapBlocksFiles', ...
     %      'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection', ...
-    'allBlocksFiles_BeforeInjection' %, 'allBlocksFiles_AfterInjection'
+  %  'allBlocksFiles_BeforeInjection' %, 
+    'allBlocksFiles_AfterInjection'
     };
 
 
@@ -281,6 +282,8 @@ if  strcmp(typeOfDecoding, 'merged_files_across_sessions')
     sites_to_use = {};
     numOfUnits = {};
     numOfTrials = {};
+    session_num_cv_splits_Info = {};
+    session_info_combined = {};
     label_counts_cell = cell(1, numel(dateOfRecording)); % Initialize a cell array to store label_counts for each day
     
     totalNumOfUnits = 0; % Initialize the total number of units
@@ -290,7 +293,8 @@ if  strcmp(typeOfDecoding, 'merged_files_across_sessions')
     sum_second_numbers = 0;
     
     for numOfData = 1:numel(dateOfRecording)
-        current_dateOfRecording = dateOfRecording{numOfData}
+             
+        current_dateOfRecording = dateOfRecording{numOfData};
         OUTPUT_PATH_binned_data = fullfile(OUTPUT_PATH_binned, current_dateOfRecording, block_grouping_folder);
         
         % List the contents of the All_blocks_BeforeInjection folder
@@ -299,34 +303,36 @@ if  strcmp(typeOfDecoding, 'merged_files_across_sessions')
         % Filter out current directory '.' and parent directory '..'
         cvSplitsFolders = cvSplitsFolders(~ismember({cvSplitsFolders.name}, {'.', '..'}));
         
+        % Extract numeric values from folder names
+        values_outside_parentheses = zeros(1, numel(cvSplitsFolders));
         
-        % Check, that we will chose required file from the folder with
-        % the haighest number of num_cv_splits
-        for cvIndex = 1:numel(cvSplitsFolders)
-            cvSplitFolderName = cvSplitsFolders(cvIndex).name;
-            
-            % Check if the folder name starts with 'num_cv_splits_'
-            if startsWith(cvSplitFolderName, 'num_cv_splits_')
-                % Extract the value within parentheses
-                parenthesesIdx = strfind(cvSplitFolderName, '(');
-                parenthesesValue = str2double(cvSplitFolderName(parenthesesIdx+1:end-1));
-                
-                % Update highest value and folder if necessary
-                if parenthesesValue > highestValue
-                    highestValue = parenthesesValue;
-                    highestFolder = cvSplitFolderName;
-                end
-            end
+        
+        
+        for idx = 1:numel(cvSplitsFolders)
+            cvSplitFolderName = cvSplitsFolders(idx).name;
+            values_outside_parentheses(idx) = str2double(extractBetween(cvSplitFolderName, 'num_cv_splits_', '('));
         end
         
-        % If the highest value folder is found, proceed to check files inside it
-        if ~isempty(highestFolder)
-            cvSplitFolderPath = fullfile(OUTPUT_PATH_binned_data, highestFolder);
+        
+        
+        % Sort folders based on values outside parentheses (in descending order)
+        [~, sorted_idx] = sort(values_outside_parentheses, 'descend');
+        
+        % Iterate over sorted folders and check for the file
+        decodingResultsFilePath = '';
+        session_num_cv_splits_Info = '';
+        
+        % Initialize a flag to check if the file is found
+        fileFound = false;
+        
+        for idx = sorted_idx
+            cvSplitFolderName = cvSplitsFolders(idx).name;
+            cvSplitFolderPath = fullfile(OUTPUT_PATH_binned_data, cvSplitFolderName);
             
-            % List the contents of the current highest value CV splits folder
+            % List the contents of the current folder
             decodingResultsFiles = dir(fullfile(cvSplitFolderPath, '*_DECODING_RESULTS.mat'));
             
-            % Check if the required file exists in the highest value folder
+            % Check if the required file exists in this folder
             for fileIndex = 1:numel(decodingResultsFiles)
                 decodingResultsFilename = decodingResultsFiles(fileIndex).name;
                 
@@ -337,69 +343,44 @@ if  strcmp(typeOfDecoding, 'merged_files_across_sessions')
                     % Construct the full path to the DECODING_RESULTS.mat file
                     decodingResultsFilePath = fullfile(cvSplitFolderPath, decodingResultsFilename);
                     
+                    
+                    
                     % Now you have the path to the suitable DECODING_RESULTS.mat file
                     % You can process or load this file as needed
+                    fileFound = true;  % Set flag to true
+                    
+                    % Extract data about session and num_cv_splits
+                    num_cv_splits = str2double(extractBetween(cvSplitFolderName, 'num_cv_splits_', '('));
+                    session_num_cv_splits_Info = sprintf('Session: %s, num_cv_splits: %d\n', dateOfRecording{numOfData}, num_cv_splits);
+                     
+                    
                     break; % Exit the loop once the file is found
                 end
             end
             
+            %             % Exit the loop if the file is found
+            %             if ~isempty(decodingResultsFilePath)
+            %                 break;
+            %             end
             
-            
-            % If the file is still not found and there are alternative folders to check
-            if isempty(decodingResultsFilePath) && numel(cvSplitsFolders) > 1
-                % Extract the values within parentheses and outside parentheses for each folder
-                values_in_parentheses = zeros(1, numel(cvSplitsFolders));
-                values_outside_parentheses = zeros(1, numel(cvSplitsFolders));
-                for idx = 1:numel(cvSplitsFolders)
-                    cvSplitFolderName = cvSplitsFolders(idx).name;
-                    parenthesesIdx = strfind(cvSplitFolderName, '(');
-                    values_in_parentheses(idx) = str2double(cvSplitFolderName(parenthesesIdx+1:end-1));
-                    values_outside_parentheses(idx) = str2double(extractBetween(cvSplitFolderName, 'num_cv_splits_', '('));
-                end
-                
-                % Sort folders based on values outside parentheses (in descending order)
-                [~, sorted_idx] = sort(values_outside_parentheses, 'descend');
-                
-                % Iterate over sorted folders and check for the file
-                for idx = sorted_idx
-                    
-                    % Skip the folder with the highest value if it has already been considered
-                    if strcmp(cvSplitsFolders(idx).name, highestFolder)
-                        continue;
-                    end
-                    cvSplitFolderName = cvSplitsFolders(idx).name;
-                    cvSplitFolderPath = fullfile(OUTPUT_PATH_binned_data, cvSplitFolderName);
-                    
-                    % List the contents of the current folder
-                    decodingResultsFiles = dir(fullfile(cvSplitFolderPath, '*_DECODING_RESULTS.mat'));
-                    
-                    % Check if the required file exists in this folder
-                    for fileIndex = 1:numel(decodingResultsFiles)
-                        decodingResultsFilename = decodingResultsFiles(fileIndex).name;
-                        
-                        % Check if the file name contains the desired target structure, state, and label
-                        if contains(decodingResultsFilename, target_brain_structure) && ...
-                                contains(decodingResultsFilename, target_state) && ...
-                                contains(decodingResultsFilename, combinedLabel)
-                            % Construct the full path to the DECODING_RESULTS.mat file
-                            decodingResultsFilePath = fullfile(cvSplitFolderPath, decodingResultsFilename);
-                            
-                            % Now you have the path to the suitable DECODING_RESULTS.mat file
-                            % You can process or load this file as needed
-                            break; % Exit the loop once the file is found
-                        end
-                    end
-                    
-                    % Exit the loop if the file is found
-                    if ~isempty(decodingResultsFilePath)
-                        break;
-                    end
-                end
+            if fileFound
+                break; % Exit the loop if the file is found
             end
-            %%%%%%%%%%%%%%%%%%%%%%%%%%
         end
         
-        if ~isempty(decodingResultsFilePath)
+        
+        % Concatenate information about all sessions into a single string
+        session_info_combined{end+1} = [session_num_cv_splits_Info];
+        
+        
+        
+        
+        % If no file was found in any folder, display error message
+        if isempty(decodingResultsFilePath)
+            % disp('ERROR: No suitable decoding results file found.');
+            disp(['No suitable decoding results file found for session: ', current_dateOfRecording]);
+            continue; % Move to the next iteration of the loop
+        else
             % Load the file
             loadedData = load(decodingResultsFilePath);
             
@@ -411,23 +392,22 @@ if  strcmp(typeOfDecoding, 'merged_files_across_sessions')
             all_mean_decoding_results{end+1} = mean_decoding_results;
             
             % Process the loaded data as needed
-        else
-            % Handle the case when the file was not found
-            disp('ERROR: The decoding results file was not found.');
+            
+            % Load additional data if necessary
+            [filepath, filename, fileext] = fileparts(decodingResultsFilePath); % Get the path and filename components
+            desired_part = fullfile(filepath, filename); % Concatenate the path and filename without the extension
+            binned_file_name = [desired_part '.mat']; % Add '.mat' to the desired part
+            % Specify substrings to remove
+            substrings_to_remove = {'_instr_R instr_L_DECODING_RESULTS', '_choice_R choice_L_DECODING_RESULTS', '_instr_R choice_R_DECODING_RESULTS', '_instr_L choice_L_DECODING_RESULTS'}; % Add more patterns as needed
+            for substring = substrings_to_remove % Remove specified substrings using strrep
+                binned_file_name = strrep(binned_file_name, substring{1}, '');
+            end
+            load(binned_file_name);
         end
+        %end
         
-        [filepath, filename, fileext] = fileparts(decodingResultsFilePath); % Get the path and filename components
-        desired_part = fullfile(filepath, filename); % Concatenate the path and filename without the extension
-        binned_file_name = [desired_part '.mat']; % Add '.mat' to the desired part
-        % Specify substrings to remove
-        substrings_to_remove = {'_instr_R instr_L_DECODING_RESULTS', '_choice_R choice_L_DECODING_RESULTS', '_instr_R choice_R_DECODING_RESULTS', '_instr_L choice_L_DECODING_RESULTS'}; % Add more patterns as needed
-        for substring = substrings_to_remove % Remove specified substrings using strrep
-            binned_file_name = strrep(binned_file_name, substring{1}, '');
-        end
-        load(binned_file_name);
-        
-        
-        % end
+      %   session_num_cv_splits_Info{end+1} = sprintf('Session: %s, num_cv_splits: %d\n', dateOfRecording{numOfData}, num_cv_splits);
+                  
         
         %% Number of units
         sites_to_use{end+1} = loadedData.DECODING_RESULTS.DS_PARAMETERS.sites_to_use;
@@ -544,7 +524,15 @@ if  strcmp(typeOfDecoding, 'merged_files_across_sessions')
         
         % create a title
         block_info = char(regexp(decodingResultsFilePath, 'block_\d+', 'match'));
-        target_and_block_info = [target_brain_structure '; ' block_info '; ' target_state];
+        
+% Reshape the character array into a single row
+block_info_combined = reshape(block_info.', 1, []);
+
+% Convert the character array to a string
+%block_info_combined = string(block_info_combined);
+
+        
+        target_and_block_info = [target_brain_structure '; ' block_info_combined '; ' target_state];
         
         combinedLabel_for_Title = rearrangeCombinedLabel(combinedLabel);
         
@@ -574,21 +562,36 @@ if  strcmp(typeOfDecoding, 'merged_files_across_sessions')
             
             % Plot the average dynamics with error bars on the same figure
             hold on; % Add the new plot to the existing one
-            plot_average_dynamics = errorbar(timeValues, average_dynamics_by_day, sem, 'LineWidth', 2, 'Color', darkBlueColor); % Use a thicker line and blue color for the average dynamics with error bars
-            plot_average_dynamics.LineWidth = 1;
+%             plot_average_dynamics = errorbar(timeValues, average_dynamics_by_day, sem, 'LineWidth', 2, 'Color', darkBlueColor); % Use a thicker line and blue color for the average dynamics with error bars
+%             plot_average_dynamics.LineWidth = 1;
+            [hp1 hp2] =  ig_errorband(timeValues, average_dynamics_by_day, sem, 0); 
+            hp1.Color = [0, 0, 0.5]; % darkBlueColor
+            hp2.FaceColor = [0, 0, 0.5]; % darkBlueColor
             
             plot(timeValues, average_dynamics_by_day, 'LineWidth', 3, 'Color', darkBlueColor);
             hold off;
             
-            if isempty(highestFolder)
-                cvSplitFolder_to_save = cvSplitFolderName; 
-            elseif ~isempty(highestFolder)
-                cvSplitFolder_to_save = highestFolder;
-            end 
+            session_info_combined_for_text = strjoin(session_info_combined, '\n');
+            
+            cvSplitFolder_to_save = 'Average_Dynamics';
             
             % save
-            OUTPUT_PATH_binned_data_for_saving = fullfile(OUTPUT_PATH_binned, typeOfDecoding, block_grouping_folder_for_saving, cvSplitFolder_to_save, meanResultsFilename);
-            saveas(gcf, [OUTPUT_PATH_binned_data_for_saving(1:end-4) '_AverageDynamics.png']);
+            OUTPUT_PATH_binned_data_for_saving = fullfile(OUTPUT_PATH_binned, typeOfDecoding, block_grouping_folder_for_saving, cvSplitFolder_to_save);
+            % Check if cvSplitFolder_to_save folder exists, if not, create it
+            if ~exist(OUTPUT_PATH_binned_data_for_saving, 'dir')
+                mkdir(OUTPUT_PATH_binned_data_for_saving);
+            end
+            
+            % Save the session information to a text file
+            name_of_txt = ['Sessions_Num_CV_Splits_Info_' meanResultsFilename(1:end-4) '.txt'];
+            sessionInfoFilePath = fullfile(OUTPUT_PATH_binned_data_for_saving, name_of_txt);
+            fid = fopen(sessionInfoFilePath, 'w');
+            fprintf(fid, session_info_combined_for_text);
+            fclose(fid);
+            
+            % Save the pic
+            path_name_to_save = fullfile (OUTPUT_PATH_binned_data_for_saving,[meanResultsFilename(1:end-4) '_AverageDynamics.png']);
+            saveas(gcf, path_name_to_save);
             
             close(gcf);
         end
