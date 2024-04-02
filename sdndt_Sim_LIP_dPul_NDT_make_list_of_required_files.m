@@ -95,6 +95,8 @@ if strcmp(mode, 'merged_files_across_sessions')
     allOverlapBlocksFiles = {};
     allOverlapBlocksFiles_AfterInjection = {};
     allOverlapBlocksFiles_BeforeInjection = {};
+    allOverlap_third_BlocksFiles = {};
+    allOverlap_fourth_BlocksFiles = {};
     
     
     % Create the folder for the list of required files
@@ -176,6 +178,13 @@ if strcmp(mode, 'merged_files_across_sessions')
                 sixth_BlocksFiles = [sixth_BlocksFiles; loadedData.list_of_required_files.sixthBlockFiles];
             end
             
+            if isfield(loadedData.list_of_required_files, 'overlap_thirdBlockFiles')
+                allOverlap_third_BlocksFiles = [allOverlap_third_BlocksFiles; loadedData.list_of_required_files.overlap_thirdBlockFiles];
+            end
+            if isfield(loadedData.list_of_required_files, 'overlap_fourthBlockFiles')
+                allOverlap_fourth_BlocksFiles = [allOverlap_fourth_BlocksFiles; loadedData.list_of_required_files.overlap_fourthBlockFiles];
+            end
+            
         end
     end
     
@@ -188,6 +197,9 @@ if strcmp(mode, 'merged_files_across_sessions')
     list_of_required_files.sixthBlockFiles = sixth_BlocksFiles;
     list_of_required_files.overlapBlocksFiles = allOverlapBlocksFiles;
     list_of_required_files.allBlocksFiles = allallBlocksFiles;
+    list_of_required_files.overlap_thirdBlockFiles = allOverlap_third_BlocksFiles;
+    list_of_required_files.overlap_fourthBlockFiles = allOverlap_fourth_BlocksFiles;
+    
     
     if strcmp(injection, '1')
         list_of_required_files.overlapBlocksFiles_AfterInjection = allOverlapBlocksFiles_AfterInjection;
@@ -316,6 +328,9 @@ else % 'each_session_separately'
                 list_of_required_files.allBlocksFiles_BeforeInjection = list_of_required_files.firstBlockFiles;
                 list_of_required_files.allBlocksFiles_AfterInjection = processAfterInjectionAllBlocksFiles(list_of_required_files.allBlocksFiles);
         end
+        
+        list_of_required_files.overlap_thirdBlockFiles = processSpecificOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles,'block_3');
+        list_of_required_files.overlap_fourthBlockFiles = processSpecificOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles, 'block_4');
         
         % Save the structure to a .mat file in the specified folder
         nameOfFinalFile = ['sdndt_Sim_LIP_dPul_NDT_' dateOfRecording{day} '_list_of_required_files.mat'];
@@ -472,6 +487,27 @@ for i = 1:numel(overlapBlocksFiles)
         end
     end
 end
+end
+
+function SpecificOverlapBlocksFiles = processSpecificOverlapBlocksFiles(overlapBlocksFiles, required_block)
+    % Initialize the output variable
+    SpecificOverlapBlocksFiles = {};
+
+    % Loop through each file in overlapBlocksFiles
+    for i = 1:numel(overlapBlocksFiles)
+        % Check if the file name contains the required block
+        if contains(overlapBlocksFiles{i}, required_block)
+            % Load the file
+            data = load(overlapBlocksFiles{i});
+            
+            % Define your new condition here
+            % For example, check if any perturbation value is greater than 0
+            if any(cellfun(@(x) x > 0, data.raster_labels.perturbation))
+                % Add the file to SpecificOverlapBlocksFiles
+                SpecificOverlapBlocksFiles = [SpecificOverlapBlocksFiles; overlapBlocksFiles{i}];
+            end
+        end
+    end
 end
 
 

@@ -28,6 +28,7 @@ function sdndt_Sim_LIP_dPul_NDT_decoding(injection, typeOfDecoding)
 %                       'fourthBlockFiles', 'fifthBlockFiles', 'sixthBlockFiles',
 %                       'allBlocksFiles', 'overlapBlocksFiles',
 %                       'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection'
+%                       'overlap_thirdBlockFiles', 'overlap_fourthBlockFiles'
 %                       'allBlocksFiles_BeforeInjection', 'allBlocksFiles_AfterInjection'
 
 
@@ -44,11 +45,12 @@ startTime = tic;
 
 %% Define the list of required files
 listOfRequiredFiles = {%'firstBlockFiles', 'secondBlockFiles', 'thirdBlockFiles', ...
-%      'fourthBlockFiles', 'fifthBlockFiles', 'sixthBlockFiles'%, ...
-%     'allBlocksFiles', 'overlapBlocksFiles', ...
-%      'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection', ...
-      'allBlocksFiles_BeforeInjection', 'allBlocksFiles_AfterInjection'
-};
+    %      'fourthBlockFiles', 'fifthBlockFiles', 'sixthBlockFiles'%, ...
+    %     'allBlocksFiles', 'overlapBlocksFiles', ...
+    %      'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection', ...
+    'overlap_thirdBlockFiles', 'overlap_fourthBlockFiles' %, ...
+    %   'allBlocksFiles_BeforeInjection', 'allBlocksFiles_AfterInjection'
+    };
 
 %% Define typeOfSessions
 % Calculate typeOfSessions based on the injection parameter
@@ -321,6 +323,7 @@ end
 allowed_blocks = {'firstBlockFiles', 'secondBlockFiles', 'thirdBlockFiles', ...
     'fourthBlockFiles', 'fifthBlockFiles', 'sixthBlockFiles', ...
     'allBlocksFiles', 'overlapBlocksFiles',  ...
+    'overlap_thirdBlockFiles', 'overlap_fourthBlockFiles',  ...
     'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection'  ...
     'allBlocksFiles_BeforeInjection', 'allBlocksFiles_AfterInjection'};
 if ~ismember(givenListOfRequiredFiles, allowed_blocks) % Check if the provided block name is in the list of allowed blocks
@@ -399,24 +402,20 @@ switch givenListOfRequiredFiles % givenListOfRequiredFiles
         listOfRequiredFiles = list_of_required_files.fifthBlockFiles;
     case 'sixthBlockFiles'
         listOfRequiredFiles = list_of_required_files.sixthBlockFiles;
+        
+    case 'overlap_thirdBlockFiles'
+        listOfRequiredFiles = list_of_required_files.overlap_thirdBlockFiles;    
+     case 'overlap_fourthBlockFiles'
+        listOfRequiredFiles = list_of_required_files.overlap_fourthBlockFiles; 
+        
     case 'allBlocksFiles'
         listOfRequiredFiles = list_of_required_files.allBlocksFiles;
     case 'overlapBlocksFiles'
         listOfRequiredFiles = list_of_required_files.overlapBlocksFiles;
     case 'overlapBlocksFiles_AfterInjection' % Add a case for 'overlapBlocksFilesInjection'
-        %         if isfield(list_of_required_files, 'overlapBlocksFiles_AfterInjection') && ...
-        %                 (isequal(dateOfRecording, 'merged_files_across_sessions') || ismember(dateOfRecording, allDateOfRecording))
         listOfRequiredFiles = list_of_required_files.overlapBlocksFiles_AfterInjection;
-        %         else
-        %             error('overlapBlocksFiles_AfterInjection not found or dateOfRecording mismatch');
-        %         end
     case 'overlapBlocksFiles_BeforeInjection' % Add a case for 'overlapBlocksFilesBeforeInjection'
-        %         if isfield(list_of_required_files, 'overlapBlocksFiles_BeforeInjection') && ...
-        %                 (isequal(dateOfRecording, 'merged_files_across_sessions') || ismember(dateOfRecording, allDateOfRecording))
         listOfRequiredFiles = list_of_required_files.overlapBlocksFiles_BeforeInjection;
-        %         else
-        %             error('overlapBlocksFiles_BeforeInjection not found or dateOfRecording mismatch');
-        %         end
     case 'allBlocksFiles_AfterInjection'
         listOfRequiredFiles = list_of_required_files.allBlocksFiles_AfterInjection;
     case 'allBlocksFiles_BeforeInjection'
@@ -561,10 +560,6 @@ if isequal(dateOfRecording, 'merged_files_across_sessions')
     block_file_names = {'firstBlockFiles', 'secondBlockFiles', 'thirdBlockFiles', 'fourthBlockFiles', 'fifthBlockFiles', 'sixthBlockFiles'};
     if any(strcmp(givenListOfRequiredFiles, block_file_names))
         for i = 1:numel(block_file_names) % Loop through block file names
-            %         if isfield(givenListOfRequiredFiles, block_file_names{i}) && isequal(listOfRequiredFiles, list_of_required_files.(block_file_names{i}))
-            %             block_grouping_folder = [block_file_names{i} 'AcrossSessions/'];
-            %             break;
-            %         end
             if isfield(list_of_required_files, givenListOfRequiredFiles)
                 if isequal(list_of_required_files.(givenListOfRequiredFiles), listOfRequiredFiles)
                     block_grouping_folder = [givenListOfRequiredFiles 'AcrossSessions/'];
@@ -589,6 +584,12 @@ if isequal(dateOfRecording, 'merged_files_across_sessions')
             block_grouping_folder = 'overlapBlocksFilesAcrossSessions_AfterInjection/';
         elseif isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection')
             block_grouping_folder = 'overlapBlocksFilesAcrossSessions_BeforeInjection/';
+            
+            
+        elseif isequal(givenListOfRequiredFiles, 'overlap_thirdBlockFiles')
+            block_grouping_folder = 'overlap_FilesAcrossSessions_Block_3/';
+        elseif isequal(givenListOfRequiredFiles, 'overlap_fourthBlockFiles')
+            block_grouping_folder = 'overlap_FilesAcrossSessions_Block_4/';
         end
     end
     
@@ -658,19 +659,23 @@ if strcmp(dateOfRecording, 'merged_files_across_sessions')
     %     copyFilesForCategory('overlapBlocksFiles', [OUTPUT_PATH_raster dateOfRecording '/overlapBlocksFilesAcrossSessions/'], listOfRequiredFiles, list_of_required_files);
     %     copyFilesForCategory('allBlocksFiles', [OUTPUT_PATH_raster dateOfRecording '/allBlocksFilesAcrossSessions/'], listOfRequiredFiles, list_of_required_files);
     if isequal(givenListOfRequiredFiles, 'firstBlockFiles')
-        copyFilesForCategory('firstBlockFiles', [OUTPUT_PATH_raster dateOfRecording '/firstBlockFilesAcrossSessions/'], listOfRequiredFiles, list_of_required_files);
+        copyFilesForCategory('firstBlockFiles', [OUTPUT_PATH_raster dateOfRecording '/all_FilesAcrossSessions_Block_1/'], listOfRequiredFiles, list_of_required_files);
     end
-    copyFilesForCategory('secondBlockFiles', [OUTPUT_PATH_raster dateOfRecording '/secondBlockFilesAcrossSessions/'], listOfRequiredFiles, list_of_required_files);
-    copyFilesForCategory('thirdBlockFiles', [OUTPUT_PATH_raster dateOfRecording '/thirdBlockFilesAcrossSessions/'], listOfRequiredFiles, list_of_required_files);
-    copyFilesForCategory('fourthBlockFiles', [OUTPUT_PATH_raster dateOfRecording '/fourthBlockFilesAcrossSessions/'], listOfRequiredFiles, list_of_required_files);
-    copyFilesForCategory('fifthBlockFiles', [OUTPUT_PATH_raster dateOfRecording '/fifthBlockFilesAcrossSessions/'], listOfRequiredFiles, list_of_required_files);
-    copyFilesForCategory('sixthBlockFiles', [OUTPUT_PATH_raster dateOfRecording '/sixthBlockFilesAcrossSessions/'], listOfRequiredFiles, list_of_required_files);
+    copyFilesForCategory('secondBlockFiles', [OUTPUT_PATH_raster dateOfRecording '/all_FilesAcrossSessions_Block_2/'], listOfRequiredFiles, list_of_required_files);
+    copyFilesForCategory('thirdBlockFiles', [OUTPUT_PATH_raster dateOfRecording '/all_FilesAcrossSessions_Block_3/'], listOfRequiredFiles, list_of_required_files);
+    copyFilesForCategory('fourthBlockFiles', [OUTPUT_PATH_raster dateOfRecording '/all_FilesAcrossSessions_Block_4/'], listOfRequiredFiles, list_of_required_files);
+    copyFilesForCategory('fifthBlockFiles', [OUTPUT_PATH_raster dateOfRecording '/all_FilesAcrossSessions_Block_5/'], listOfRequiredFiles, list_of_required_files);
+    copyFilesForCategory('sixthBlockFiles', [OUTPUT_PATH_raster dateOfRecording '/all_FilesAcrossSessions_Block_6/'], listOfRequiredFiles, list_of_required_files);
     copyFilesForCategory('overlapBlocksFiles_AfterInjection', [OUTPUT_PATH_raster dateOfRecording '/overlapBlocksFilesAcrossSessions_AfterInjection/'], listOfRequiredFiles, list_of_required_files);
     copyFilesForCategory('overlapBlocksFiles_BeforeInjection', [OUTPUT_PATH_raster dateOfRecording '/overlapBlocksFilesAcrossSessions_BeforeInjection/'], listOfRequiredFiles, list_of_required_files);
     copyFilesForCategory('allBlocksFiles_AfterInjection', [OUTPUT_PATH_raster dateOfRecording '/allBlocksFilesAcrossSessions_AfterInjection/'], listOfRequiredFiles, list_of_required_files);
     if isequal(givenListOfRequiredFiles, 'allBlocksFiles_BeforeInjection')
         copyFilesForCategory('allBlocksFiles_BeforeInjection', [OUTPUT_PATH_raster dateOfRecording '/allBlocksFilesAcrossSessions_BeforeInjection/'], listOfRequiredFiles, list_of_required_files);
     end
+    
+    copyFilesForCategory('overlap_thirdBlockFiles', [OUTPUT_PATH_raster dateOfRecording '/' block_grouping_folder], listOfRequiredFiles, list_of_required_files);
+    copyFilesForCategory('overlap_fourthBlockFiles', [OUTPUT_PATH_raster dateOfRecording '/' block_grouping_folder], listOfRequiredFiles, list_of_required_files);
+   
     %     elseif ismember(current_date, allDateOfRecording)
     %         copyFilesForCategory('overlapBlocksFiles_AfterInjection', [OUTPUT_PATH_raster current_date '/Overlap_blocks_AfterInjection/'], listOfRequiredFiles, list_of_required_files);
     %         copyFilesForCategory('overlapBlocksFiles_BeforeInjection', [OUTPUT_PATH_raster current_date '/Overlap_blocks_BeforeInjection/'], listOfRequiredFiles, list_of_required_files);
@@ -780,33 +785,6 @@ for k = 1:250
     % number of columns - how many times the stimulus was presented (number of repetitions);
     % the value in each column - how many units has this number of repetitions
 end
-
-
-% % Define the prefix for the file
-% prefix_for_file_with_num_sites_with_k_repeats = ['num_sites_with_k_repeats_for_' target_brain_structure '_' target_state_name '_' targetBlockUsed];
-%
-% % Create a string to store the phrases
-% phrases = '';
-%
-% % Iterate over num_sites_with_k_repeats variable
-% for i = 1:numel(num_sites_with_k_repeats)
-%     % Get the value from num_sites_with_k_repeats
-%     num_neurons = num_sites_with_k_repeats(i);
-%
-%     % Check if the value is non-zero
-%     if num_neurons > 0
-%         % Append the phrase to the string
-%         phrases = [phrases num2str(num_neurons) ' neurons have ' num2str(i) ' repetitions\n'];
-%     end
-% end
-%
-% % Create the full file path
-% file_path = fullfile(Binned_data_dir, [prefix_for_file_with_num_sites_with_k_repeats '.txt']);
-%
-% % Write the phrases to the text file
-% fid = fopen(file_path, 'w');
-% fprintf(fid, phrases);
-% fclose(fid);
 
 
 %% Create a file with information about the number of stimulus repetitions for N number of units
@@ -923,18 +901,6 @@ specific_label_name_to_use = 'trial_type_side';
 %(by default, the data is recorded at the simultaneously in the sdndt_Sim_LIP_dPul_NDT_settings.m:
 % settings.create_simultaneously_recorded_populations = 1;)
 if isequal(dateOfRecording, 'merged_files_across_sessions')%&& ...
-    %         isfield(list_of_required_files, 'overlapBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles) || ...
-    %         isfield(list_of_required_files, 'firstBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.firstBlockFiles) || ...
-    %         isfield(list_of_required_files, 'secondBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.secondBlockFiles) || ...
-    %         isfield(list_of_required_files, 'thirdBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.thirdBlockFiles) || ...
-    %         isfield(list_of_required_files, 'fourthBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.fourthBlockFiles) || ...
-    %         isfield(list_of_required_files, 'fifthBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.fifthBlockFiles) || ...
-    %         isfield(list_of_required_files, 'sixthBlockFiles') && isequal(listOfRequiredFiles, list_of_required_files.sixthBlockFiles) || ...
-    %         isfield(list_of_required_files, 'allBlocksFiles') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles) || ...
-    %         isfield(list_of_required_files, 'overlapBlocksFiles_BeforeInjection') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles_BeforeInjection) || ...
-    %         isfield(list_of_required_files, 'overlapBlocksFiles_AfterInjection') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles_AfterInjection) || ...
-    %         isfield(list_of_required_files, 'allBlocksFiles_BeforeInjection') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles_BeforeInjection) || ...
-    %         isfield(list_of_required_files, 'allBlocksFiles_AfterInjection') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles_AfterInjection)
     settings.create_simultaneously_recorded_populations = 0; % data are not recorded simultaneously
 elseif isequal(typeOfDecoding, 'each_session_separately')&& ...
         isfield(list_of_required_files, 'allBlocksFiles_AfterInjection') && isequal(givenListOfRequiredFiles, 'allBlocksFiles_AfterInjection')

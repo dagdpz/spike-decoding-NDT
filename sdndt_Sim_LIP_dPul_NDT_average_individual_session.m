@@ -13,9 +13,8 @@ startTime = tic;
 listOfRequiredFiles = {%'firstBlockFiles', 'secondBlockFiles', 'thirdBlockFiles', ...
     %'fourthBlockFiles', 'fifthBlockFiles', 'sixthBlockFiles'%, ...
     %     'allBlocksFiles', 'overlapBlocksFiles', ...
-    %      'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection', ...
-  %  'allBlocksFiles_BeforeInjection' %, 
-    'allBlocksFiles_AfterInjection'
+          'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection', ...
+        'allBlocksFiles_BeforeInjection', 'allBlocksFiles_AfterInjection'
     };
 
 
@@ -40,8 +39,7 @@ targetParams.GOSignal = 'GOsignal';
 
 
 %% Define labels_to_use as a cell array containing both values
-labels_to_use = {%'instr_R_instr_L', ...
-    'choice_R_choice_L'};
+labels_to_use = {'instr_R_instr_L', 'choice_R_choice_L'};
 
 
 %% Define valid combinations of injection and target_brain_structure
@@ -232,21 +230,57 @@ allDateOfRecording = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(inje
 if isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection')
     block_grouping_folder = 'Overlap_blocks_BeforeInjection/';
     block_grouping_folder_for_saving = 'overlapBlocksFilesAcrossSessions_BeforeInjection'
+    num_block = '';
     
     % elseif ismember(current_date, allDateOfRecording) && isfield(list_of_required_files, 'overlapBlocksFiles_AfterInjection') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles_AfterInjection)
 elseif isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection')
     block_grouping_folder = 'Overlap_blocks_AfterInjection/';
     block_grouping_folder_for_saving = 'overlapBlocksFilesAcrossSessions_AfterInjection'
+    num_block = '';
     
     % elseif ismember(current_date, allDateOfRecording) && isfield(list_of_required_files, 'allBlocksFiles_BeforeInjection') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles_BeforeInjection)
 elseif isequal(givenListOfRequiredFiles, 'allBlocksFiles_BeforeInjection')
     block_grouping_folder = 'All_blocks_BeforeInjection/';
     block_grouping_folder_for_saving = 'allBlocksFilesAcrossSessions_BeforeInjection'
+    num_block = '';
     
     % elseif ismember(current_date, allDateOfRecording) && isfield(list_of_required_files, 'allpBlocksFiles_AfterInjection') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles_AfterInjection)
 elseif isequal(givenListOfRequiredFiles, 'allBlocksFiles_AfterInjection')
     block_grouping_folder = 'All_blocks_AfterInjection/';
     block_grouping_folder_for_saving = 'allBlocksFilesAcrossSessions_AfterInjection'
+    num_block = '';
+    
+
+    
+elseif isequal(givenListOfRequiredFiles, 'firstBlockFiles')
+    block_grouping_folder = '';
+    block_grouping_folder_for_saving = 'all_FilesAcrossSessions_Block_1/'
+    num_block = 'block_1';
+    
+elseif isequal(givenListOfRequiredFiles, 'secondBlockFiles')
+    block_grouping_folder = '';
+    block_grouping_folder_for_saving = 'all_FilesAcrossSessions_Block_2/'
+    num_block = 'block_2';
+    
+elseif isequal(givenListOfRequiredFiles, 'thirdBlockFiles')
+    block_grouping_folder = '';
+    block_grouping_folder_for_saving = 'all_FilesAcrossSessions_Block_3/'
+    num_block = 'block_3';
+    
+elseif isequal(givenListOfRequiredFiles, 'fourthBlockFiles')
+    block_grouping_folder = '';
+    block_grouping_folder_for_saving = 'all_FilesAcrossSessions_Block_4/'
+    num_block = 'block_4';
+    
+elseif isequal(givenListOfRequiredFiles, 'fifthBlockFiles')
+    block_grouping_folder = '';
+    block_grouping_folder_for_saving = 'all_FilesAcrossSessions_Block_5/'
+    num_block = 'block_5';
+    
+elseif isequal(givenListOfRequiredFiles, 'sixthBlockFiles')
+    block_grouping_folder = '';
+    block_grouping_folder_for_saving = 'all_FilesAcrossSessions_Block_6/'
+    num_block = 'block_6';
     
     % elseif ~isequal(dateOfRecording, allDateOfRecording)
     %     % Handle different date recordings
@@ -293,7 +327,7 @@ if  strcmp(typeOfDecoding, 'merged_files_across_sessions')
     sum_second_numbers = 0;
     
     for numOfData = 1:numel(dateOfRecording)
-             
+        
         current_dateOfRecording = dateOfRecording{numOfData};
         OUTPUT_PATH_binned_data = fullfile(OUTPUT_PATH_binned, current_dateOfRecording, block_grouping_folder);
         
@@ -310,13 +344,24 @@ if  strcmp(typeOfDecoding, 'merged_files_across_sessions')
         
         for idx = 1:numel(cvSplitsFolders)
             cvSplitFolderName = cvSplitsFolders(idx).name;
-            values_outside_parentheses(idx) = str2double(extractBetween(cvSplitFolderName, 'num_cv_splits_', '('));
+            if startsWith(cvSplitFolderName, 'num_cv_splits_')
+                values_outside_parentheses(idx) = str2double(extractBetween(cvSplitFolderName, 'num_cv_splits_', '('));
+            end
         end
         
         
+        % Filter out zeros
+        nonZeroValues = values_outside_parentheses(values_outside_parentheses > 0);
         
-        % Sort folders based on values outside parentheses (in descending order)
-        [~, sorted_idx] = sort(values_outside_parentheses, 'descend');
+        % Sort non-zero values in ascending order
+        [sorted_nonZeroValues, sorted_idx] = sort(nonZeroValues);
+        
+        % Get the corresponding indices in the original array
+        sorted_idx = find(values_outside_parentheses > 0);
+        %
+        %
+        %         % Sort folders based on values outside parentheses (in descending order)
+        %         [~, sorted_idx] = sort(values_outside_parentheses, 'descend');
         
         % Iterate over sorted folders and check for the file
         decodingResultsFilePath = '';
@@ -339,23 +384,52 @@ if  strcmp(typeOfDecoding, 'merged_files_across_sessions')
                 % Check if the file name contains the desired target structure, state, and label
                 if contains(decodingResultsFilename, target_brain_structure) && ...
                         contains(decodingResultsFilename, target_state) && ...
-                        contains(decodingResultsFilename, combinedLabel)
+                        contains(decodingResultsFilename, combinedLabel) && ...
+                        contains(decodingResultsFilename, num_block) 
                     % Construct the full path to the DECODING_RESULTS.mat file
-                    decodingResultsFilePath = fullfile(cvSplitFolderPath, decodingResultsFilename);
                     
                     
                     
-                    % Now you have the path to the suitable DECODING_RESULTS.mat file
-                    % You can process or load this file as needed
-                    fileFound = true;  % Set flag to true
+%                     % If certain conditions are met (e.g., processing specific block files),
+%                     % you can add an additional filter based on the block number here
+%                     if isequal(givenListOfRequiredFiles, 'firstBlockFiles') && contains(decodingResultsFilename, 'block_1') || ...
+%                             isequal(givenListOfRequiredFiles, 'secondBlockFiles') && contains(decodingResultsFilename, 'block_2') || ...
+%                             isequal(givenListOfRequiredFiles, 'thirdBlockFiles') && contains(decodingResultsFilename, 'block_3') || ...
+%                             isequal(givenListOfRequiredFiles, 'fourthBlockFiles') && contains(decodingResultsFilename, 'block_4') || ...
+%                             isequal(givenListOfRequiredFiles, 'fifthBlockFiles') && contains(decodingResultsFilename, 'block_5') || ...
+%                             isequal(givenListOfRequiredFiles, 'sixthBlockFiles') && contains(decodingResultsFilename, 'block_6')
+%                         
+%                         % Construct the full path to the DECODING_RESULTS.mat file
+%                         decodingResultsFilePath = fullfile(cvSplitFolderPath, decodingResultsFilename);
+%                         
+%                         % Now you have the path to the suitable DECODING_RESULTS.mat file
+%                         % You can process or load this file as needed
+%                         fileFound = true;  % Set flag to true
+%                         
+%                         % Extract data about session and num_cv_splits
+%                         num_cv_splits = str2double(extractBetween(cvSplitFolderName, 'num_cv_splits_', '('));
+%                         session_num_cv_splits_Info = sprintf('Session: %s, num_cv_splits: %d\n', dateOfRecording{numOfData}, num_cv_splits);
+%                         
+%                         break; % Exit the loop once the file is found
+%                    
+%                     
+%                     else
+                        decodingResultsFilePath = fullfile(cvSplitFolderPath, decodingResultsFilename);
+                        
+                        % Now you have the path to the suitable DECODING_RESULTS.mat file
+                        % You can process or load this file as needed
+                        fileFound = true;  % Set flag to true
+                        
+                        % Extract data about session and num_cv_splits
+                        num_cv_splits = str2double(extractBetween(cvSplitFolderName, 'num_cv_splits_', '('));
+                        session_num_cv_splits_Info = sprintf('Session: %s, num_cv_splits: %d\n', dateOfRecording{numOfData}, num_cv_splits);
+                        
+                        
+                        break; % Exit the loop once the file is found
+                    end
                     
-                    % Extract data about session and num_cv_splits
-                    num_cv_splits = str2double(extractBetween(cvSplitFolderName, 'num_cv_splits_', '('));
-                    session_num_cv_splits_Info = sprintf('Session: %s, num_cv_splits: %d\n', dateOfRecording{numOfData}, num_cv_splits);
-                     
                     
-                    break; % Exit the loop once the file is found
-                end
+               % end
             end
             
             %             % Exit the loop if the file is found
@@ -406,8 +480,8 @@ if  strcmp(typeOfDecoding, 'merged_files_across_sessions')
         end
         %end
         
-      %   session_num_cv_splits_Info{end+1} = sprintf('Session: %s, num_cv_splits: %d\n', dateOfRecording{numOfData}, num_cv_splits);
-                  
+        %   session_num_cv_splits_Info{end+1} = sprintf('Session: %s, num_cv_splits: %d\n', dateOfRecording{numOfData}, num_cv_splits);
+        
         
         %% Number of units
         sites_to_use{end+1} = loadedData.DECODING_RESULTS.DS_PARAMETERS.sites_to_use;
@@ -494,8 +568,11 @@ if  strcmp(typeOfDecoding, 'merged_files_across_sessions')
         
         %% Plot the results
         
-        lightBlueColor = [0.5, 0.5, 1.0]; % RGB triplet representing a lighter shade of blue
-        plot(timeValues, mean_decoding_results_100, 'LineWidth', 1, 'Color', lightBlueColor);
+%         lightBlueColor = [0.5, 0.5, 1.0]; % RGB triplet representing a lighter shade of blue
+%         plot(timeValues, mean_decoding_results_100, 'LineWidth', 1, 'Color', lightBlueColor);
+        
+        plot(timeValues, mean_decoding_results_100, 'LineWidth', 1);
+        
         
         tickPositions = 0:200:1000; % Calculate the tick positions every 200 ms
         xticks(tickPositions);  % Set the tick positions on the X-axis
@@ -525,12 +602,12 @@ if  strcmp(typeOfDecoding, 'merged_files_across_sessions')
         % create a title
         block_info = char(regexp(decodingResultsFilePath, 'block_\d+', 'match'));
         
-% Reshape the character array into a single row
-block_info_combined = reshape(block_info.', 1, []);
-
-% Convert the character array to a string
-%block_info_combined = string(block_info_combined);
-
+        % Reshape the character array into a single row
+        block_info_combined = reshape(block_info.', 1, []);
+        
+        % Convert the character array to a string
+        %block_info_combined = string(block_info_combined);
+        
         
         target_and_block_info = [target_brain_structure '; ' block_info_combined '; ' target_state];
         
@@ -540,12 +617,32 @@ block_info_combined = reshape(block_info.', 1, []);
         t.FontSize = 15;
         s.FontSize = 12;
         
+
+        
         % Draw annotation window only on the last iteration
         if numOfData == numel(dateOfRecording)
             positionOfAnnotation = [0.76, 0.5, 0.26, 0.26]; % [x position, y position, size x, size y]
             annotation('textbox', positionOfAnnotation, 'String', numOfUnits_and_numOfTrials_info_labelsAppears, ...
                 'FontSize', 10, 'HorizontalAlignment', 'left','FitBoxToText','on');
             set(gca, 'Position', [0.1, 0.13, 0.65, 0.72] ) % change the position of the axes to fit the annotation into the figure too.
+            
+            
+            
+            
+            % Label each line with the session name
+            colorOrder = get(gca, 'ColorOrder');
+            xPosition = timeValues(1);  % X position for the annotations (same for all)
+            yPosition = 100 - 4*(numel(dateOfRecording)-1) : 4 : 100;  % Y positions for the annotations (spaced vertically)
+            
+            for i = 1:numel(dateOfRecording)
+                lineColor = colorOrder(rem(i - 1, size(colorOrder, 1)) + 1, :);
+                %                 text(timeValues(end), mean_decoding_results_100(end, i), dateOfRecording{i}, ...
+                %                     'Color', lineColor, 'FontSize', 11, 'HorizontalAlignment', 'left');
+                text(xPosition, yPosition(i), dateOfRecording{i}, ...
+                    'Color', lineColor, 'FontSize', 10, 'HorizontalAlignment', 'left');
+            end
+
+            
             
             
             % changing file name
@@ -562,9 +659,9 @@ block_info_combined = reshape(block_info.', 1, []);
             
             % Plot the average dynamics with error bars on the same figure
             hold on; % Add the new plot to the existing one
-%             plot_average_dynamics = errorbar(timeValues, average_dynamics_by_day, sem, 'LineWidth', 2, 'Color', darkBlueColor); % Use a thicker line and blue color for the average dynamics with error bars
-%             plot_average_dynamics.LineWidth = 1;
-            [hp1 hp2] =  ig_errorband(timeValues, average_dynamics_by_day, sem, 0); 
+            %             plot_average_dynamics = errorbar(timeValues, average_dynamics_by_day, sem, 'LineWidth', 2, 'Color', darkBlueColor); % Use a thicker line and blue color for the average dynamics with error bars
+            %             plot_average_dynamics.LineWidth = 1;
+            [hp1 hp2] =  ig_errorband(timeValues, average_dynamics_by_day, sem, 0);
             hp1.Color = [0, 0, 0.5]; % darkBlueColor
             hp2.FaceColor = [0, 0, 0.5]; % darkBlueColor
             
@@ -590,7 +687,7 @@ block_info_combined = reshape(block_info.', 1, []);
             fclose(fid);
             
             % Save the pic
-            path_name_to_save = fullfile (OUTPUT_PATH_binned_data_for_saving,[meanResultsFilename(1:end-4) '_AverageDynamics.png']);
+            path_name_to_save = fullfile (OUTPUT_PATH_binned_data_for_saving,[meanResultsFilename(1:end-4) '_AverageDynamics_Color.png']);
             saveas(gcf, path_name_to_save);
             
             close(gcf);
