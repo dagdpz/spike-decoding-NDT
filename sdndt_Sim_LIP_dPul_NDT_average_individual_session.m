@@ -1,4 +1,4 @@
-function sdndt_Sim_LIP_dPul_NDT_average_individual_session(injection, typeOfDecoding)
+function sdndt_Sim_LIP_dPul_NDT_average_individual_session(injection, typeOfDecoding, curves_per_session)
 
 % For across session analysis, you just need to average individual session
 % sdndt_Sim_LIP_dPul_NDT_average_individual_session('1', 'merged_files_across_sessions')
@@ -12,9 +12,10 @@ startTime = tic;
 %% Define the list of required files
 listOfRequiredFiles = {%'firstBlockFiles', 'secondBlockFiles', 'thirdBlockFiles', ...
     %'fourthBlockFiles', 'fifthBlockFiles', 'sixthBlockFiles'%, ...
-    %     'allBlocksFiles', 'overlapBlocksFiles', ...
-          'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection', ...
-        'allBlocksFiles_BeforeInjection', 'allBlocksFiles_AfterInjection'
+     'overlap_thirdBlockFiles', 'overlap_fourthBlockFiles'
+    %      'allBlocksFiles', 'overlapBlocksFiles', ...
+         'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection' %, ...
+    %       'allBlocksFiles_BeforeInjection', 'allBlocksFiles_AfterInjection'
     };
 
 
@@ -118,7 +119,7 @@ for file_index = 1:numFiles % Loop through each file in listOfRequiredFiles
                                 current_date = current_set_of_date{numDays};
                                 
                                 % Call the internal decoding function for each day
-                                sdndt_Sim_LIP_dPul_NDT_avarage_internal(current_injection, current_type_of_session, typeOfDecoding, current_date, current_target_brain_structure, target_state, current_label, current_file); % typeOfSessions{j}
+                                sdndt_Sim_LIP_dPul_NDT_avarage_internal(current_injection, current_type_of_session, typeOfDecoding, current_date, current_target_brain_structure, target_state, current_label, current_file, curves_per_session); % typeOfSessions{j}
                                 
                                 % Update progress bar
                                 progress = ((file_index - 1) * numCombinations * numLabels * numFieldNames * numTypesOfSessions * numel(current_set_of_date) + ...
@@ -135,7 +136,7 @@ for file_index = 1:numFiles % Loop through each file in listOfRequiredFiles
                         else % strcmp(typeOfDecoding, 'merged_files_across_sessions')
                             current_date = [];
                             % Call the internal decoding function only once
-                            sdndt_Sim_LIP_dPul_NDT_avarage_internal(current_injection, current_type_of_session, typeOfDecoding, current_set_of_date, current_target_brain_structure, target_state, current_label, current_file);
+                            sdndt_Sim_LIP_dPul_NDT_avarage_internal(current_injection, current_type_of_session, typeOfDecoding, current_set_of_date, current_target_brain_structure, target_state, current_label, current_file, curves_per_session);
                             
                             %                             % Update progress bar for merged files scenario
                             %                             progress = ((file_index - 1) * numCombinations + (comb_index - 1)) / (numFiles * numCombinations);
@@ -213,7 +214,7 @@ end
 
 
 
-function sdndt_Sim_LIP_dPul_NDT_avarage_internal(injection, typeOfSessions, typeOfDecoding, dateOfRecording, target_brain_structure, target_state, given_labels_to_use, givenListOfRequiredFiles)
+function sdndt_Sim_LIP_dPul_NDT_avarage_internal(injection, typeOfSessions, typeOfDecoding, dateOfRecording, target_brain_structure, target_state, given_labels_to_use, givenListOfRequiredFiles, curves_per_session)
 
 
 
@@ -281,6 +282,17 @@ elseif isequal(givenListOfRequiredFiles, 'sixthBlockFiles')
     block_grouping_folder = '';
     block_grouping_folder_for_saving = 'all_FilesAcrossSessions_Block_6/'
     num_block = 'block_6';
+    
+    
+elseif isequal(givenListOfRequiredFiles, 'overlap_thirdBlockFiles')
+    block_grouping_folder = 'By_block_Overlap';
+    block_grouping_folder_for_saving = 'overlap_FilesAcrossSessions_Block_3/'
+    num_block = 'block_3';
+    
+elseif isequal(givenListOfRequiredFiles, 'overlap_fourthBlockFiles')
+    block_grouping_folder = 'By_block_Overlap';
+    block_grouping_folder_for_saving = 'overlap_FilesAcrossSessions_Block_4/';
+    num_block = 'block_4';
     
     % elseif ~isequal(dateOfRecording, allDateOfRecording)
     %     % Handle different date recordings
@@ -568,11 +580,18 @@ if  strcmp(typeOfDecoding, 'merged_files_across_sessions')
         
         %% Plot the results
         
-%         lightBlueColor = [0.5, 0.5, 1.0]; % RGB triplet representing a lighter shade of blue
-%         plot(timeValues, mean_decoding_results_100, 'LineWidth', 1, 'Color', lightBlueColor);
+        if isequal(curves_per_session, 'Same')
+            lightBlueColor = [0.5, 0.5, 1.0]; % RGB triplet representing a lighter shade of blue
+            plot(timeValues, mean_decoding_results_100, 'LineWidth', 1, 'Color', lightBlueColor);
+            
+        elseif isequal(curves_per_session, 'Color')
+            plot(timeValues, mean_decoding_results_100, 'LineWidth', 1);
+            
+        elseif isequal(curves_per_session, 'nis') % no individual session
+            % plot without individual session labels
+        end
         
-        plot(timeValues, mean_decoding_results_100, 'LineWidth', 1);
-        
+                
         
         tickPositions = 0:200:1000; % Calculate the tick positions every 200 ms
         xticks(tickPositions);  % Set the tick positions on the X-axis
@@ -628,20 +647,20 @@ if  strcmp(typeOfDecoding, 'merged_files_across_sessions')
             
             
             
-            
-            % Label each line with the session name
-            colorOrder = get(gca, 'ColorOrder');
-            xPosition = timeValues(1);  % X position for the annotations (same for all)
-            yPosition = 100 - 4*(numel(dateOfRecording)-1) : 4 : 100;  % Y positions for the annotations (spaced vertically)
-            
-            for i = 1:numel(dateOfRecording)
-                lineColor = colorOrder(rem(i - 1, size(colorOrder, 1)) + 1, :);
-                %                 text(timeValues(end), mean_decoding_results_100(end, i), dateOfRecording{i}, ...
-                %                     'Color', lineColor, 'FontSize', 11, 'HorizontalAlignment', 'left');
-                text(xPosition, yPosition(i), dateOfRecording{i}, ...
-                    'Color', lineColor, 'FontSize', 10, 'HorizontalAlignment', 'left');
+            if isequal(curves_per_session, 'Color')
+                % Label each line with the session name
+                colorOrder = get(gca, 'ColorOrder');
+                xPosition = timeValues(1);  % X position for the annotations (same for all)
+                yPosition = 100 - 4*(numel(dateOfRecording)-1) : 4 : 100;  % Y positions for the annotations (spaced vertically)
+                
+                for i = 1:numel(dateOfRecording)
+                    lineColor = colorOrder(rem(i - 1, size(colorOrder, 1)) + 1, :);
+                    %                 text(timeValues(end), mean_decoding_results_100(end, i), dateOfRecording{i}, ...
+                    %                     'Color', lineColor, 'FontSize', 11, 'HorizontalAlignment', 'left');
+                    text(xPosition, yPosition(i), dateOfRecording{i}, ...
+                        'Color', lineColor, 'FontSize', 10, 'HorizontalAlignment', 'left');
+                end
             end
-
             
             
             
@@ -686,8 +705,18 @@ if  strcmp(typeOfDecoding, 'merged_files_across_sessions')
             fprintf(fid, session_info_combined_for_text);
             fclose(fid);
             
+            
+            if isequal(curves_per_session, 'Color')
+                Color_curves_name = '_Color';
+            elseif isequal(curves_per_session, 'Same')
+                Color_curves_name = '';    
+            elseif isequal(curves_per_session, 'nis') % no individual session
+                Color_curves_name = '_nis';
+            end
+             
+           
             % Save the pic
-            path_name_to_save = fullfile (OUTPUT_PATH_binned_data_for_saving,[meanResultsFilename(1:end-4) '_AverageDynamics_Color.png']);
+            path_name_to_save = fullfile (OUTPUT_PATH_binned_data_for_saving,[meanResultsFilename(1:end-4) '_AverageDynamics' Color_curves_name '.png']);
             saveas(gcf, path_name_to_save);
             
             close(gcf);

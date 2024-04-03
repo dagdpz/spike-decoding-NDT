@@ -629,6 +629,10 @@ elseif ~isequal(dateOfRecording, allDateOfRecording)
     elseif isfield(list_of_required_files, 'allBlocksFiles')&& isequal(givenListOfRequiredFiles, 'allBlocksFiles') && ...
             ~isequal(dateOfRecording, allDateOfRecording)
         block_grouping_folder = 'All_blocks/';
+        
+    elseif isequal(givenListOfRequiredFiles, 'overlap_thirdBlockFiles')|| ...
+            isequal(givenListOfRequiredFiles, 'overlap_fourthBlockFiles')
+         block_grouping_folder = 'By_block_Overlap/';
     end
 end
 
@@ -687,6 +691,9 @@ elseif ismember(dateOfRecording, allDateOfRecording)
     copyFilesForCategory('overlapBlocksFiles_BeforeInjection', [OUTPUT_PATH_raster dateOfRecording '/Overlap_blocks_BeforeInjection/'], listOfRequiredFiles, list_of_required_files);
     copyFilesForCategory('allBlocksFiles_AfterInjection', [OUTPUT_PATH_raster dateOfRecording '/All_blocks_AfterInjection/'], listOfRequiredFiles, list_of_required_files);
     copyFilesForCategory('allBlocksFiles_BeforeInjection', [OUTPUT_PATH_raster dateOfRecording '/All_blocks_BeforeInjection/'], listOfRequiredFiles, list_of_required_files);
+
+     copyFilesForCategory('overlap_thirdBlockFiles', [OUTPUT_PATH_raster dateOfRecording '/' block_grouping_folder], listOfRequiredFiles, list_of_required_files);
+    copyFilesForCategory('overlap_fourthBlockFiles', [OUTPUT_PATH_raster dateOfRecording '/' block_grouping_folder], listOfRequiredFiles, list_of_required_files);
 end
 
 
