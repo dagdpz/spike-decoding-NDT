@@ -1,13 +1,14 @@
-function [raster_data, raster_labels, raster_site_info] = sdndt_Sim_LIP_dPul_NDT_make_raster(injection)
+function [raster_data, raster_labels, raster_site_info] = sdndt_Sim_LIP_dPul_NDT_make_raster(monkey, injection)
 % This function processes a list of files obtained from filelist_of_days_from_Simultaneous_dPul_PPC_recordings
 % This code loads one population**.mat file and converts it to a raster_data, array 0 and 1
 
 % Example, how to run it:
-% sdndt_Sim_LIP_dPul_NDT_make_raster('0', ' ');
-% sdndt_Sim_LIP_dPul_NDT_make_raster('1', 'right');
-% sdndt_Sim_LIP_dPul_NDT_make_raster('2', ' ');
+% sdndt_Sim_LIP_dPul_NDT_make_raster('Bacchus', '0');
+% sdndt_Sim_LIP_dPul_NDT_make_raster('Bacchus', '1');
+% sdndt_Sim_LIP_dPul_NDT_make_raster('Linus', '2');
 
 
+%
 % injection: '0' - control, '1' - injection (Inactivation experiment)
 %            '2' - Functional interaction experiment (dPul and LIP)
 % typeOfSessions: ' ' - for control (Inactivation experiment) and Functional interaction experiment (dPul and LIP)
@@ -20,7 +21,11 @@ function [raster_data, raster_labels, raster_site_info] = sdndt_Sim_LIP_dPul_NDT
 
 %% Define the session types based on the injection value
 if strcmp(injection, '1')
-    typeOfSessions = {'left', 'right', 'all'}; % For control and injection experiments
+    if strcmp(monkey, 'Linus')
+        typeOfSessions = {'left', 'right', 'all'}; % For control and injection experiments
+    elseif strcmp(monkey, 'Bacchus')
+        typeOfSessions = {'right'};
+    end
 elseif  strcmp(injection, '0') || strcmp(injection, '2')
     typeOfSessions = {''}; % For the functional interaction experiment
 else
@@ -51,7 +56,7 @@ for i = 1:numel(fieldNames)
     % Loop through each typeOfSessions
     for j = 1:numel(typeOfSessions)
         
-        sdndt_Sim_LIP_dPul_NDT_make_raster_path(injection, typeOfSessions{j}, target_state);
+        sdndt_Sim_LIP_dPul_NDT_make_raster_path(monkey, injection, typeOfSessions{j}, target_state);
         
         updateProgressBar(i, j, numFieldNames, numTypesOfSessions, h);  % Update progress bar
     end
@@ -61,32 +66,48 @@ close(h);  % Close progress bar
 end
 
 
-function sdndt_Sim_LIP_dPul_NDT_make_raster_path(injection, typeOfSessions, target_state)
+function sdndt_Sim_LIP_dPul_NDT_make_raster_path(monkey, injection, typeOfSessions, target_state)
 % Call the function to get the dates
-dateOfRecording = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(injection, typeOfSessions);
+dateOfRecording = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(monkey, injection, typeOfSessions);
 
 % Call the settings function with the chosen set
-[base_path, INPUT_PATH, OUTPUT_PATH_raster, OUTPUT_PATH_binned, settings] = sdndt_Sim_LIP_dPul_NDT_settings(injection, typeOfSessions);
+[base_path, INPUT_PATH, OUTPUT_PATH_raster, OUTPUT_PATH_binned, monkey_prefix, settings] = sdndt_Sim_LIP_dPul_NDT_settings(monkey, injection, typeOfSessions);
 %run('sdndt_Sim_LIP_dPul_NDT_settings');
 
+
 for day = 1:length(dateOfRecording)
+    
+        
     % Create the folder for the list of required files
-    OUTPUT_PATH_raster_dateOfRecording = [OUTPUT_PATH_raster dateOfRecording{day} '/'];
+    OUTPUT_PATH_raster_dateOfRecording = [OUTPUT_PATH_raster monkey_prefix dateOfRecording{day} '/'];
     if ~exist(OUTPUT_PATH_raster_dateOfRecording, 'dir')
         mkdir(OUTPUT_PATH_raster_dateOfRecording);
     end
     
-    % Construct the mat_file_name for the current day
-    if strcmp(injection, '0') % '0' means 'control'
-        mat_file_name = ['dPul_LIP_Lin_' dateOfRecording{day} '/population_Linus_' dateOfRecording{day} '.mat'];
-    elseif strcmp(injection, '1') % '1' means 'injection'
-        mat_file_name = ['dPul_inj_LIP_Lin_10s/population_Linus_' dateOfRecording{day} '.mat'];
-    else
-        error('Invalid selection. Use ''0'' or ''1'' for injection.');
-    end
-    
+    % Construct the mat_file_name for the current day based on monkey and injection
+        if strcmp(monkey, 'Linus')
+            if strcmp(injection, '0') % '0' means 'control'
+                mat_file_name = ['dPul_LIP_Lin_' dateOfRecording{day} '/population_Linus_' dateOfRecording{day} '.mat'];
+            elseif strcmp(injection, '1') % '1' means 'injection'
+                mat_file_name = ['dPul_inj_LIP_Lin_10s/population_Linus_' dateOfRecording{day} '.mat'];
+            else
+                error('Invalid selection. Use ''0'' or ''1'' for injection.');
+            end
+        elseif strcmp(monkey, 'Bacchus')
+            if strcmp(injection, '0') % '0' means 'control'
+                mat_file_name = ['dPul_LIP_Bac_9_sessions/population_Bacchus_' dateOfRecording{day} '.mat'];
+            elseif strcmp(injection, '1') % '1' means 'injection'
+                mat_file_name = ['dPul_inj_LIP_Bac_8s_paired/population_Bacchus_' dateOfRecording{day} '.mat'];
+            else
+                error('Invalid selection. Use ''0'' or ''1'' for injection.');
+            end
+        else
+            error('Invalid monkey value. Use ''Bacchus'' or ''Linus''.');
+        end
+     
+        
     % Call sdndt_Sim_LIP_dPul_NDT_make_raster for the current file
-    sdndt_Sim_LIP_dPul_NDT_make_raster_internal(INPUT_PATH, OUTPUT_PATH_raster_dateOfRecording, mat_file_name, injection, target_state, settings);
+    sdndt_Sim_LIP_dPul_NDT_make_raster_internal(INPUT_PATH, OUTPUT_PATH_raster_dateOfRecording, mat_file_name, monkey, injection, target_state, settings);
     
     % Display message indicating session is done
     fprintf('Session of %s is completed.\n', dateOfRecording{day});
@@ -97,7 +118,7 @@ end
 
 
 
-function sdndt_Sim_LIP_dPul_NDT_make_raster_internal(INPUT_PATH, OUTPUT_PATH_raster_dateOfRecording, mat_file_name, injection, target_state, settings)
+function sdndt_Sim_LIP_dPul_NDT_make_raster_internal(INPUT_PATH, OUTPUT_PATH_raster_dateOfRecording, mat_file_name, monkey, injection, target_state, settings)
 % This is the internal function that contains the main logic of your code
 
 input_population_file = [INPUT_PATH mat_file_name];

@@ -1,7 +1,7 @@
-function sdndt_Sim_LIP_dPul_NDT_plot_decoding_results(injection, typeOfSessions, save_file_name)
+function sdndt_Sim_LIP_dPul_NDT_plot_decoding_results(monkey, injection, typeOfSessions, save_file_name)
 
 % Call the settings function with the chosen set
-[base_path, INPUT_PATH, OUTPUT_PATH_raster, OUTPUT_PATH_binned, settings] = sdndt_Sim_LIP_dPul_NDT_settings(injection, typeOfSessions);
+[base_path, INPUT_PATH, OUTPUT_PATH_raster, OUTPUT_PATH_binned, monkey_prefix, settings] = sdndt_Sim_LIP_dPul_NDT_settings(monkey, injection, typeOfSessions);
 %run('sdndt_Sim_LIP_dPul_NDT_settings');
 
 load(save_file_name);

@@ -1,10 +1,10 @@
-function sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files(injection, mode)
+function sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files(monkey, injection, mode)
 % If I plan to decode within one session:
-% sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files('1', 'each_session_separately');
+% sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files('Bacchus', '1', 'each_session_separately');
 
 % If I plan to decode across all sessions:
 % !(To do this action, you must first have filelists for each session individually)!
-% sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files('0', 'merged_files_across_sessions');
+% sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files('Bacchus', '0', 'merged_files_across_sessions');
 
 
 % injection: '0' - control, '1' - injection (Inactivation experiment)
@@ -24,7 +24,11 @@ end
 
 %% Define the session types based on the injection value
 if strcmp(injection, '1')
-    typeOfSessions = {'left', 'right', 'all'}; % For control and injection experiments
+    if strcmp(monkey, 'Linus')
+        typeOfSessions = {'left', 'right', 'all'}; % For control and injection experiments
+    elseif strcmp(monkey, 'Bacchus')
+        typeOfSessions = {'right'};
+    end
 elseif  strcmp(injection, '0') || strcmp(injection, '2')
     typeOfSessions = {''}; % For the functional interaction experiment
 else
@@ -35,26 +39,37 @@ end
 h = waitbar(0, 'Processing Sessions...');
 numTypesOfSessions = numel(typeOfSessions); % Get the total number of session types
 
+% Initialize total session count
+totalSessions = 0;
+
 % Loop through each session type if injection is '1'
 if strcmp(injection, '1')
     for k = 1:numTypesOfSessions
         currentType = typeOfSessions{k};
         % Call the function to generate lists of required files for the current session type
-        dateOfRecording = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(injection, currentType);
+        dateOfRecording = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(monkey, injection, currentType);
+        
+        % Increment total session count by the number of sessions for this type
+        totalSessions = totalSessions + numel(dateOfRecording);
         
         % Call additional functions and process the data for each session type
-        sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files_inner(injection, mode, currentType, dateOfRecording);
+        sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files_inner(monkey, injection, mode, currentType, dateOfRecording);
         
         % Calculate progress
-        progress = k / numTypesOfSessions;
+        %progress = k / numTypesOfSessions;
+        progress = (k / numTypesOfSessions) * (totalSessions / length(dateOfRecording));
+       
         waitbar(progress, h, sprintf('Processing... %.2f%%', progress * 100)); % Update progress bar
     end
 else
     % Call the function to generate lists of required files
-    dateOfRecording = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(injection, typeOfSessions);
+    dateOfRecording = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(monkey, injection, typeOfSessions);
+    
+    % Increment total session count by the number of sessions for this type
+    totalSessions = totalSessions + numel(dateOfRecording);
     
     % Call additional functions and process the data
-    sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files_inner(injection, mode, currentType, dateOfRecording); % !! check: (currentType) or ('') will work
+    sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files_inner(monkey, injection, mode, currentType, dateOfRecording); % !! check: (currentType) or ('') will work
     
     waitbar(1, h, 'Processing Completed.');   % Update progress bar
 end
@@ -66,12 +81,12 @@ end   % function sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files(injection, m
 
 
 
-function sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files_inner(injection, mode, currentType, dateOfRecording)
+function sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files_inner(monkey, injection, mode, currentType, dateOfRecording)
 %% Call the additional functions
 % Call the function to get the dates
 
 % Call the settings function with the chosen set
-[base_path, INPUT_PATH, OUTPUT_PATH_raster, OUTPUT_PATH_binned, settings] = sdndt_Sim_LIP_dPul_NDT_settings(injection, currentType);
+[base_path, INPUT_PATH, OUTPUT_PATH_raster, OUTPUT_PATH_binned, monkey_prefix, settings] = sdndt_Sim_LIP_dPul_NDT_settings(monkey, injection, currentType);
 %run('sdndt_Sim_LIP_dPul_NDT_settings');
 
 
@@ -83,31 +98,35 @@ if strcmp(mode, 'merged_files_across_sessions')
     OUTPUT_PATH_list_of_required_files_per_day = cell(1, numel(dateOfRecording));
     
     % Create a cell array to store overlapBlocksFiles from different sessions
-    first_BlocksFiles = {};
-    second_BlocksFiles = {};
-    third_BlocksFiles = {};
-    fourth_BlocksFiles = {};
-    fifth_BlocksFiles = {};
-    sixth_BlocksFiles = {};
-    allallBlocksFiles = {};
-    allallBlocksFiles_AfterInjection = {};
-    allallBlocksFiles_BeforeInjection = {};
-    allOverlapBlocksFiles = {};
-    allOverlapBlocksFiles_AfterInjection = {};
-    allOverlapBlocksFiles_BeforeInjection = {};
-    allOverlap_third_BlocksFiles = {};
-    allOverlap_fourth_BlocksFiles = {};
+    all_first_BlocksFiles = {};
+    all_second_BlocksFiles = {};
+    all_third_BlocksFiles = {};
+    all_fourth_BlocksFiles = {};
+    all_fifth_BlocksFiles = {};
+    all_sixth_BlocksFiles = {};
+    allBlocksFiles = {};
+    allBlocksFiles_AfterInjection = {};
+    allBlocksFiles_BeforeInjection = {};
+    OverlapBlocksFiles = {};
+    OverlapBlocksFiles_AfterInjection = {};
+    OverlapBlocksFiles_BeforeInjection = {};
+    overlap_first_BlocksFiles = {};
+    overlap_second_BlocksFiles = {};
+    overlap_third_BlocksFiles = {};
+    overlap_fourth_BlocksFiles = {};
+    overlap_fifth_BlocksFiles = {};
+    overlap_sixth_BlocksFiles = {};
     
     
     % Create the folder for the list of required files
-    OUTPUT_PATH_list_of_required_files = [OUTPUT_PATH_raster 'merged_files_across_sessions/List_of_required_files/'];
+    OUTPUT_PATH_list_of_required_files = [OUTPUT_PATH_raster monkey_prefix 'merged_files_across_sessions/List_of_required_files/'];
     if ~exist(OUTPUT_PATH_list_of_required_files, 'dir')
         mkdir(OUTPUT_PATH_list_of_required_files);
     end
     
     % Loop through the dates
     for fol = 1:numel(dateOfRecording)
-        OUTPUT_PATH_raster_dateOfRecording{fol} = [OUTPUT_PATH_raster dateOfRecording{fol} '/'];
+        OUTPUT_PATH_raster_dateOfRecording{fol} = [OUTPUT_PATH_raster monkey_prefix dateOfRecording{fol} '/'];
         OUTPUT_PATH_list_of_required_files_per_day{fol} = [OUTPUT_PATH_raster_dateOfRecording{fol} 'List_of_required_files/'];
         
         % Loop through the dates and create subfolders (optional, remove if not needed)
@@ -134,78 +153,95 @@ if strcmp(mode, 'merged_files_across_sessions')
             % Check if the variable overlapBlocksFiles exists
             if isfield(loadedData.list_of_required_files, 'overlapBlocksFiles')
                 % Append to the cell array
-                allOverlapBlocksFiles = [allOverlapBlocksFiles; loadedData.list_of_required_files.overlapBlocksFiles];
+                OverlapBlocksFiles = [OverlapBlocksFiles; loadedData.list_of_required_files.overlapBlocksFiles];
             end
             if isfield(loadedData.list_of_required_files, 'overlapBlocksFiles_AfterInjection')
                 % Append to the cell array
-                allOverlapBlocksFiles_AfterInjection = [allOverlapBlocksFiles_AfterInjection; loadedData.list_of_required_files.overlapBlocksFiles_AfterInjection];
+                OverlapBlocksFiles_AfterInjection = [OverlapBlocksFiles_AfterInjection; loadedData.list_of_required_files.overlapBlocksFiles_AfterInjection];
             end
             if isfield(loadedData.list_of_required_files, 'overlapBlocksFiles_BeforeInjection')
                 % Append to the cell array
-                allOverlapBlocksFiles_BeforeInjection = [allOverlapBlocksFiles_BeforeInjection; loadedData.list_of_required_files.overlapBlocksFiles_BeforeInjection];
+                OverlapBlocksFiles_BeforeInjection = [OverlapBlocksFiles_BeforeInjection; loadedData.list_of_required_files.overlapBlocksFiles_BeforeInjection];
             end
             
             if isfield(loadedData.list_of_required_files, 'allBlocksFiles')
-                allallBlocksFiles = [allallBlocksFiles; loadedData.list_of_required_files.allBlocksFiles];
+                allBlocksFiles = [allBlocksFiles; loadedData.list_of_required_files.allBlocksFiles];
             end
             
             if isfield(loadedData.list_of_required_files, 'allBlocksFiles_AfterInjection')
                 % Append to the cell array
-                allallBlocksFiles_AfterInjection = [allallBlocksFiles_AfterInjection; loadedData.list_of_required_files.allBlocksFiles_AfterInjection];
+                allBlocksFiles_AfterInjection = [allBlocksFiles_AfterInjection; loadedData.list_of_required_files.allBlocksFiles_AfterInjection];
             end
             if isfield(loadedData.list_of_required_files, 'allBlocksFiles_BeforeInjection')
                 % Append to the cell array
-                allallBlocksFiles_BeforeInjection = [allallBlocksFiles_BeforeInjection; loadedData.list_of_required_files.allBlocksFiles_BeforeInjection];
+                allBlocksFiles_BeforeInjection = [allBlocksFiles_BeforeInjection; loadedData.list_of_required_files.allBlocksFiles_BeforeInjection];
             end
             
             
-            if isfield(loadedData.list_of_required_files, 'firstBlockFiles')
-                first_BlocksFiles = [first_BlocksFiles; loadedData.list_of_required_files.firstBlockFiles];
+            if isfield(loadedData.list_of_required_files, 'all_firstBlockFiles')
+                all_first_BlocksFiles = [all_first_BlocksFiles; loadedData.list_of_required_files.all_firstBlockFiles];
             end
-            if isfield(loadedData.list_of_required_files, 'secondBlockFiles')
-                second_BlocksFiles = [second_BlocksFiles; loadedData.list_of_required_files.secondBlockFiles];
+            if isfield(loadedData.list_of_required_files, 'all_secondBlockFiles')
+                all_second_BlocksFiles = [all_second_BlocksFiles; loadedData.list_of_required_files.all_secondBlockFiles];
             end
-            if isfield(loadedData.list_of_required_files, 'thirdBlockFiles')
-                third_BlocksFiles = [third_BlocksFiles; loadedData.list_of_required_files.thirdBlockFiles];
+            if isfield(loadedData.list_of_required_files, 'all_thirdBlockFiles')
+                all_third_BlocksFiles = [all_third_BlocksFiles; loadedData.list_of_required_files.all_thirdBlockFiles];
             end
-            if isfield(loadedData.list_of_required_files, 'fourthBlockFiles')
-                fourth_BlocksFiles = [fourth_BlocksFiles; loadedData.list_of_required_files.fourthBlockFiles];
+            if isfield(loadedData.list_of_required_files, 'all_fourthBlockFiles')
+                all_fourth_BlocksFiles = [all_fourth_BlocksFiles; loadedData.list_of_required_files.all_fourthBlockFiles];
             end
-            if isfield(loadedData.list_of_required_files, 'fifthBlockFiles')
-                fifth_BlocksFiles = [fifth_BlocksFiles; loadedData.list_of_required_files.fifthBlockFiles];
+            if isfield(loadedData.list_of_required_files, 'all_fifthBlockFiles')
+                all_fifth_BlocksFiles = [all_fifth_BlocksFiles; loadedData.list_of_required_files.all_fifthBlockFiles];
             end
-            if isfield(loadedData.list_of_required_files, 'sixthBlockFiles')
-                sixth_BlocksFiles = [sixth_BlocksFiles; loadedData.list_of_required_files.sixthBlockFiles];
+            if isfield(loadedData.list_of_required_files, 'all_sixthBlockFiles')
+                all_sixth_BlocksFiles = [all_sixth_BlocksFiles; loadedData.list_of_required_files.all_sixthBlockFiles];
             end
             
+            if isfield(loadedData.list_of_required_files, 'overlap_firstBlockFiles')
+                overlap_first_BlocksFiles = [overlap_first_BlocksFiles; loadedData.list_of_required_files.overlap_firstBlockFiles];
+            end
+            if isfield(loadedData.list_of_required_files, 'overlap_secondBlockFiles')
+                overlap_second_BlocksFiles = [overlap_second_BlocksFiles; loadedData.list_of_required_files.overlap_secondBlockFiles];
+            end
             if isfield(loadedData.list_of_required_files, 'overlap_thirdBlockFiles')
-                allOverlap_third_BlocksFiles = [allOverlap_third_BlocksFiles; loadedData.list_of_required_files.overlap_thirdBlockFiles];
+                overlap_third_BlocksFiles = [overlap_third_BlocksFiles; loadedData.list_of_required_files.overlap_thirdBlockFiles];
             end
             if isfield(loadedData.list_of_required_files, 'overlap_fourthBlockFiles')
-                allOverlap_fourth_BlocksFiles = [allOverlap_fourth_BlocksFiles; loadedData.list_of_required_files.overlap_fourthBlockFiles];
+                overlap_fourth_BlocksFiles = [overlap_fourth_BlocksFiles; loadedData.list_of_required_files.overlap_fourthBlockFiles];
+            end
+            if isfield(loadedData.list_of_required_files, 'overlap_fifthBlockFiles')
+                overlap_fifth_BlocksFiles = [overlap_fifth_BlocksFiles; loadedData.list_of_required_files.overlap_fifthBlockFiles];
+            end
+            if isfield(loadedData.list_of_required_files, 'overlap_sixthBlockFiles')
+                overlap_sixth_BlocksFiles = [overlap_sixth_BlocksFiles; loadedData.list_of_required_files.overlap_sixthBlockFiles];
             end
             
         end
     end
     
     % Create the variable list_of_required_files.overlapBlocksFilesAcrisSession
-    list_of_required_files.firstBlockFiles = first_BlocksFiles;
-    list_of_required_files.secondBlockFiles = second_BlocksFiles;
-    list_of_required_files.thirdBlockFiles = third_BlocksFiles;
-    list_of_required_files.fourthBlockFiles = fourth_BlocksFiles;
-    list_of_required_files.fifthBlockFiles = fifth_BlocksFiles;
-    list_of_required_files.sixthBlockFiles = sixth_BlocksFiles;
-    list_of_required_files.overlapBlocksFiles = allOverlapBlocksFiles;
-    list_of_required_files.allBlocksFiles = allallBlocksFiles;
-    list_of_required_files.overlap_thirdBlockFiles = allOverlap_third_BlocksFiles;
-    list_of_required_files.overlap_fourthBlockFiles = allOverlap_fourth_BlocksFiles;
+    list_of_required_files.all_firstBlockFiles = all_first_BlocksFiles;
+    list_of_required_files.all_secondBlockFiles = all_second_BlocksFiles;
+    list_of_required_files.all_thirdBlockFiles = all_third_BlocksFiles;
+    list_of_required_files.all_fourthBlockFiles = all_fourth_BlocksFiles;
+    list_of_required_files.all_fifthBlockFiles = all_fifth_BlocksFiles;
+    list_of_required_files.all_sixthBlockFiles = all_sixth_BlocksFiles;
     
+    list_of_required_files.overlap_firstBlockFiles = overlap_first_BlocksFiles;
+    list_of_required_files.overlap_secondBlockFiles = overlap_second_BlocksFiles;
+    list_of_required_files.overlap_thirdBlockFiles = overlap_third_BlocksFiles;
+    list_of_required_files.overlap_fourthBlockFiles = overlap_fourth_BlocksFiles;
+    list_of_required_files.overlap_fifthBlockFiles = overlap_fifth_BlocksFiles;
+    list_of_required_files.overlap_sixthBlockFiles = overlap_sixth_BlocksFiles;
+    
+    list_of_required_files.overlapBlocksFiles = OverlapBlocksFiles;
+    list_of_required_files.allBlocksFiles = allBlocksFiles;
     
     if strcmp(injection, '1')
-        list_of_required_files.overlapBlocksFiles_AfterInjection = allOverlapBlocksFiles_AfterInjection;
-        list_of_required_files.overlapBlocksFiles_BeforeInjection = allOverlapBlocksFiles_BeforeInjection;
-        list_of_required_files.allBlocksFiles_AfterInjection = allallBlocksFiles_AfterInjection;
-        list_of_required_files.allBlocksFiles_BeforeInjection = allallBlocksFiles_BeforeInjection;
+        list_of_required_files.overlapBlocksFiles_AfterInjection = OverlapBlocksFiles_AfterInjection;
+        list_of_required_files.overlapBlocksFiles_BeforeInjection = OverlapBlocksFiles_BeforeInjection;
+        list_of_required_files.allBlocksFiles_AfterInjection = allBlocksFiles_AfterInjection;
+        list_of_required_files.allBlocksFiles_BeforeInjection = allBlocksFiles_BeforeInjection;
     end
     
     % Save the structure to a .mat file in the specified folder
@@ -219,7 +255,7 @@ else % 'each_session_separately'
     
     for day = 1:length(dateOfRecording)
         % Create the folder for the list of required files
-        OUTPUT_PATH_raster_dateOfRecording = [OUTPUT_PATH_raster dateOfRecording{day} '/'];
+        OUTPUT_PATH_raster_dateOfRecording = [OUTPUT_PATH_raster monkey_prefix dateOfRecording{day} '/'];
         OUTPUT_PATH_list_of_required_files = [OUTPUT_PATH_raster_dateOfRecording 'List_of_required_files/'];
         if ~exist(OUTPUT_PATH_list_of_required_files, 'dir')
             mkdir(OUTPUT_PATH_list_of_required_files);
@@ -231,12 +267,12 @@ else % 'each_session_separately'
         
         
         % Initialize lists for each category
-        list_of_required_files.firstBlockFiles = {};
-        list_of_required_files.secondBlockFiles = {};
-        list_of_required_files.thirdBlockFiles = {};
-        list_of_required_files.fourthBlockFiles = {};
-        list_of_required_files.fifthBlockFiles = {};
-        list_of_required_files.sixthBlockFiles = {};
+        list_of_required_files.all_firstBlockFiles = {};
+        list_of_required_files.all_secondBlockFiles = {};
+        list_of_required_files.all_thirdBlockFiles = {};
+        list_of_required_files.all_fourthBlockFiles = {};
+        list_of_required_files.all_fifthBlockFiles = {};
+        list_of_required_files.all_sixthBlockFiles = {};
         list_of_required_files.allBlocksFiles = {};
         list_of_required_files.overlapBlocksFiles = {};
         
@@ -282,28 +318,28 @@ else % 'each_session_separately'
                 
                 % Check if it's the first block
                 if contains(files(i).name, 'block_1') &&  all(cellfun(@(x) all(x == 1), data.raster_labels.block))
-                    list_of_required_files.firstBlockFiles = [list_of_required_files.firstBlockFiles; fullfile(files(i).folder, files(i).name)];
+                    list_of_required_files.all_firstBlockFiles = [list_of_required_files.all_firstBlockFiles; fullfile(files(i).folder, files(i).name)];
                     
                     
                     % Check if it's the second block
                 elseif contains(files(i).name, 'block_2') && all(cellfun(@(x) all(x == 2), data.raster_labels.block))
-                    list_of_required_files.secondBlockFiles = [list_of_required_files.secondBlockFiles; fullfile(files(i).folder, files(i).name)];
+                    list_of_required_files.all_secondBlockFiles = [list_of_required_files.all_secondBlockFiles; fullfile(files(i).folder, files(i).name)];
                     
                     % Check if it's the third block
                 elseif contains(files(i).name, 'block_3')&& all(cellfun(@(x) all(x == 3), data.raster_labels.block))
-                    list_of_required_files.thirdBlockFiles = [list_of_required_files.thirdBlockFiles; fullfile(files(i).folder, files(i).name)];
+                    list_of_required_files.all_thirdBlockFiles = [list_of_required_files.all_thirdBlockFiles; fullfile(files(i).folder, files(i).name)];
                     
                     % Check if it's the fourth block
                 elseif contains(files(i).name, 'block_4')&& all(cellfun(@(x) all(x == 4), data.raster_labels.block))
-                    list_of_required_files.fourthBlockFiles = [list_of_required_files.fourthBlockFiles; fullfile(files(i).folder, files(i).name)];
+                    list_of_required_files.all_fourthBlockFiles = [list_of_required_files.all_fourthBlockFiles; fullfile(files(i).folder, files(i).name)];
                     
                     % Check if it's the fifth block
                 elseif contains(files(i).name, 'block_5')&& all(cellfun(@(x) all(x == 5), data.raster_labels.block))
-                    list_of_required_files.fifthBlockFiles = [list_of_required_files.fifthBlockFiles; fullfile(files(i).folder, files(i).name)];
+                    list_of_required_files.all_fifthBlockFiles = [list_of_required_files.all_fifthBlockFiles; fullfile(files(i).folder, files(i).name)];
                     
                     % Check if it's the sixth block
                 elseif contains(files(i).name, 'block_6')&& all(cellfun(@(x) all(x == 6), data.raster_labels.block))
-                    list_of_required_files.sixthBlockFiles = [list_of_required_files.sixthBlockFiles; fullfile(files(i).folder, files(i).name)];
+                    list_of_required_files.all_sixthBlockFiles = [list_of_required_files.all_sixthBlockFiles; fullfile(files(i).folder, files(i).name)];
                 end
                 
                 % Check if it's all blocks
@@ -325,12 +361,16 @@ else % 'each_session_separately'
                 list_of_required_files.overlapBlocksFiles_BeforeInjection = processBeforeInjectionOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles);
                 list_of_required_files.overlapBlocksFiles_AfterInjection = processAfterInjectionOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles); % select only files recorded after injection from overlapBlocksFiles
                 
-                list_of_required_files.allBlocksFiles_BeforeInjection = list_of_required_files.firstBlockFiles;
+                list_of_required_files.allBlocksFiles_BeforeInjection = list_of_required_files.all_firstBlockFiles;
                 list_of_required_files.allBlocksFiles_AfterInjection = processAfterInjectionAllBlocksFiles(list_of_required_files.allBlocksFiles);
         end
         
+        list_of_required_files.overlap_firstBlockFiles = processSpecificOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles,'block_1');
+        list_of_required_files.overlap_secondBlockFiles = processSpecificOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles,'block_2');
         list_of_required_files.overlap_thirdBlockFiles = processSpecificOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles,'block_3');
         list_of_required_files.overlap_fourthBlockFiles = processSpecificOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles, 'block_4');
+        list_of_required_files.overlap_fifthBlockFiles = processSpecificOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles,'block_5');
+        list_of_required_files.overlap_sixthBlockFiles = processSpecificOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles, 'block_6');
         
         % Save the structure to a .mat file in the specified folder
         nameOfFinalFile = ['sdndt_Sim_LIP_dPul_NDT_' dateOfRecording{day} '_list_of_required_files.mat'];
@@ -502,10 +542,10 @@ function SpecificOverlapBlocksFiles = processSpecificOverlapBlocksFiles(overlapB
             
             % Define your new condition here
             % For example, check if any perturbation value is greater than 0
-            if any(cellfun(@(x) x > 0, data.raster_labels.perturbation))
+         %   if any(cellfun(@(x) x > 0, data.raster_labels.perturbation))
                 % Add the file to SpecificOverlapBlocksFiles
                 SpecificOverlapBlocksFiles = [SpecificOverlapBlocksFiles; overlapBlocksFiles{i}];
-            end
+          %  end
         end
     end
 end

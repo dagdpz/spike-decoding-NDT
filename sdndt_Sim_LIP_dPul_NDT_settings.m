@@ -1,4 +1,4 @@
-function [base_path, INPUT_PATH, OUTPUT_PATH_raster, OUTPUT_PATH_binned, settings] = sdndt_Sim_LIP_dPul_NDT_settings(injection, typeOfSessions)
+function [base_path, INPUT_PATH, OUTPUT_PATH_raster, OUTPUT_PATH_binned, monkey_prefix, settings] = sdndt_Sim_LIP_dPul_NDT_settings(monkey, injection, typeOfSessions)
 % This code contains the variables needed to run all the basic codes (raster data creation, file list, decoding)
 % Will automatically run when the main codes are run
 
@@ -41,6 +41,15 @@ else % For control sessions (Inactivation experiment) and Functional interaction
     OUTPUT_PATH_binned = [base_path 'binned/'];
 end
 
+
+ % Create the folder for the list of required files
+    if strcmp(monkey, 'Linus')
+        monkey_prefix = 'Lin_';
+    elseif strcmp(monkey, 'Bacchus')
+        monkey_prefix = 'Bac_';
+    else
+        error('Invalid monkey name. Use ''Linus'' or ''Bacchus''.');
+    end
 
 
 %% settings

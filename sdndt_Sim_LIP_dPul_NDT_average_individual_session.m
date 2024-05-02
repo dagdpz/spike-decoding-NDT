@@ -1,8 +1,16 @@
-function sdndt_Sim_LIP_dPul_NDT_average_individual_session(injection, typeOfDecoding, curves_per_session)
+function sdndt_Sim_LIP_dPul_NDT_average_individual_session(monkey, injection, typeOfDecoding, curves_per_session)
 
 % For across session analysis, you just need to average individual session
-% sdndt_Sim_LIP_dPul_NDT_average_individual_session('1', 'merged_files_across_sessions')
+% sdndt_Sim_LIP_dPul_NDT_average_individual_session('Bacchus', '1', 'merged_files_across_sessions', 'nis')
 
+
+% monkey: 'Linus', 'Bacchus'
+% injection: '0' - control sessions, '1' - inactivation sessions (for inactivation experiment),
+%            '2' - for functional interaction experiment
+% typeOfDecoding: 'each_session_separately' or 'merged_files_across_sessions'
+% curves_per_session: 'Same' - showing individual sessions (monochrome) on the graph
+%                     'Color' - showing individual sessions (with individual color) on the graph
+%                     'nis' (no individual session) - without plotting individual sessions on the graph
 
 %%
 % Start timing the execution
@@ -10,26 +18,34 @@ startTime = tic;
 
 
 %% Define the list of required files
-listOfRequiredFiles = {%'firstBlockFiles', 'secondBlockFiles', 'thirdBlockFiles', ...
-    %'fourthBlockFiles', 'fifthBlockFiles', 'sixthBlockFiles'%, ...
-     'overlap_thirdBlockFiles', 'overlap_fourthBlockFiles'
-    %      'allBlocksFiles', 'overlapBlocksFiles', ...
-         'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection' %, ...
-    %       'allBlocksFiles_BeforeInjection', 'allBlocksFiles_AfterInjection'
+listOfRequiredFiles = {'firstBlockFiles', 'secondBlockFiles', 'thirdBlockFiles', ...
+    'fourthBlockFiles', 'fifthBlockFiles', 'sixthBlockFiles', ...
+    'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection' , ...
+    'allBlocksFiles_BeforeInjection', 'allBlocksFiles_AfterInjection'
+    
+    %'allBlocksFiles', 'overlapBlocksFiles'
     };
 
 
 %% Define typeOfSessions
 % Calculate typeOfSessions based on the injection parameter
 if strcmp(injection, '1')
-    typeOfSessions = {'left', 'right', 'all'}; % For control and injection experiments
-    %    typeOfSessions = { 'right'};
+    if strcmp(monkey, 'Linus')
+        typeOfSessions = {'left', 'right', 'all'}; % For control and injection experiments
+    elseif strcmp(monkey, 'Bacchus')
+        typeOfSessions = {'right'};
+    end
 elseif strcmp(injection, '0') || strcmp(injection, '2')
     typeOfSessions = {''}; % For the functional interaction experiment
 else
     error('Invalid injection value. Use ''0'', ''1'', or ''2''.');
 end
 
+% Calculate the number of session types
+numTypesOfSessions = numel(typeOfSessions);
+
+%% Define approach parameters
+approach_to_use = {'all_approach', 'overlap_approach'};
 
 %% Define target_state parameters
 targetParams = struct();
@@ -38,6 +54,8 @@ targetParams = struct();
 targetParams.cueON = 'cueON';
 targetParams.GOSignal = 'GOsignal';
 
+% Calculate the number of target state parameters (number of fields)
+numFieldNames = numel(fieldnames(targetParams));
 
 %% Define labels_to_use as a cell array containing both values
 labels_to_use = {'instr_R_instr_L', 'choice_R_choice_L'};
@@ -60,9 +78,16 @@ h = waitbar(0, 'Processing...'); % Initialize progress bar (for 'each_session_se
 
 numCombinations = numel(combinations_inj_and_target_brain_structure);
 numLabels = numel(labels_to_use);
-numFiles = numel(listOfRequiredFiles); % Add this line to get the number of files
+numApproach = numel(approach_to_use);
+numTypeBlocks = numel(listOfRequiredFiles); % Add this line to get the number of files
 
-for file_index = 1:numFiles % Loop through each file in listOfRequiredFiles
+
+% Calculate total number of iterations
+totalIterations = numApproach * numTypeBlocks * numCombinations * numLabels * numFieldNames * numTypesOfSessions;
+overallProgress = 0; % Initialize progress
+
+
+for file_index = 1:numTypeBlocks % Loop through each file in listOfRequiredFiles
     current_file = listOfRequiredFiles{file_index}; % Get the current file
     
     % Skip processing the second block if the injection is 0 or 1
@@ -76,93 +101,106 @@ for file_index = 1:numFiles % Loop through each file in listOfRequiredFiles
             current_injection = current_comb.injection;
             current_target_brain_structure = current_comb.target_brain_structure;
             
-            % Loop through each label in labels_to_use
-            for label_index = 1:numLabels
-                current_label = labels_to_use{label_index};
+            % Loop through each label in approach_to_use
+            for approach_index = 1:numApproach
+                current_approach = approach_to_use{approach_index};
                 
-                % Check if decoding should be performed for each session separately
-                % if strcmp(typeOfDecoding, 'each_session_separately')
-                datesForSessions = {}; % Initialize datesForSessions as an empty cell array
-                if strcmp(injection, '1')
-                    for type = 1:numel(typeOfSessions)
-                        % Get the dates for the corresponding injection and session types
-                        datesForSessions{end+1} = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(injection, typeOfSessions{type});
-                    end
-                elseif  strcmp(injection, '0') || strcmp(injection, '2')
-                    datesForSessions = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(injection, typeOfSessions);
-                end
-                %                 else % strcmp(typeOfDecoding, 'merged_files_across_sessions')
-                %                     datesForSessions = {''}; % Set a default value if decoding across sessions
-                %                 end
-                
-                
-                
-                % Loop through each target_state parameter
-                fieldNames = fieldnames(targetParams);
-                numFieldNames = numel(fieldNames);
-                numTypesOfSessions = numel(typeOfSessions);
-                
-                for i = 1:numFieldNames
-                    target_state_name = fieldNames{i};
-                    target_state = targetParams.(target_state_name);
+                % Loop through each label in labels_to_use
+                for label_index = 1:numLabels
+                    current_label = labels_to_use{label_index};
                     
-                    for j = 1:numTypesOfSessions
-                        % Call the main decoding function based on dateOfRecording
+                    % Check if decoding should be performed for each session separately
+                    % if strcmp(typeOfDecoding, 'each_session_separately')
+                    datesForSessions = {}; % Initialize datesForSessions as an empty cell array
+                    if strcmp(injection, '1')
+                        for type = 1:numel(typeOfSessions)
+                            % Get the dates for the corresponding injection and session types
+                            datesForSessions{end+1} = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(monkey, injection, typeOfSessions{type});
+                        end
+                    elseif  strcmp(injection, '0') || strcmp(injection, '2')
+                        datesForSessions = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(monkey, injection, typeOfSessions);
+                    end
+                    %                 else % strcmp(typeOfDecoding, 'merged_files_across_sessions')
+                    %                     datesForSessions = {''}; % Set a default value if decoding across sessions
+                    %                 end
+                    
+                    
+                    
+                    % Loop through each target_state parameter
+                    fieldNames = fieldnames(targetParams);
+                    numFieldNames = numel(fieldNames);
+                    numTypesOfSessions = numel(typeOfSessions);
+                    
+                    for i = 1:numFieldNames
+                        target_state_name = fieldNames{i};
+                        target_state = targetParams.(target_state_name);
                         
-                        % current_set_of_date = datesForSessions{j}; % Get the corresponding set of dates !!!!!
-                        current_type_of_session = typeOfSessions{j}; % Get the corresponding type of session !!!!!
-                        current_set_of_date = datesForSessions{j}; % Get the corresponding set of dates !!!!!
-                        
-                        if strcmp(typeOfDecoding, 'each_session_separately') % typeOfDecoding
+                        for j = 1:numTypesOfSessions
+                            % Call the main decoding function based on dateOfRecording
                             
-                            for numDays = 1:numel(current_set_of_date)
-                                current_date = current_set_of_date{numDays};
+                            % current_set_of_date = datesForSessions{j}; % Get the corresponding set of dates !!!!!
+                            current_type_of_session = typeOfSessions{j}; % Get the corresponding type of session !!!!!
+                            current_set_of_date = datesForSessions{j}; % Get the corresponding set of dates !!!!!
+                            
+                            if strcmp(typeOfDecoding, 'each_session_separately') % typeOfDecoding
                                 
-                                % Call the internal decoding function for each day
-                                sdndt_Sim_LIP_dPul_NDT_avarage_internal(current_injection, current_type_of_session, typeOfDecoding, current_date, current_target_brain_structure, target_state, current_label, current_file, curves_per_session); % typeOfSessions{j}
+                                for numDays = 1:numel(current_set_of_date)
+                                    current_date = current_set_of_date{numDays};
+                                    
+                                    % Call the internal decoding function for each day
+                                    sdndt_Sim_LIP_dPul_NDT_avarage_internal(monkey, current_injection, current_type_of_session, typeOfDecoding, current_date, current_target_brain_structure, target_state, current_label, current_approach, current_file, curves_per_session); % typeOfSessions{j}
+                                    
+                                    %                                     % Update progress bar
+                                    %                                     progress = ((file_index - 1) * numCombinations * numLabels * numFieldNames * numTypesOfSessions * numel(current_set_of_date) + ...
+                                    %                                         (comb_index - 1) * numLabels * numFieldNames * numTypesOfSessions * numel(current_set_of_date) + ...
+                                    %                                         (label_index - 1) * numFieldNames * numTypesOfSessions * numel(current_set_of_date) + ...
+                                    %                                         (i - 1) * numTypesOfSessions * numel(current_set_of_date) + ...
+                                    %                                         (j - 1) * numel(current_set_of_date) + numDays) / ...
+                                    %                                         (numFiles * numCombinations * numLabels * numFieldNames * numTypesOfSessions * numel(current_set_of_date));
+                                    %                                     waitbar(progress, h, sprintf('Processing... %.2f%%', progress * 100));
+                                    
+                                    % Update progress for each iteration
+                                    overallProgress = overallProgress + 1;
+                                    waitbar(overallProgress / totalIterations, h, sprintf('Processing... %.2f%%', overallProgress / totalIterations * 100));
+                                    
+                                end
                                 
-                                % Update progress bar
-                                progress = ((file_index - 1) * numCombinations * numLabels * numFieldNames * numTypesOfSessions * numel(current_set_of_date) + ...
-                                    (comb_index - 1) * numLabels * numFieldNames * numTypesOfSessions * numel(current_set_of_date) + ...
-                                    (label_index - 1) * numFieldNames * numTypesOfSessions * numel(current_set_of_date) + ...
-                                    (i - 1) * numTypesOfSessions * numel(current_set_of_date) + ...
-                                    (j - 1) * numel(current_set_of_date) + numDays) / ...
-                                    (numFiles * numCombinations * numLabels * numFieldNames * numTypesOfSessions * numel(current_set_of_date));
-                                waitbar(progress, h, sprintf('Processing... %.2f%%', progress * 100));
                                 
-                            end
+                            else % strcmp(typeOfDecoding, 'merged_files_across_sessions')
+                                current_date = [];
+                                % Call the internal decoding function only once
+                                sdndt_Sim_LIP_dPul_NDT_avarage_internal(monkey, current_injection, current_type_of_session, typeOfDecoding, current_set_of_date, current_target_brain_structure, target_state, current_label, current_approach, current_file, curves_per_session);
+                                
+                                %                             % Update progress bar for merged files scenario
+                                %                             progress = ((file_index - 1) * numCombinations + (comb_index - 1)) / (numFiles * numCombinations);
+                                %                             waitbar(progress, h, sprintf('Processing... %.2f%%', progress * 100));
+                                
+                                % Update progress for each combination
+                                %                                 overallProgress = ((file_index - 1) * numCombinations * numLabels * numFieldNames * numTypesOfSessions + ...
+                                %                                     (comb_index - 1) * numLabels * numFieldNames * numTypesOfSessions + ...
+                                %                                     (label_index - 1) * numFieldNames * numTypesOfSessions + ...
+                                %                                     (i - 1) * numTypesOfSessions + ...
+                                %                                     (j - 1)) / ...
+                                %                                     (numFiles * numCombinations * numLabels * numFieldNames * numTypesOfSessions);
+                                %
+                                %                                 % Update progress bar
+                                %                                 waitbar(overallProgress, h, sprintf('Processing... %.2f%%', overallProgress * 100));
+                                
+                                % Update progress for each iteration
+                                overallProgress = overallProgress + 1;
+                                waitbar(overallProgress / totalIterations, h, sprintf('Processing... %.2f%%', overallProgress / totalIterations * 100));
+                                
+                                
+                            end % if strcmp(typeOfDecoding, 'each_session_separately')
                             
-                            
-                        else % strcmp(typeOfDecoding, 'merged_files_across_sessions')
-                            current_date = [];
-                            % Call the internal decoding function only once
-                            sdndt_Sim_LIP_dPul_NDT_avarage_internal(current_injection, current_type_of_session, typeOfDecoding, current_set_of_date, current_target_brain_structure, target_state, current_label, current_file, curves_per_session);
-                            
-                            %                             % Update progress bar for merged files scenario
-                            %                             progress = ((file_index - 1) * numCombinations + (comb_index - 1)) / (numFiles * numCombinations);
-                            %                             waitbar(progress, h, sprintf('Processing... %.2f%%', progress * 100));
-                            
-                            % Update progress for each combination
-                            overallProgress = ((file_index - 1) * numCombinations * numLabels * numFieldNames * numTypesOfSessions + ...
-                                (comb_index - 1) * numLabels * numFieldNames * numTypesOfSessions + ...
-                                (label_index - 1) * numFieldNames * numTypesOfSessions + ...
-                                (i - 1) * numTypesOfSessions + ...
-                                (j - 1)) / ...
-                                (numFiles * numCombinations * numLabels * numFieldNames * numTypesOfSessions);
-                            
-                            % Update progress bar
-                            waitbar(overallProgress, h, sprintf('Processing... %.2f%%', overallProgress * 100));
-                            
-                            
-                        end % if strcmp(typeOfDecoding, 'each_session_separately')
-                        
-                    end % for j = 1:numTypesOfSessions
-                end % for i = 1:numFieldNames
-            end % for label_index = 1:numLabels
+                        end % for j = 1:numTypesOfSessions
+                    end % for i = 1:numFieldNames
+                end % for label_index = 1:numLabels
+            end % approach_index = 1:numApproach
         end % for comb_index = 1:numCombinations
         
     end %  if ~(strcmp(current_file, 'secondBlockFiles')
-end % file_index = 1:numFiles
+end % file_index = 1:numTypeBlocks
 
 
 
@@ -214,97 +252,93 @@ end
 
 
 
-function sdndt_Sim_LIP_dPul_NDT_avarage_internal(injection, typeOfSessions, typeOfDecoding, dateOfRecording, target_brain_structure, target_state, given_labels_to_use, givenListOfRequiredFiles, curves_per_session)
+function sdndt_Sim_LIP_dPul_NDT_avarage_internal(monkey, injection, typeOfSessions, typeOfDecoding, dateOfRecording, target_brain_structure, target_state, given_labels_to_use, current_approach, givenListOfRequiredFiles, curves_per_session)
 
 
 
 
 %% Path
 % Call the function to get the dates
-allDateOfRecording = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(injection, typeOfSessions);
+allDateOfRecording = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(monkey, injection, typeOfSessions);
 
 
 % Call the settings function with the chosen set
-[base_path, INPUT_PATH, OUTPUT_PATH_raster, OUTPUT_PATH_binned, settings] = sdndt_Sim_LIP_dPul_NDT_settings(injection, typeOfSessions);
+[base_path, INPUT_PATH, OUTPUT_PATH_raster, OUTPUT_PATH_binned, monkey_prefix, settings] = sdndt_Sim_LIP_dPul_NDT_settings(monkey, injection, typeOfSessions);
 
 %% find grouping_folder
-if isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection')
-    block_grouping_folder = 'Overlap_blocks_BeforeInjection/';
-    block_grouping_folder_for_saving = 'overlapBlocksFilesAcrossSessions_BeforeInjection'
-    num_block = '';
-    
-    % elseif ismember(current_date, allDateOfRecording) && isfield(list_of_required_files, 'overlapBlocksFiles_AfterInjection') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles_AfterInjection)
-elseif isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection')
-    block_grouping_folder = 'Overlap_blocks_AfterInjection/';
-    block_grouping_folder_for_saving = 'overlapBlocksFilesAcrossSessions_AfterInjection'
-    num_block = '';
-    
-    % elseif ismember(current_date, allDateOfRecording) && isfield(list_of_required_files, 'allBlocksFiles_BeforeInjection') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles_BeforeInjection)
-elseif isequal(givenListOfRequiredFiles, 'allBlocksFiles_BeforeInjection')
-    block_grouping_folder = 'All_blocks_BeforeInjection/';
-    block_grouping_folder_for_saving = 'allBlocksFilesAcrossSessions_BeforeInjection'
-    num_block = '';
-    
-    % elseif ismember(current_date, allDateOfRecording) && isfield(list_of_required_files, 'allpBlocksFiles_AfterInjection') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles_AfterInjection)
-elseif isequal(givenListOfRequiredFiles, 'allBlocksFiles_AfterInjection')
-    block_grouping_folder = 'All_blocks_AfterInjection/';
-    block_grouping_folder_for_saving = 'allBlocksFilesAcrossSessions_AfterInjection'
-    num_block = '';
-    
 
-    
-elseif isequal(givenListOfRequiredFiles, 'firstBlockFiles')
-    block_grouping_folder = '';
-    block_grouping_folder_for_saving = 'all_FilesAcrossSessions_Block_1/'
-    num_block = 'block_1';
-    
-elseif isequal(givenListOfRequiredFiles, 'secondBlockFiles')
-    block_grouping_folder = '';
-    block_grouping_folder_for_saving = 'all_FilesAcrossSessions_Block_2/'
-    num_block = 'block_2';
-    
-elseif isequal(givenListOfRequiredFiles, 'thirdBlockFiles')
-    block_grouping_folder = '';
-    block_grouping_folder_for_saving = 'all_FilesAcrossSessions_Block_3/'
-    num_block = 'block_3';
-    
-elseif isequal(givenListOfRequiredFiles, 'fourthBlockFiles')
-    block_grouping_folder = '';
-    block_grouping_folder_for_saving = 'all_FilesAcrossSessions_Block_4/'
-    num_block = 'block_4';
-    
-elseif isequal(givenListOfRequiredFiles, 'fifthBlockFiles')
-    block_grouping_folder = '';
-    block_grouping_folder_for_saving = 'all_FilesAcrossSessions_Block_5/'
-    num_block = 'block_5';
-    
-elseif isequal(givenListOfRequiredFiles, 'sixthBlockFiles')
-    block_grouping_folder = '';
-    block_grouping_folder_for_saving = 'all_FilesAcrossSessions_Block_6/'
-    num_block = 'block_6';
-    
-    
-elseif isequal(givenListOfRequiredFiles, 'overlap_thirdBlockFiles')
-    block_grouping_folder = 'By_block_Overlap';
-    block_grouping_folder_for_saving = 'overlap_FilesAcrossSessions_Block_3/'
-    num_block = 'block_3';
-    
-elseif isequal(givenListOfRequiredFiles, 'overlap_fourthBlockFiles')
-    block_grouping_folder = 'By_block_Overlap';
-    block_grouping_folder_for_saving = 'overlap_FilesAcrossSessions_Block_4/';
-    num_block = 'block_4';
-    
-    % elseif ~isequal(dateOfRecording, allDateOfRecording)
-    %     % Handle different date recordings
-    %     if isfield(list_of_required_files, 'overlapBlocksFiles')&& isequal(givenListOfRequiredFiles, 'overlapBlocksFiles') && ...
-    %             ~isequal(dateOfRecording, allDateOfRecording)
-    %         block_grouping_folder = 'Overlap_blocks/';
-    %     elseif isfield(list_of_required_files, 'allBlocksFiles')&& isequal(givenListOfRequiredFiles, 'allBlocksFiles') && ...
-    %             ~isequal(dateOfRecording, allDateOfRecording)
-    %         block_grouping_folder = 'All_blocks/';
-    %     end
+% Initialize block_grouping_folder and block_grouping_folder_for_saving
+block_grouping_folder = '';
+block_grouping_folder_for_saving = '';
+
+% Set the block grouping folder based on the approach
+if strcmp(current_approach, 'all_approach')
+    % For 'all_approach', set the block grouping folder prefix to 'All_'
+    block_grouping_folder_prefix = 'All_';
+elseif strcmp(current_approach, 'overlap_approach')
+    % For 'overlap_approach', set the block grouping folder prefix to 'Overlap_'
+    block_grouping_folder_prefix = 'Overlap_';
+else
+    % Handle the case when the approach is unknown
+    error('Unknown approach. Please use either ''all_approach'' or ''overlap_approach''.');
 end
 
+% Extract the block number suffix from givenListOfRequiredFiles
+if strcmp(givenListOfRequiredFiles, 'firstBlockFiles')
+    num_block_suffix = '1';
+elseif strcmp(givenListOfRequiredFiles, 'secondBlockFiles')
+    num_block_suffix = '2';
+elseif strcmp(givenListOfRequiredFiles, 'thirdBlockFiles')
+    num_block_suffix = '3';
+elseif strcmp(givenListOfRequiredFiles, 'fourthBlockFiles')
+    num_block_suffix = '4';
+elseif strcmp(givenListOfRequiredFiles, 'fifthBlockFiles')
+    num_block_suffix = '5';
+elseif strcmp(givenListOfRequiredFiles, 'sixthBlockFiles')
+    num_block_suffix = '6';
+elseif strcmp(givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection')
+    % For overlap blocks before injection
+    block_grouping_folder = 'Overlap_blocks_BeforeInjection/';
+    block_grouping_folder_for_saving = 'overlapBlocksFilesAcrossSessions_BeforeInjection';
+    num_block_suffix = '';
+elseif strcmp(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection')
+    % For overlap blocks after injection
+    block_grouping_folder = 'Overlap_blocks_AfterInjection/';
+    block_grouping_folder_for_saving = 'overlapBlocksFilesAcrossSessions_AfterInjection';
+    num_block_suffix = '';
+elseif strcmp(givenListOfRequiredFiles, 'allBlocksFiles_BeforeInjection')
+    % For all blocks before injection
+    block_grouping_folder = 'All_blocks_BeforeInjection/';
+    block_grouping_folder_for_saving = 'allBlocksFilesAcrossSessions_BeforeInjection';
+    num_block_suffix = '';
+elseif strcmp(givenListOfRequiredFiles, 'allBlocksFiles_AfterInjection')
+    % For all blocks after injection
+    block_grouping_folder = 'All_blocks_AfterInjection/';
+    block_grouping_folder_for_saving = 'allBlocksFilesAcrossSessions_AfterInjection';
+    num_block_suffix = '';
+else
+    error('Unknown value for givenListOfRequiredFiles.');
+end
+
+
+% Construct the block grouping folder
+block_grouping_folder = sprintf('%sBy_block', block_grouping_folder_prefix);
+
+% Construct the block grouping folder for saving
+if isempty(block_grouping_folder_for_saving)
+    % For specific block files, construct the folder with block number suffix
+    block_grouping_folder_for_saving = sprintf('%sFilesAcrossSessions_Block_%s/', lower(block_grouping_folder_prefix), num_block_suffix);
+end
+
+
+% Construct num_block
+if isempty(num_block_suffix)
+    % For overlap or all blocks files, num_block is empty
+    num_block = '';
+else
+    % For specific block files, construct num_block
+    num_block = sprintf('block_%s', num_block_suffix);
+end
 
 
 % Preprocess given_labels_to_use
@@ -341,7 +375,8 @@ if  strcmp(typeOfDecoding, 'merged_files_across_sessions')
     for numOfData = 1:numel(dateOfRecording)
         
         current_dateOfRecording = dateOfRecording{numOfData};
-        OUTPUT_PATH_binned_data = fullfile(OUTPUT_PATH_binned, current_dateOfRecording, block_grouping_folder);
+        current_dateOfRecording_monkey = [monkey_prefix current_dateOfRecording];
+        OUTPUT_PATH_binned_data = fullfile(OUTPUT_PATH_binned, current_dateOfRecording_monkey, block_grouping_folder);
         
         % List the contents of the All_blocks_BeforeInjection folder
         cvSplitsFolders = dir(OUTPUT_PATH_binned_data);
@@ -397,51 +432,51 @@ if  strcmp(typeOfDecoding, 'merged_files_across_sessions')
                 if contains(decodingResultsFilename, target_brain_structure) && ...
                         contains(decodingResultsFilename, target_state) && ...
                         contains(decodingResultsFilename, combinedLabel) && ...
-                        contains(decodingResultsFilename, num_block) 
+                        contains(decodingResultsFilename, num_block)
                     % Construct the full path to the DECODING_RESULTS.mat file
                     
                     
                     
-%                     % If certain conditions are met (e.g., processing specific block files),
-%                     % you can add an additional filter based on the block number here
-%                     if isequal(givenListOfRequiredFiles, 'firstBlockFiles') && contains(decodingResultsFilename, 'block_1') || ...
-%                             isequal(givenListOfRequiredFiles, 'secondBlockFiles') && contains(decodingResultsFilename, 'block_2') || ...
-%                             isequal(givenListOfRequiredFiles, 'thirdBlockFiles') && contains(decodingResultsFilename, 'block_3') || ...
-%                             isequal(givenListOfRequiredFiles, 'fourthBlockFiles') && contains(decodingResultsFilename, 'block_4') || ...
-%                             isequal(givenListOfRequiredFiles, 'fifthBlockFiles') && contains(decodingResultsFilename, 'block_5') || ...
-%                             isequal(givenListOfRequiredFiles, 'sixthBlockFiles') && contains(decodingResultsFilename, 'block_6')
-%                         
-%                         % Construct the full path to the DECODING_RESULTS.mat file
-%                         decodingResultsFilePath = fullfile(cvSplitFolderPath, decodingResultsFilename);
-%                         
-%                         % Now you have the path to the suitable DECODING_RESULTS.mat file
-%                         % You can process or load this file as needed
-%                         fileFound = true;  % Set flag to true
-%                         
-%                         % Extract data about session and num_cv_splits
-%                         num_cv_splits = str2double(extractBetween(cvSplitFolderName, 'num_cv_splits_', '('));
-%                         session_num_cv_splits_Info = sprintf('Session: %s, num_cv_splits: %d\n', dateOfRecording{numOfData}, num_cv_splits);
-%                         
-%                         break; % Exit the loop once the file is found
-%                    
-%                     
-%                     else
-                        decodingResultsFilePath = fullfile(cvSplitFolderPath, decodingResultsFilename);
-                        
-                        % Now you have the path to the suitable DECODING_RESULTS.mat file
-                        % You can process or load this file as needed
-                        fileFound = true;  % Set flag to true
-                        
-                        % Extract data about session and num_cv_splits
-                        num_cv_splits = str2double(extractBetween(cvSplitFolderName, 'num_cv_splits_', '('));
-                        session_num_cv_splits_Info = sprintf('Session: %s, num_cv_splits: %d\n', dateOfRecording{numOfData}, num_cv_splits);
-                        
-                        
-                        break; % Exit the loop once the file is found
-                    end
+                    %                     % If certain conditions are met (e.g., processing specific block files),
+                    %                     % you can add an additional filter based on the block number here
+                    %                     if isequal(givenListOfRequiredFiles, 'firstBlockFiles') && contains(decodingResultsFilename, 'block_1') || ...
+                    %                             isequal(givenListOfRequiredFiles, 'secondBlockFiles') && contains(decodingResultsFilename, 'block_2') || ...
+                    %                             isequal(givenListOfRequiredFiles, 'thirdBlockFiles') && contains(decodingResultsFilename, 'block_3') || ...
+                    %                             isequal(givenListOfRequiredFiles, 'fourthBlockFiles') && contains(decodingResultsFilename, 'block_4') || ...
+                    %                             isequal(givenListOfRequiredFiles, 'fifthBlockFiles') && contains(decodingResultsFilename, 'block_5') || ...
+                    %                             isequal(givenListOfRequiredFiles, 'sixthBlockFiles') && contains(decodingResultsFilename, 'block_6')
+                    %
+                    %                         % Construct the full path to the DECODING_RESULTS.mat file
+                    %                         decodingResultsFilePath = fullfile(cvSplitFolderPath, decodingResultsFilename);
+                    %
+                    %                         % Now you have the path to the suitable DECODING_RESULTS.mat file
+                    %                         % You can process or load this file as needed
+                    %                         fileFound = true;  % Set flag to true
+                    %
+                    %                         % Extract data about session and num_cv_splits
+                    %                         num_cv_splits = str2double(extractBetween(cvSplitFolderName, 'num_cv_splits_', '('));
+                    %                         session_num_cv_splits_Info = sprintf('Session: %s, num_cv_splits: %d\n', dateOfRecording{numOfData}, num_cv_splits);
+                    %
+                    %                         break; % Exit the loop once the file is found
+                    %
+                    %
+                    %                     else
+                    decodingResultsFilePath = fullfile(cvSplitFolderPath, decodingResultsFilename);
+                    
+                    % Now you have the path to the suitable DECODING_RESULTS.mat file
+                    % You can process or load this file as needed
+                    fileFound = true;  % Set flag to true
+                    
+                    % Extract data about session and num_cv_splits
+                    num_cv_splits = str2double(extractBetween(cvSplitFolderName, 'num_cv_splits_', '('));
+                    session_num_cv_splits_Info = sprintf('Session: %s, num_cv_splits: %d\n', dateOfRecording{numOfData}, num_cv_splits);
                     
                     
-               % end
+                    break; % Exit the loop once the file is found
+                end
+                
+                
+                % end
             end
             
             %             % Exit the loop if the file is found
@@ -591,7 +626,7 @@ if  strcmp(typeOfDecoding, 'merged_files_across_sessions')
             % plot without individual session labels
         end
         
-                
+        
         
         tickPositions = 0:200:1000; % Calculate the tick positions every 200 ms
         xticks(tickPositions);  % Set the tick positions on the X-axis
@@ -636,7 +671,7 @@ if  strcmp(typeOfDecoding, 'merged_files_across_sessions')
         t.FontSize = 15;
         s.FontSize = 12;
         
-
+        
         
         % Draw annotation window only on the last iteration
         if numOfData == numel(dateOfRecording)
@@ -692,7 +727,8 @@ if  strcmp(typeOfDecoding, 'merged_files_across_sessions')
             cvSplitFolder_to_save = 'Average_Dynamics';
             
             % save
-            OUTPUT_PATH_binned_data_for_saving = fullfile(OUTPUT_PATH_binned, typeOfDecoding, block_grouping_folder_for_saving, cvSplitFolder_to_save);
+            typeOfDecoding_monkey = [monkey_prefix typeOfDecoding];
+            OUTPUT_PATH_binned_data_for_saving = fullfile(OUTPUT_PATH_binned, typeOfDecoding_monkey, block_grouping_folder_for_saving, cvSplitFolder_to_save);
             % Check if cvSplitFolder_to_save folder exists, if not, create it
             if ~exist(OUTPUT_PATH_binned_data_for_saving, 'dir')
                 mkdir(OUTPUT_PATH_binned_data_for_saving);
@@ -709,12 +745,12 @@ if  strcmp(typeOfDecoding, 'merged_files_across_sessions')
             if isequal(curves_per_session, 'Color')
                 Color_curves_name = '_Color';
             elseif isequal(curves_per_session, 'Same')
-                Color_curves_name = '';    
+                Color_curves_name = '';
             elseif isequal(curves_per_session, 'nis') % no individual session
                 Color_curves_name = '_nis';
             end
-             
-           
+            
+            
             % Save the pic
             path_name_to_save = fullfile (OUTPUT_PATH_binned_data_for_saving,[meanResultsFilename(1:end-4) '_AverageDynamics' Color_curves_name '.png']);
             saveas(gcf, path_name_to_save);
