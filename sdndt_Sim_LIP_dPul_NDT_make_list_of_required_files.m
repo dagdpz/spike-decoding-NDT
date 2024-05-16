@@ -108,8 +108,11 @@ if strcmp(mode, 'merged_files_across_sessions')
     allBlocksFiles_AfterInjection = {};
     allBlocksFiles_BeforeInjection = {};
     OverlapBlocksFiles = {};
+    OverlapBlocksFiles_1_3_4 = {};
     OverlapBlocksFiles_AfterInjection = {};
     OverlapBlocksFiles_BeforeInjection = {};
+    OverlapBlocksFiles_AfterInjection_3_4 = {};
+    OverlapBlocksFiles_BeforeInjection_3_4 = {};
     overlap_first_BlocksFiles = {};
     overlap_second_BlocksFiles = {};
     overlap_third_BlocksFiles = {};
@@ -155,6 +158,10 @@ if strcmp(mode, 'merged_files_across_sessions')
                 % Append to the cell array
                 OverlapBlocksFiles = [OverlapBlocksFiles; loadedData.list_of_required_files.overlapBlocksFiles];
             end
+              if isfield(loadedData.list_of_required_files, 'overlapBlocksFiles_1_3_4')
+                % Append to the cell array
+                OverlapBlocksFiles_1_3_4 = [OverlapBlocksFiles_1_3_4; loadedData.list_of_required_files.overlapBlocksFiles_1_3_4];
+            end
             if isfield(loadedData.list_of_required_files, 'overlapBlocksFiles_AfterInjection')
                 % Append to the cell array
                 OverlapBlocksFiles_AfterInjection = [OverlapBlocksFiles_AfterInjection; loadedData.list_of_required_files.overlapBlocksFiles_AfterInjection];
@@ -162,6 +169,14 @@ if strcmp(mode, 'merged_files_across_sessions')
             if isfield(loadedData.list_of_required_files, 'overlapBlocksFiles_BeforeInjection')
                 % Append to the cell array
                 OverlapBlocksFiles_BeforeInjection = [OverlapBlocksFiles_BeforeInjection; loadedData.list_of_required_files.overlapBlocksFiles_BeforeInjection];
+            end
+            if isfield(loadedData.list_of_required_files, 'overlapBlocksFiles_AfterInjection_3_4')
+                % Append to the cell array
+                OverlapBlocksFiles_AfterInjection_3_4 = [OverlapBlocksFiles_AfterInjection_3_4; loadedData.list_of_required_files.overlapBlocksFiles_AfterInjection_3_4];
+            end
+            if isfield(loadedData.list_of_required_files, 'overlapBlocksFiles_BeforeInjection_3_4')
+                % Append to the cell array
+                OverlapBlocksFiles_BeforeInjection_3_4 = [OverlapBlocksFiles_BeforeInjection_3_4; loadedData.list_of_required_files.overlapBlocksFiles_BeforeInjection_3_4];
             end
             
             if isfield(loadedData.list_of_required_files, 'allBlocksFiles')
@@ -235,11 +250,14 @@ if strcmp(mode, 'merged_files_across_sessions')
     list_of_required_files.overlap_sixthBlockFiles = overlap_sixth_BlocksFiles;
     
     list_of_required_files.overlapBlocksFiles = OverlapBlocksFiles;
+    list_of_required_files.overlapBlocksFiles_1_3_4 = OverlapBlocksFiles_1_3_4;
     list_of_required_files.allBlocksFiles = allBlocksFiles;
     
     if strcmp(injection, '1')
         list_of_required_files.overlapBlocksFiles_AfterInjection = OverlapBlocksFiles_AfterInjection;
         list_of_required_files.overlapBlocksFiles_BeforeInjection = OverlapBlocksFiles_BeforeInjection;
+        list_of_required_files.overlapBlocksFiles_AfterInjection_3_4 = OverlapBlocksFiles_AfterInjection_3_4;
+        list_of_required_files.overlapBlocksFiles_BeforeInjection_3_4 = OverlapBlocksFiles_BeforeInjection_3_4;
         list_of_required_files.allBlocksFiles_AfterInjection = allBlocksFiles_AfterInjection;
         list_of_required_files.allBlocksFiles_BeforeInjection = allBlocksFiles_BeforeInjection;
     end
@@ -274,7 +292,9 @@ else % 'each_session_separately'
         list_of_required_files.all_fifthBlockFiles = {};
         list_of_required_files.all_sixthBlockFiles = {};
         list_of_required_files.allBlocksFiles = {};
+        % list_of_required_files.allBlocksFiles_AfterInjection_3_4 = {};
         list_of_required_files.overlapBlocksFiles = {};
+        list_of_required_files.overlapBlocksFiles_1_3_4 = {};
         
         
         % Initialize a struct to store the maximum block value and conventions for each session
@@ -282,7 +302,7 @@ else % 'each_session_separately'
         
         % Call the function to get unique blocks for the day
         uniqueBlocks = countUniqueBlocksForDay(OUTPUT_PATH_raster_dateOfRecording);
-        
+        Blocks_1_2_3 = [1 3 4];
         
         % Loop through each file
         for i = 1:length(files)
@@ -342,6 +362,7 @@ else % 'each_session_separately'
                     list_of_required_files.all_sixthBlockFiles = [list_of_required_files.all_sixthBlockFiles; fullfile(files(i).folder, files(i).name)];
                 end
                 
+                
                 % Check if it's all blocks
                 % Add the file to the allBlocksFiles list
                 list_of_required_files.allBlocksFiles = [list_of_required_files.allBlocksFiles; fullfile(files(i).folder, files(i).name)];
@@ -357,12 +378,21 @@ else % 'each_session_separately'
                 
             case '1'
                 list_of_required_files.overlapBlocksFiles = processOverlapBlocksFiles(OUTPUT_PATH_raster_dateOfRecording, OUTPUT_PATH_list_of_required_files, uniqueBlocks);
+                list_of_required_files.overlapBlocksFiles_1_3_4 = findBlocksFiles_1_3_4(OUTPUT_PATH_raster_dateOfRecording, list_of_required_files.allBlocksFiles,  Blocks_1_2_3); % find units that are present in blocks 1, 3, 4 (we are not interested in other blocks such as 5 and 6). 
                 
                 list_of_required_files.overlapBlocksFiles_BeforeInjection = processBeforeInjectionOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles);
                 list_of_required_files.overlapBlocksFiles_AfterInjection = processAfterInjectionOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles); % select only files recorded after injection from overlapBlocksFiles
                 
+                list_of_required_files.overlapBlocksFiles_BeforeInjection_3_4 = processBeforeInjectionOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles_1_3_4); % find units before inactivation (in block 1) that are also present in blocks 3 and 4. 
+                list_of_required_files.overlapBlocksFiles_AfterInjection_3_4 = processAfterInjectionOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles_1_3_4); % find units after inactivation (in block 3 and 4) that are also present in blocks 1.
+                
                 list_of_required_files.allBlocksFiles_BeforeInjection = list_of_required_files.all_firstBlockFiles;
                 list_of_required_files.allBlocksFiles_AfterInjection = processAfterInjectionAllBlocksFiles(list_of_required_files.allBlocksFiles);
+       
+%                  % Add the file to the all_3_4_BlockFiles list
+%                 if all(cellfun(@(x) any(x == [3 4]), data.raster_labels.block))
+%                     list_of_required_files.allBlocksFiles_AfterInjection_3_4 = [list_of_required_files.all_3_4_BlockFiles; fullfile(files(i).folder, files(i).name)];
+%                 end
         end
         
         list_of_required_files.overlap_firstBlockFiles = processSpecificOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles,'block_1');
@@ -486,7 +516,51 @@ overlapFiles  = vertcat(uniqueFileGroups(validGroups).files);
 end
 
 
+function overlapBlocksFiles_1_3_4 = findBlocksFiles_1_3_4(OUTPUT_PATH_raster_dateOfRecording, allBlocksFiles, uniqueBlocks)
+overlapBlocksFiles_1_3_4 = allBlocksFiles ;
 
+% Loop through each file in overlapBlocksFiles
+for i = numel(overlapBlocksFiles_1_3_4):-1:1
+    if contains(overlapBlocksFiles_1_3_4{i}, 'block_5') || contains(overlapBlocksFiles_1_3_4{i}, 'block_6')
+    overlapBlocksFiles_1_3_4(i) = [];  % Remove files containing 'block_5'
+    end
+end
+
+
+% Extract prefixes from file names
+for i = 1:numel(overlapBlocksFiles_1_3_4)
+    [~, filename, ~] = fileparts(overlapBlocksFiles_1_3_4{i});
+    parts = strsplit(filename, '_');
+    prefix = strjoin(parts(1:end-1), '_'); % Extract the prefix
+    prefixes{i} = prefix;
+end
+
+% Remove duplicates
+uniquePrefixes = unique(prefixes);
+
+% Initialize a cell array to store valid file names
+validFileNames = {};
+
+% Loop through each unique prefix
+for prefixIdx = 1:numel(uniquePrefixes)
+    prefix = uniquePrefixes{prefixIdx};
+    
+    % Extract file names from overlapBlocksFiles_1_3_4
+    overlapFileNames = cellfun(@(x) split(x, filesep), overlapBlocksFiles_1_3_4, 'UniformOutput', false);
+    overlapFileNames = cellfun(@(x) x{end}, overlapFileNames, 'UniformOutput', false);
+    
+    % Check if the file names start with the prefix
+    files_with_prefix = overlapBlocksFiles_1_3_4(startsWith(overlapFileNames, [prefix, '_']));
+    
+    % Check if files with blocks 1, 3, and 4 exist for this prefix
+    if any(contains(files_with_prefix, 'block_1')) && any(contains(files_with_prefix, 'block_3')) && any(contains(files_with_prefix, 'block_4'))
+        % Add valid files to the list
+        validFileNames = [validFileNames, files_with_prefix];
+    end
+end
+
+overlapBlocksFiles_1_3_4 = validFileNames(:); % Assign valid file names to overlapBlocksFiles_1_3_4
+end
 
 
 function overlapBlocksFilesAfterInjection = processAfterInjectionOverlapBlocksFiles(overlapBlocksFiles)

@@ -44,19 +44,20 @@ function sdndt_Sim_LIP_dPul_NDT_decoding(monkey, injection, typeOfDecoding)
 startTime = tic;
 
 %% Define the list of required files
-listOfRequiredFiles = {'firstBlockFiles', 'secondBlockFiles', ...
-    'thirdBlockFiles', 'fourthBlockFiles', ...
-    'fifthBlockFiles', 'sixthBlockFiles', ...
-    'overlapBlocksFiles_BeforeInjection',...
-    'overlapBlocksFiles_AfterInjection', ...
-    'allBlocksFiles_BeforeInjection', 'allBlocksFiles_AfterInjection'
+listOfRequiredFiles = {%'firstBlockFiles', 'secondBlockFiles', ...
+%     'thirdBlockFiles', 'fourthBlockFiles', ...
+%     'fifthBlockFiles', 'sixthBlockFiles', ...
+%     'overlapBlocksFiles_BeforeInjection',...
+%     'overlapBlocksFiles_AfterInjection', ...
+%     'allBlocksFiles_BeforeInjection', 
+'allBlocksFiles_AfterInjection'
     };  %'allBlocksFiles', 'overlapBlocksFiles', ...
 
 %% Define typeOfSessions
 % Calculate typeOfSessions based on the injection parameter
 if strcmp(injection, '1')
     if strcmp(monkey, 'Linus')
-        typeOfSessions = {'left', 'right', 'all'}; % For control and injection experiments
+        typeOfSessions = {'right', 'left', 'all'}; % For control and injection experiments
     elseif strcmp(monkey, 'Bacchus')
         typeOfSessions = {'right'};
     end
@@ -101,8 +102,8 @@ targetParams.GOSignal = 4;
 numFieldNames = numel(fieldnames(targetParams));
 
 %% Define labels_to_use as a cell array containing both values
-labels_to_use = {'instr_R_instr_L', 'choice_R_choice_L'};
-%labels_to_use = {'choice_R_choice_L'};
+%labels_to_use = {'instr_R_instr_L', 'choice_R_choice_L'};
+labels_to_use = {'choice_R_choice_L'};
 
 %% Define valid combinations of injection and target_brain_structure
 if strcmp(injection, '1') || strcmp(injection, '0')
@@ -866,6 +867,10 @@ end
 num_units = data_from_text_document(:, 1);
 num_repetitions = data_from_text_document(:, 2);
 
+% Filter out rows where the number of repetitions is less than 8
+valid_indices = num_repetitions >= 4*settings.num_times_to_repeat_each_label_per_cv_split;
+num_units = num_units(valid_indices);
+num_repetitions = num_repetitions(valid_indices);
 
 % Check if all units are zeros
 if all(num_units == 0)

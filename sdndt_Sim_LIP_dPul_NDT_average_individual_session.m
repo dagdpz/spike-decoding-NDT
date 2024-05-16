@@ -18,10 +18,12 @@ startTime = tic;
 
 
 %% Define the list of required files
-listOfRequiredFiles = {'firstBlockFiles', 'secondBlockFiles', 'thirdBlockFiles', ...
-    'fourthBlockFiles', 'fifthBlockFiles', 'sixthBlockFiles', ...
-    'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection' , ...
-    'allBlocksFiles_BeforeInjection', 'allBlocksFiles_AfterInjection'
+listOfRequiredFiles = {%'firstBlockFiles', 'secondBlockFiles', 'thirdBlockFiles', ...
+%     'fourthBlockFiles', 'fifthBlockFiles', 'sixthBlockFiles', ...
+%     'overlapBlocksFiles_BeforeInjection',
+    'overlapBlocksFiles_AfterInjection' %, ...
+    %'allBlocksFiles_BeforeInjection',
+    'allBlocksFiles_AfterInjection'
     
     %'allBlocksFiles', 'overlapBlocksFiles'
     };
@@ -286,16 +288,22 @@ end
 % Extract the block number suffix from givenListOfRequiredFiles
 if strcmp(givenListOfRequiredFiles, 'firstBlockFiles')
     num_block_suffix = '1';
+    block_grouping_folder = sprintf('%sBy_block', block_grouping_folder_prefix);
 elseif strcmp(givenListOfRequiredFiles, 'secondBlockFiles')
     num_block_suffix = '2';
+    block_grouping_folder = sprintf('%sBy_block', block_grouping_folder_prefix);
 elseif strcmp(givenListOfRequiredFiles, 'thirdBlockFiles')
     num_block_suffix = '3';
+    block_grouping_folder = sprintf('%sBy_block', block_grouping_folder_prefix);
 elseif strcmp(givenListOfRequiredFiles, 'fourthBlockFiles')
     num_block_suffix = '4';
+    block_grouping_folder = sprintf('%sBy_block', block_grouping_folder_prefix);
 elseif strcmp(givenListOfRequiredFiles, 'fifthBlockFiles')
     num_block_suffix = '5';
+    block_grouping_folder = sprintf('%sBy_block', block_grouping_folder_prefix);
 elseif strcmp(givenListOfRequiredFiles, 'sixthBlockFiles')
     num_block_suffix = '6';
+    block_grouping_folder = sprintf('%sBy_block', block_grouping_folder_prefix);
 elseif strcmp(givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection')
     % For overlap blocks before injection
     block_grouping_folder = 'Overlap_blocks_BeforeInjection/';
@@ -321,8 +329,6 @@ else
 end
 
 
-% Construct the block grouping folder
-block_grouping_folder = sprintf('%sBy_block', block_grouping_folder_prefix);
 
 % Construct the block grouping folder for saving
 if isempty(block_grouping_folder_for_saving)
@@ -334,6 +340,11 @@ end
 % Construct num_block
 if isempty(num_block_suffix)
     % For overlap or all blocks files, num_block is empty
+    %     if strcmp(givenListOfRequiredFiles, 'allBlocksFiles_AfterInjection') || strcmp(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection')
+    %          num_block = '...';
+    %     else
+    %         num_block = '1';
+    %     end
     num_block = '';
 else
     % For specific block files, construct num_block
