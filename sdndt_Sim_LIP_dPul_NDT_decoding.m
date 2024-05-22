@@ -28,6 +28,7 @@ function sdndt_Sim_LIP_dPul_NDT_decoding(monkey, injection, typeOfDecoding)
 %                       'fourthBlockFiles', 'fifthBlockFiles', 'sixthBlockFiles',
 %                       'allBlocksFiles', 'overlapBlocksFiles',
 %                       'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection'
+%                       'overlapBlocksFiles_BeforeInjection_3_4', 'overlapBlocksFiles_AfterInjection_3_4'
 %                       'overlap_thirdBlockFiles', 'overlap_fourthBlockFiles'
 %                       'allBlocksFiles_BeforeInjection', 'allBlocksFiles_AfterInjection'
 
@@ -45,12 +46,11 @@ startTime = tic;
 
 %% Define the list of required files
 listOfRequiredFiles = {%'firstBlockFiles', 'secondBlockFiles', ...
-%     'thirdBlockFiles', 'fourthBlockFiles', ...
-%     'fifthBlockFiles', 'sixthBlockFiles', ...
-%     'overlapBlocksFiles_BeforeInjection',...
-%     'overlapBlocksFiles_AfterInjection', ...
-%     'allBlocksFiles_BeforeInjection', 
-'allBlocksFiles_AfterInjection'
+    %     'thirdBlockFiles', 'fourthBlockFiles', ...
+    %     'fifthBlockFiles', 'sixthBlockFiles', ...
+    %     'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection', ...
+    'overlapBlocksFiles_BeforeInjection_3_4',  'overlapBlocksFiles_AfterInjection_3_4'%, ...
+    %     'allBlocksFiles_BeforeInjection', 'allBlocksFiles_AfterInjection'
     };  %'allBlocksFiles', 'overlapBlocksFiles', ...
 
 %% Define typeOfSessions
@@ -71,22 +71,6 @@ end
 % Calculate the number of session types
 numTypesOfSessions = numel(typeOfSessions);
 
-%% Check if decoding should be performed for each session separately
-%
-% if strcmp(typeOfDecoding, 'each_session_separately')
-%     datesForSessions = {}; % Initialize datesForSessions as an empty cell array
-%     if strcmp(injection, '1')
-%         for type = 1:numel(typeOfSessions)
-%             % Get the dates for the corresponding injection and session types
-%             datesForSessions{end+1} = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(injection, typeOfSessions{type});
-%         end
-%     elseif  strcmp(injection, '0') || strcmp(injection, '2')
-%         datesForSessions = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(injection, typeOfSessions);
-%     end
-% else % strcmp(typeOfDecoding, 'merged_files_across_sessions')
-%     datesForSessions = {''}; % Set a default value if decoding across sessions
-% end
-
 %% Define approach parameters
 approach_to_use = {'all_approach', 'overlap_approach'};
 
@@ -102,8 +86,8 @@ targetParams.GOSignal = 4;
 numFieldNames = numel(fieldnames(targetParams));
 
 %% Define labels_to_use as a cell array containing both values
-%labels_to_use = {'instr_R_instr_L', 'choice_R_choice_L'};
-labels_to_use = {'choice_R_choice_L'};
+labels_to_use = {'instr_R_instr_L', 'choice_R_choice_L'};
+% labels_to_use = {'instr_R_instr_L'};
 
 %% Define valid combinations of injection and target_brain_structure
 if strcmp(injection, '1') || strcmp(injection, '0')
@@ -116,39 +100,48 @@ else
     error('Invalid injection value. Use ''0'', ''1'', or ''2''.');
 end
 
-%% Loop through each target_state parameter
 
-
-% for i = 1:numFieldNames
-%     target_state_name = fieldNames{i};
-%     target_state = targetParams.(target_state_name);
-%
-%     % Call your main function for each typeOfSession
-%     for j = 1:numTypesOfSessions
-%         % Call the main decoding function
-%         sdndt_Sim_LIP_dPul_NDT_decoding_internal(injection, typeOfSessions{j}, dateOfRecording, target_brain_structure, target_state, labels_to_use, listOfRequiredFiles);
-%
-%         % Update progress bar
-%         progress = ((i - 1) * numTypesOfSessions + j) / (numFieldNames * numTypesOfSessions);
-%         waitbar(progress, h, sprintf('Processing... %.2f%%', progress * 100));
-%     end
-%     %         % Call your main function
-%     %         sdndt_Sim_LIP_dPul_NDT_decoding_internal(injection, typeOfSessions, dateOfRecording, target_brain_structure, target_state, labels_to_use, listOfRequiredFiles);
-% end
-
-%% Loop through each combination of injection, target_brain_structure, and label
-h = waitbar(0, 'Processing...'); % Initialize progress bar (for 'each_session_separately')
+%% 
+h = waitbar(0, 'Processing...'); % Initialize progress bar
 
 numCombinations = numel(combinations_inj_and_target_brain_structure);
 numLabels = numel(labels_to_use);
 numApproach = numel(approach_to_use);
 numFiles = numel(listOfRequiredFiles); % Add this line to get the number of files
 
-
 % Calculate total number of iterations
-totalIterations = numApproach * numFiles * numCombinations * numLabels * numFieldNames * numTypesOfSessions;
+totalIterations = 0; % Initialize progress
+
+
+%% Check if decoding should be performed for each session separately
+
+if strcmp(typeOfDecoding, 'each_session_separately')
+    datesForSessions = {};
+    if strcmp(injection, '1')
+        for type = 1:numel(typeOfSessions)
+            % Get the dates for the corresponding injection and session types
+            datesForSessions{end+1} = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(monkey, injection, typeOfSessions{type});
+        end
+    elseif strcmp(injection, '0') || strcmp(injection, '2')
+        datesForSessions = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(monkey, injection, typeOfSessions);
+    end
+    % Calculate total number of iterations based on datesForSessions
+    for j = 1:numTypesOfSessions
+        totalIterations = totalIterations + numel(datesForSessions{j});
+    end
+else % strcmp(typeOfDecoding, 'merged_files_across_sessions')
+    datesForSessions = {''};
+    totalIterations = 1; % For merged_files_across_sessions, only one iteration per combination
+end
+
+
+%% Counting the number of iterations (how many times the loop will be run)
+
+totalIterations = totalIterations * numApproach * numFiles * numCombinations * numLabels * numFieldNames * numTypesOfSessions;
 overallProgress = 0; % Initialize progress
 
+
+%% Loop through each combination of injection, target_brain_structure, and label
 
 for file_index = 1:numFiles % Loop through each file in listOfRequiredFiles
     current_file = listOfRequiredFiles{file_index}; % Get the current file
@@ -173,20 +166,20 @@ for file_index = 1:numFiles % Loop through each file in listOfRequiredFiles
                 for label_index = 1:numLabels
                     current_label = labels_to_use{label_index};
                     
-                    % Check if decoding should be performed for each session separately
-                    if strcmp(typeOfDecoding, 'each_session_separately')
-                        datesForSessions = {}; % Initialize datesForSessions as an empty cell array
-                        if strcmp(injection, '1')
-                            for type = 1:numel(typeOfSessions)
-                                % Get the dates for the corresponding injection and session types
-                                datesForSessions{end+1} = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(monkey, injection, typeOfSessions{type});
-                            end
-                        elseif  strcmp(injection, '0') || strcmp(injection, '2')
-                            datesForSessions = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(monkey, injection, typeOfSessions);
-                        end
-                    else % strcmp(typeOfDecoding, 'merged_files_across_sessions')
-                        datesForSessions = {''}; % Set a default value if decoding across sessions
-                    end
+                    %                     % Check if decoding should be performed for each session separately
+                    %                     if strcmp(typeOfDecoding, 'each_session_separately')
+                    %                         datesForSessions = {}; % Initialize datesForSessions as an empty cell array
+                    %                         if strcmp(injection, '1')
+                    %                             for type = 1:numel(typeOfSessions)
+                    %                                 % Get the dates for the corresponding injection and session types
+                    %                                 datesForSessions{end+1} = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(monkey, injection, typeOfSessions{type});
+                    %                             end
+                    %                         elseif  strcmp(injection, '0') || strcmp(injection, '2')
+                    %                             datesForSessions = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(monkey, injection, typeOfSessions);
+                    %                         end
+                    %                     else % strcmp(typeOfDecoding, 'merged_files_across_sessions')
+                    %                         datesForSessions = {''}; % Set a default value if decoding across sessions
+                    %                     end
                     
                     
                     
@@ -209,6 +202,8 @@ for file_index = 1:numFiles % Loop through each file in listOfRequiredFiles
                             if strcmp(typeOfDecoding, 'each_session_separately') % typeOfDecoding
                                 
                                 current_set_of_date = datesForSessions{j}; % Get the corresponding set of dates !!!!!
+                                % totalIterations = totalIterations + numel(current_set_of_date) * numLabels * numApproach * numFieldNames;
+                                
                                 
                                 for numDays = 1:numel(current_set_of_date)
                                     current_date = current_set_of_date{numDays};
@@ -360,7 +355,8 @@ end
 allowed_blocks = {'firstBlockFiles', 'secondBlockFiles', 'thirdBlockFiles', ...
     'fourthBlockFiles', 'fifthBlockFiles', 'sixthBlockFiles', ...
     'allBlocksFiles', 'overlapBlocksFiles',  ...
-    'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection'  ...
+    'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection', ...
+    'overlapBlocksFiles_BeforeInjection_3_4', 'overlapBlocksFiles_AfterInjection_3_4', ...
     'allBlocksFiles_BeforeInjection', 'allBlocksFiles_AfterInjection'};
 if ~ismember(givenListOfRequiredFiles, allowed_blocks) % Check if the provided block name is in the list of allowed blocks
     error(['The specified block name is not correct. ', ...
@@ -436,7 +432,9 @@ end
 switch givenListOfRequiredFiles
     case {'firstBlockFiles', 'secondBlockFiles', 'thirdBlockFiles', 'fourthBlockFiles', 'fifthBlockFiles', 'sixthBlockFiles'}
         listOfRequiredFiles = list_of_required_files.(givenListOfRequiredFiles_with_approach);
-    case {'allBlocksFiles', 'allBlocksFiles_AfterInjection', 'allBlocksFiles_BeforeInjection', 'overlapBlocksFiles', 'overlapBlocksFiles_AfterInjection', 'overlapBlocksFiles_BeforeInjection'}
+    case {'allBlocksFiles', 'allBlocksFiles_AfterInjection', 'allBlocksFiles_BeforeInjection',...
+            'overlapBlocksFiles', 'overlapBlocksFiles_AfterInjection', 'overlapBlocksFiles_BeforeInjection'...
+            'overlapBlocksFiles_AfterInjection_3_4', 'overlapBlocksFiles_BeforeInjection_3_4'}
         listOfRequiredFiles = list_of_required_files.(givenListOfRequiredFiles);
     otherwise
         error(['Unknown list of required files for ' given_approach '.']);
@@ -560,6 +558,7 @@ switch targetBlock
         if (isfield(list_of_required_files, 'allBlocksFiles') && isequal(givenListOfRequiredFiles,'allBlocksFiles'))||...
                 ((isfield(list_of_required_files, 'overlapBlocksFiles') && strcmp(dateOfRecording, 'merged_files_across_sessions') && isequal(givenListOfRequiredFiles, 'overlapBlocksFiles')) || ...
                 (isfield(list_of_required_files, 'overlapBlocksFiles_AfterInjection') && isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection')) || ... %  && strcmp(dateOfRecording, 'merged_files_across_sessions')
+                (isfield(list_of_required_files, 'overlapBlocksFiles_AfterInjection_3_4') && isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection_3_4')) || ...
                 (isfield(list_of_required_files, 'allBlocksFiles_AfterInjection') && isequal(givenListOfRequiredFiles, 'allBlocksFiles_AfterInjection')))
             targetBlockUsed_among_raster_data = [];
         else
@@ -624,6 +623,10 @@ if isequal(dateOfRecording, 'merged_files_across_sessions')
             block_grouping_folder = 'overlapBlocksFilesAcrossSessions_AfterInjection/';
         elseif isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection')
             block_grouping_folder = 'overlapBlocksFilesAcrossSessions_BeforeInjection/';
+        elseif isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection_3_4')
+            block_grouping_folder = 'overlapBlocksFilesAcrossSessions_AfterInjection_3_4/';
+        elseif isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection_3_4')
+            block_grouping_folder = 'overlapBlocksFilesAcrossSessions_BeforeInjection_3_4/';
         end
     end
     
@@ -635,6 +638,14 @@ elseif ismember(dateOfRecording, allDateOfRecording) && isfield(list_of_required
     % elseif ismember(current_date, allDateOfRecording) && isfield(list_of_required_files, 'overlapBlocksFiles_AfterInjection') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles_AfterInjection)
 elseif ismember(dateOfRecording, allDateOfRecording) && isfield(list_of_required_files, 'overlapBlocksFiles_AfterInjection') && isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection')
     block_grouping_folder = 'Overlap_blocks_AfterInjection/';
+    
+    %elseif ismember(current_date, allDateOfRecording) && isfield(list_of_required_files, 'overlapBlocksFiles_BeforeInjection') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles_BeforeInjection)
+elseif ismember(dateOfRecording, allDateOfRecording) && isfield(list_of_required_files, 'overlapBlocksFiles_BeforeInjection_3_4') && isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection_3_4')
+    block_grouping_folder = 'Overlap_blocks_BeforeInjection_3_4/';
+    
+    % elseif ismember(current_date, allDateOfRecording) && isfield(list_of_required_files, 'overlapBlocksFiles_AfterInjection') && isequal(listOfRequiredFiles, list_of_required_files.overlapBlocksFiles_AfterInjection)
+elseif ismember(dateOfRecording, allDateOfRecording) && isfield(list_of_required_files, 'overlapBlocksFiles_AfterInjection_3_4') && isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection_3_4')
+    block_grouping_folder = 'Overlap_blocks_AfterInjection_3_4/';
     
     % elseif ismember(current_date, allDateOfRecording) && isfield(list_of_required_files, 'allBlocksFiles_BeforeInjection') && isequal(listOfRequiredFiles, list_of_required_files.allBlocksFiles_BeforeInjection)
 elseif ismember(dateOfRecording, allDateOfRecording) && isfield(list_of_required_files, 'allBlocksFiles_BeforeInjection') && isequal(givenListOfRequiredFiles, 'allBlocksFiles_BeforeInjection')
@@ -686,6 +697,8 @@ if strcmp(dateOfRecording, 'merged_files_across_sessions')
     
     if isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection')|| ...
             isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection')|| ...
+            isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection_3_4')|| ...
+            isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection_3_4')|| ...
             isequal(givenListOfRequiredFiles, 'allBlocksFiles_BeforeInjection')|| ...
             isequal(givenListOfRequiredFiles, 'allBlocksFiles_AfterInjection')
         copyFilesForCategory(givenListOfRequiredFiles, [OUTPUT_PATH_raster monkey_prefix dateOfRecording '/' block_grouping_folder], listOfRequiredFiles, list_of_required_files);
@@ -705,6 +718,8 @@ elseif ismember(dateOfRecording, allDateOfRecording)
     
     if isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection') || ...
             isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection') || ...
+            isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection_3_4') || ...
+            isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection_3_4') || ...
             isequal(givenListOfRequiredFiles, 'allBlocksFiles_AfterInjection') || ...
             isequal(givenListOfRequiredFiles, 'allBlocksFiles_BeforeInjection')
         copyFilesForCategory(givenListOfRequiredFiles, [OUTPUT_PATH_raster monkey_prefix dateOfRecording '/' block_grouping_folder], listOfRequiredFiles, list_of_required_files);
@@ -730,7 +745,8 @@ end
 
 meta_block_folder = '';  % Initialize meta_block_folder
 if isequal(block_grouping_folder, 'overlapBlocksFilesAcrossSessions/') || ...
-        isequal(block_grouping_folder, 'overlapBlocksFilesAcrossSessions_AfterInjection/')
+        isequal(block_grouping_folder, 'overlapBlocksFilesAcrossSessions_AfterInjection/')|| ...
+        isequal(block_grouping_folder, 'overlapBlocksFilesAcrossSessions_AfterInjection_3_4/')
     
     % Construct paths
     OUTPUT_PATH_raster_dateOfRecording = [OUTPUT_PATH_raster monkey_prefix dateOfRecording '/'];
@@ -742,7 +758,8 @@ if isequal(block_grouping_folder, 'overlapBlocksFilesAcrossSessions/') || ...
         mkdir(meta_block_folder);
     end
     
-elseif isequal(block_grouping_folder, 'Overlap_blocks_AfterInjection/')
+elseif isequal(block_grouping_folder, 'Overlap_blocks_AfterInjection/')|| ...
+        isequal(block_grouping_folder, 'Overlap_blocks_AfterInjection_3_4/')
     % Construct paths
     %         OUTPUT_PATH_raster_dateOfRecording = [OUTPUT_PATH_raster current_date '/'];
     OUTPUT_PATH_raster_dateOfRecording = [OUTPUT_PATH_raster monkey_prefix dateOfRecording '/'];
@@ -764,7 +781,8 @@ end
 
 
 if (isfield(list_of_required_files, 'overlapBlocksFiles') && isequal(givenListOfRequiredFiles, 'overlapBlocksFiles')) || ...
-        (isfield(list_of_required_files, 'overlapBlocksFiles_AfterInjection') && isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection'))
+        (isfield(list_of_required_files, 'overlapBlocksFiles_AfterInjection') && isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection'))|| ...
+        (isfield(list_of_required_files, 'overlapBlocksFiles_AfterInjection_3_4') && isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection_3_4'))
     % add also for overlap-approach specific (with the better results) blocks after injection
     mergeFilesInBlockGroup(listOfRequiredFiles, target_state_name, search_target_brain_structure_among_raster_data, target_brain_structure, OUTPUT_PATH_raster_dateOfRecording_Overlap_blocks, meta_block_folder);
 end

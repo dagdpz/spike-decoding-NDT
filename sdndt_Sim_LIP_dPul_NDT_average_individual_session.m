@@ -20,11 +20,9 @@ startTime = tic;
 %% Define the list of required files
 listOfRequiredFiles = {%'firstBlockFiles', 'secondBlockFiles', 'thirdBlockFiles', ...
 %     'fourthBlockFiles', 'fifthBlockFiles', 'sixthBlockFiles', ...
-%     'overlapBlocksFiles_BeforeInjection',
-    'overlapBlocksFiles_AfterInjection' %, ...
-    %'allBlocksFiles_BeforeInjection',
-    'allBlocksFiles_AfterInjection'
-    
+%     'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection' %, ...
+    %'allBlocksFiles_BeforeInjection', 'allBlocksFiles_AfterInjection'...
+    'overlapBlocksFiles_BeforeInjection_3_4',  'overlapBlocksFiles_AfterInjection_3_4'
     %'allBlocksFiles', 'overlapBlocksFiles'
     };
 
@@ -313,6 +311,16 @@ elseif strcmp(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection')
     % For overlap blocks after injection
     block_grouping_folder = 'Overlap_blocks_AfterInjection/';
     block_grouping_folder_for_saving = 'overlapBlocksFilesAcrossSessions_AfterInjection';
+    num_block_suffix = '';
+elseif strcmp(givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection_3_4')
+    % For overlap blocks before injection
+    block_grouping_folder = 'Overlap_blocks_BeforeInjection_3_4/';
+    block_grouping_folder_for_saving = 'overlapBlocksFilesAcrossSessions_BeforeInjection_3_4';
+    num_block_suffix = '';
+elseif strcmp(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection_3_4')
+    % For overlap blocks after injection
+    block_grouping_folder = 'Overlap_blocks_AfterInjection_3_4/';
+    block_grouping_folder_for_saving = 'overlapBlocksFilesAcrossSessions_AfterInjection_3_4';
     num_block_suffix = '';
 elseif strcmp(givenListOfRequiredFiles, 'allBlocksFiles_BeforeInjection')
     % For all blocks before injection
