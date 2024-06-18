@@ -74,3 +74,23 @@ The function contains additional settings for plotting decoding results.
 Input:                                                                                                                                                                                                         
 mat-file: 
 - like population_Linus_20211109.mat, which contains variable population
+
+
+# sdndt_Sim_LIP_dPul_NDT_statistics.m 
+Checks two groups of data for normality (each separately). Then performs a paired t-test, left-tailed t-test,  Wilcoxon test.                                                              
+                                                                                                                                                                                                                
+Input:                                       
+mat-files:                                               
+like Binned_Sim_LIP_dPul__NDT_data_for_LIP_L_cueON_block_3_block_4_block_5_100ms_bins_25ms_sampled_instr_R instr_L_DECODING_RESULTS.mat 
+                                                                                                                                                                                                               
+Output:   
+                                                                                                                                                                                                               
+txt-files:                         
+- Binned_Sim_LIP_dPul__NDT_data_for_LIP_L_cueON_block_3_block_4_block_5_100ms_bins_25ms_sampled_instr_R instr_L_Normality_test_results.txt
+- Binned_Sim_LIP_dPul_NDT_data_for_LIP_L_cueON_block_1_and_block_3_block_4_block_5_100ms_bins_25ms_sampled_instr_R instr_L_Left-tailed_T-test.txt
+- Binned_Sim_LIP_dPul_NDT_data_for_LIP_L_cueON_block_1_and_block_3_block_4_block_5_100ms_bins_25ms_sampled_instr_R instr_L_Paired_T-test_results.txt
+- Binned_Sim_LIP_dPul_NDT_data_for_LIP_L_cueON_block_1_and_block_3_block_4_block_5_100ms_bins_25ms_sampled_instr_R instr_L_Wilcoxon_Signed-Rank_Test.txt
+
+picture:     
+- Binned_Sim_LIP_dPul__NDT_data_for_LIP_L_cueON_block_3_block_4_block_5_100ms_bins_25ms_sampled_instr_R instr_L_Normality_plot.png
+- Binned_Sim_LIP_dPul_NDT_data_for_LIP_L_cueON_block_1_and_block_3_block_4_block_5_100ms_bins_25ms_sampled_instr_R instr_L_Left-tailed_T-test.png
