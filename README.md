@@ -79,11 +79,11 @@ mat-file:
 # sdndt_Sim_LIP_dPul_NDT_statistics.m 
 Checks two groups of data for normality (each separately). Then performs a paired t-test, left-tailed t-test,  Wilcoxon test.                                                              
                                                                                                                                                                                                                 
-Input:                                       
+**Input:**                                       
 mat-files:                                               
 like Binned_Sim_LIP_dPul__NDT_data_for_LIP_L_cueON_block_3_block_4_block_5_100ms_bins_25ms_sampled_instr_R instr_L_DECODING_RESULTS.mat 
                                                                                                                                                                                                                
-Output:   
+**Output:**   
                                                                                                                                                                                                                
 txt-files:                         
 - Binned_Sim_LIP_dPul__NDT_data_for_LIP_L_cueON_block_3_block_4_block_5_100ms_bins_25ms_sampled_instr_R instr_L_Normality_test_results.txt
