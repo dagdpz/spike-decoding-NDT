@@ -9,11 +9,11 @@ Requires NDT: http://www.readout.info
 # sdndt_Sim_LIP_dPul_NDT_make_raster.m
 Converts data from file type: "population_Linus_20211109.mat" to raster data.
 
-Input:                                                                                                                                                                                                                          
+**Input:**                                                                                                                                                                                                                          
 mat-file: 
 - like population_Linus_20211109.mat, which contains variable population   
 
-Output:                                                                                                                                                                                                                               
+**Output:**                                                                                                                                                                                                                               
 many mat-files: 
 - like Lin_20211109_01_raster_dPul_L_trial_state_cueON_block_1.mat, which contains variables raster_data, raster_labels, raster_site_info. 
 for each unit, epoch around a certain trigger point (e.g. state_CueOn, state_GoSignal), and each block, separate mat-file
@@ -21,18 +21,18 @@ for each unit, epoch around a certain trigger point (e.g. state_CueOn, state_GoS
 # sdndt_Sim_LIP_dPul_NDT_plot_raster.m
 Plots spike rasters from each trial and peri-stimulus time histogram (PSTH) of the data.   
 
-Input:                                                                                                                                                                                                                      
+**Input:**                                                                                                                                                                                                                      
 mat-file: 
 - like Lin_20211109_01_raster_dPul_L_trial_state_cueON_block_1.mat                                             
 
 # sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files.m
 Groups files with raster data into groups: files containing only block 1, files containing only block 2, files containing only block 3, all files (from a particular session), and overlap blocks files (files that contain the same units in all blocks of a given session).    
 
-Input:                                                                                                                                                                                                                       
+**Input:**                                                                                                                                                                                                                       
 many mat-files: 
 - like Lin_20211109_01_raster_dPul_L_trial_state_cueON_block_1.mat, which contains variables raster_data, raster_labels, raster_site_info. 
 
-Output:                                                                                                                                                                                                                                                                      
+**Output:**                                                                                                                                                                                                                                                                      
 mat-files:                                                                                                                                                                                                                                                                                               
 - like sdndt_Sim_LIP_dPul_NDT_20211109_list_of_required_files.mat (filelist for only one session), which contains variables list_of_required_files.firstBlockFiles, list_of_required_files.secondBlockFiles, list_of_required_files.thirdBlockFiles, list_of_required_files.allBlocksFiles, list_of_required_files.commonBlocksFiles
                                                                                                                                                                                                                                                                   
@@ -44,11 +44,11 @@ Contains the dateOfRecording variable, which contains the dates of the sessions 
 # sdndt_Sim_LIP_dPul_NDT_decoding.m
 Converts data from raster data into binned data (including merging binned data, if necessary), which it then uses for decoding. It is possible to decode both within a single session and across multiple sessions.                                                         
 
-Input:                                                                                                                                                                                            
+**Input:**                                                                                                                                                                                            
 many mat-files:                                                                                                                                                                                                           
 - like Lin_20211109_01_raster_dPul_L_trial_state_cueON_block_1.mat, which contains variables raster_data, raster_labels, raster_site_info.  
 
-Output:   
+**Output:**   
                                                                                                                                                                                                                
 mat-files:                                                                                                                                                                                                                
 - like Binned_Sim_LIP_dPul__NDT_data_for_dPul_L_cueON_block_1_100ms_bins_25ms_sampled.mat, which contains variables binned_data, binned_labels, binned_site_info.
@@ -71,6 +71,26 @@ The function contains additional settings for plotting decoding results.
 3) finds the number of successful trials for a particular block, 
 4) finds the number of choice and instructed among successful trials for a certain block.
 
-Input:                                                                                                                                                                                                         
+**Input:**                                                                                                                                                                                                         
 mat-file: 
 - like population_Linus_20211109.mat, which contains variable population
+
+
+# sdndt_Sim_LIP_dPul_NDT_statistics.m 
+Checks two groups of data for normality (each separately). Then performs a paired t-test, left-tailed t-test,  Wilcoxon test.                                                              
+                                                                                                                                                                                                                
+**Input:**                                       
+mat-files:                                               
+like Binned_Sim_LIP_dPul__NDT_data_for_LIP_L_cueON_block_3_block_4_block_5_100ms_bins_25ms_sampled_instr_R instr_L_DECODING_RESULTS.mat 
+                                                                                                                                                                                                               
+**Output:**   
+                                                                                                                                                                                                               
+txt-files:                         
+- Binned_Sim_LIP_dPul__NDT_data_for_LIP_L_cueON_block_3_block_4_block_5_100ms_bins_25ms_sampled_instr_R instr_L_Normality_test_results.txt
+- Binned_Sim_LIP_dPul_NDT_data_for_LIP_L_cueON_block_1_and_block_3_block_4_block_5_100ms_bins_25ms_sampled_instr_R instr_L_Left-tailed_T-test.txt
+- Binned_Sim_LIP_dPul_NDT_data_for_LIP_L_cueON_block_1_and_block_3_block_4_block_5_100ms_bins_25ms_sampled_instr_R instr_L_Paired_T-test_results.txt
+- Binned_Sim_LIP_dPul_NDT_data_for_LIP_L_cueON_block_1_and_block_3_block_4_block_5_100ms_bins_25ms_sampled_instr_R instr_L_Wilcoxon_Signed-Rank_Test.txt
+
+picture:     
+- Binned_Sim_LIP_dPul__NDT_data_for_LIP_L_cueON_block_3_block_4_block_5_100ms_bins_25ms_sampled_instr_R instr_L_Normality_plot.png
+- Binned_Sim_LIP_dPul_NDT_data_for_LIP_L_cueON_block_1_and_block_3_block_4_block_5_100ms_bins_25ms_sampled_instr_R instr_L_Left-tailed_T-test.png
