@@ -48,8 +48,10 @@ startTime = tic;
 
 %% Define the list of required files
 
-file_for_group_1 = {'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_BeforeInjection_3_4'}
-file_for_group_2 = {'overlapBlocksFiles_AfterInjection', 'overlapBlocksFiles_AfterInjection_3_4'}
+file_for_group_1 = {%'overlapBlocksFiles_BeforeInjection', 
+    'overlapBlocksFiles_BeforeInjection_3_4'};
+file_for_group_2 = {%'overlapBlocksFiles_AfterInjection',
+    'overlapBlocksFiles_AfterInjection_3_4'};
 
 % Ensure both groups have the same length
 if length(file_for_group_1) ~= length(file_for_group_2)
@@ -71,7 +73,9 @@ end
 if strcmp(injection, '1')
     if strcmp(monkey, 'Linus')
         % typeOfSessions = {'right'};
-        typeOfSessions = {'right', 'left', 'all'}; % For control and injection experiments
+        typeOfSessions = {'right', 'left' %, ... 
+            %'all'
+            }; % For control and injection experiments
     elseif strcmp(monkey, 'Bacchus')
         typeOfSessions = {'right'};
     end
@@ -335,6 +339,29 @@ else
     error('Unknown typeOfDecoding.');
 end
 
+% 
+% % Create a combined folder name for the two file groups
+% combined_folder_name = sprintf('%s_and_%s', folder_pairs{1}, folder_pairs{2});
+
+
+% Create a combined folder name by comparing parts
+parts_1 = strsplit(folder_pairs{1}, '_');
+parts_2 = strsplit(folder_pairs{2}, '_');
+
+common_parts = intersect(parts_1, parts_2);
+diff_parts_1 = setdiff(parts_1, common_parts);
+diff_parts_2 = setdiff(parts_2, common_parts);
+
+% Add common parts in their original order
+combined_folder_name_parts = {};
+for i = 1:length(parts_1)
+    if ismember(parts_1{i}, common_parts)
+        combined_folder_name_parts{end+1} = parts_1{i};
+    end
+end
+%combined_folder_name = strjoin([common_parts, strcat(diff_parts_1, '_and_', diff_parts_2)], '_');
+combined_folder_name_parts = [combined_folder_name_parts, strcat(diff_parts_1, '_and_', diff_parts_2)]; % Add the different parts with 'and' in between
+combined_folder_name = strjoin(combined_folder_name_parts, '_'); % Construct the combined folder name
 
 %% find grouping_folder
 
@@ -347,8 +374,8 @@ for fg_idx = 1:2
     end
     
     % Initialize block_grouping_folder and block_grouping_folder_for_saving
-    block_grouping_folder = '';
-    block_grouping_folder_for_saving = '';
+    block_grouping_folder_in_each_session = '';
+    block_grouping_folder_in_all_session = '';
     
     % Set the block grouping folder based on the approach
     if strcmp(given_approach, 'all_approach')
@@ -365,51 +392,51 @@ for fg_idx = 1:2
     % Extract the block number suffix from givenListOfRequiredFiles
     if strcmp(givenListOfRequiredFiles, 'firstBlockFiles')
         num_block_suffix = '1';
-        block_grouping_folder = sprintf('%sBy_block', block_grouping_folder_prefix);
+        block_grouping_folder_in_each_session = sprintf('%sBy_block', block_grouping_folder_prefix);
     elseif strcmp(givenListOfRequiredFiles, 'secondBlockFiles')
         num_block_suffix = '2';
-        block_grouping_folder = sprintf('%sBy_block', block_grouping_folder_prefix);
+        block_grouping_folder_in_each_session = sprintf('%sBy_block', block_grouping_folder_prefix);
     elseif strcmp(givenListOfRequiredFiles, 'thirdBlockFiles')
         num_block_suffix = '3';
-        block_grouping_folder = sprintf('%sBy_block', block_grouping_folder_prefix);
+        block_grouping_folder_in_each_session = sprintf('%sBy_block', block_grouping_folder_prefix);
     elseif strcmp(givenListOfRequiredFiles, 'fourthBlockFiles')
         num_block_suffix = '4';
-        block_grouping_folder = sprintf('%sBy_block', block_grouping_folder_prefix);
+        block_grouping_folder_in_each_session = sprintf('%sBy_block', block_grouping_folder_prefix);
     elseif strcmp(givenListOfRequiredFiles, 'fifthBlockFiles')
         num_block_suffix = '5';
-        block_grouping_folder = sprintf('%sBy_block', block_grouping_folder_prefix);
+        block_grouping_folder_in_each_session = sprintf('%sBy_block', block_grouping_folder_prefix);
     elseif strcmp(givenListOfRequiredFiles, 'sixthBlockFiles')
         num_block_suffix = '6';
-        block_grouping_folder = sprintf('%sBy_block', block_grouping_folder_prefix);
+        block_grouping_folder_in_each_session = sprintf('%sBy_block', block_grouping_folder_prefix);
     elseif strcmp(givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection')
         % For overlap blocks before injection
-        block_grouping_folder = 'Overlap_blocks_BeforeInjection/';
-        block_grouping_folder_for_saving = 'overlapBlocksFilesAcrossSessions_BeforeInjection';
+        block_grouping_folder_in_each_session = 'Overlap_blocks_BeforeInjection/';
+        block_grouping_folder_in_all_session = 'overlapBlocksFilesAcrossSessions_BeforeInjection';
         num_block_suffix = '';
     elseif strcmp(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection')
         % For overlap blocks after injection
-        block_grouping_folder = 'Overlap_blocks_AfterInjection/';
-        block_grouping_folder_for_saving = 'overlapBlocksFilesAcrossSessions_AfterInjection';
+        block_grouping_folder_in_each_session = 'Overlap_blocks_AfterInjection/';
+        block_grouping_folder_in_all_session = 'overlapBlocksFilesAcrossSessions_AfterInjection';
         num_block_suffix = '';
     elseif strcmp(givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection_3_4')
         % For overlap blocks before injection
-        block_grouping_folder = 'Overlap_blocks_BeforeInjection_3_4/';
-        block_grouping_folder_for_saving = 'overlapBlocksFilesAcrossSessions_BeforeInjection_3_4';
+        block_grouping_folder_in_each_session = 'Overlap_blocks_BeforeInjection_3_4/';
+        block_grouping_folder_in_all_session = 'overlapBlocksFilesAcrossSessions_BeforeInjection_3_4';
         num_block_suffix = '';
     elseif strcmp(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection_3_4')
         % For overlap blocks after injection
-        block_grouping_folder = 'Overlap_blocks_AfterInjection_3_4/';
-        block_grouping_folder_for_saving = 'overlapBlocksFilesAcrossSessions_AfterInjection_3_4';
+        block_grouping_folder_in_each_session = 'Overlap_blocks_AfterInjection_3_4/';
+        block_grouping_folder_in_all_session = 'overlapBlocksFilesAcrossSessions_AfterInjection_3_4';
         num_block_suffix = '';
     elseif strcmp(givenListOfRequiredFiles, 'allBlocksFiles_BeforeInjection')
         % For all blocks before injection
-        block_grouping_folder = 'All_blocks_BeforeInjection/';
-        block_grouping_folder_for_saving = 'allBlocksFilesAcrossSessions_BeforeInjection';
+        block_grouping_folder_in_each_session = 'All_blocks_BeforeInjection/';
+        block_grouping_folder_in_all_session = 'allBlocksFilesAcrossSessions_BeforeInjection';
         num_block_suffix = '';
     elseif strcmp(givenListOfRequiredFiles, 'allBlocksFiles_AfterInjection')
         % For all blocks after injection
-        block_grouping_folder = 'All_blocks_AfterInjection/';
-        block_grouping_folder_for_saving = 'allBlocksFilesAcrossSessions_AfterInjection';
+        block_grouping_folder_in_each_session = 'All_blocks_AfterInjection/';
+        block_grouping_folder_in_all_session = 'allBlocksFilesAcrossSessions_AfterInjection';
         num_block_suffix = '';
     else
         error('Unknown value for givenListOfRequiredFiles.');
@@ -418,9 +445,9 @@ for fg_idx = 1:2
     
     
     % Construct the block grouping folder for saving
-    if isempty(block_grouping_folder_for_saving)
+    if isempty(block_grouping_folder_in_all_session)
         % For specific block files, construct the folder with block number suffix
-        block_grouping_folder_for_saving = sprintf('%sFilesAcrossSessions_Block_%s/', lower(block_grouping_folder_prefix), num_block_suffix);
+        block_grouping_folder_in_all_session = sprintf('%sFilesAcrossSessions_Block_%s/', lower(block_grouping_folder_prefix), num_block_suffix);
     end
     
     
@@ -443,12 +470,12 @@ for fg_idx = 1:2
     if  strcmp(typeOfDecoding, 'each_session_separately')
         
         % Call the new function to find the decoding results file
-        [decodingResultsFilePath, session_num_cv_splits_Info, mean_decoding_results, loadedData] = find_decoding_results_file(monkey_prefix, dateOfRecording, OUTPUT_PATH_binned, block_grouping_folder, target_brain_structure, target_state, combinedLabel, num_block);
+        [decodingResultsFilePath, session_num_cv_splits_Info, mean_decoding_results, loadedData] = find_decoding_results_file(monkey_prefix, dateOfRecording, OUTPUT_PATH_binned, block_grouping_folder_in_each_session, target_brain_structure, target_state, combinedLabel, num_block);
         
         
         %%%%% Here you can perform your analysis for normal distribution on
         % `mean_decoding_results` and other loaded data.
-        output_folder = [file_for_group '/' folder_pairs{fg_idx} '/Statistics/Normality_Test_Results/' ]
+        output_folder = [file_for_group '/' folder_pairs{fg_idx} '/Normality_Test_Results/' ]
         if ~exist(output_folder, 'dir')
             mkdir(output_folder);
         end
@@ -482,7 +509,7 @@ differences = data_file_group_2 - data_file_group_1;
 %% Perform paired t-test
 
 % Perform paired t-test using the new function
-output_folder_Statistical_results = [file_for_group '/' folder_pairs{fg_idx} '/Statistics/Statistical_results/'];
+output_folder_Statistical_results = [file_for_group '/Statistics/' combined_folder_name '/'];
 if ~exist(output_folder_Statistical_results, 'dir')
     mkdir(output_folder_Statistical_results);
 end
@@ -502,17 +529,17 @@ end
 
 
 
-function data = load_data_from_folder(folder_path)
-% Load all data files from the specified folder
-data_files = dir(fullfile(folder_path, '*.mat'));
-data = [];
-
-for k = 1:length(data_files)
-    file_path = fullfile(folder_path, data_files(k).name);
-    file_data = load(file_path);
-    data = [data; file_data]; % Assuming each file contains a single variable
-end
-end
+% function data = load_data_from_folder(folder_path)
+% % Load all data files from the specified folder
+% data_files = dir(fullfile(folder_path, '*.mat'));
+% data = [];
+% 
+% for k = 1:length(data_files)
+%     file_path = fullfile(folder_path, data_files(k).name);
+%     file_data = load(file_path);
+%     data = [data; file_data]; % Assuming each file contains a single variable
+% end
+% end
 
 
 function check_normality(data, output_folder, filename_prefix)
@@ -626,6 +653,8 @@ fprintf(fid, 'Interpretation: %s\n', interpretation_jb);
 % Close the text file
 fclose(fid);
 
+% Close the figure
+close(gcf);
 end
 
 
@@ -705,6 +734,9 @@ end
 
 % Close the text file
 fclose(fid);
+
+% Close the figure
+close(gcf);
 end
 
 
@@ -795,6 +827,9 @@ end
 % Close the text file
 fclose(fid);
 
+% Close the figure
+close(gcf);
+
 end 
 
 function perform_left_tailed_ttest(data_file_group_1, data_file_group_2, filename_prefix_1, filename_prefix_2, output_folder)
@@ -867,6 +902,13 @@ hold off;
 % Save the figure
 output_file_figure = [output_folder common_prefix diff_1 '_and_' diff_2 common_suffix '_Left-tailed_T-test.png'];
 saveas(gcf, output_file_figure);
+
+
+% Close the figure
+close(gcf);
+
+% Close the file after writing
+fclose(fid);
 
 end
 
