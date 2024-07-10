@@ -25,6 +25,7 @@ end
 %% Define the session types based on the injection value
 if strcmp(injection, '1')
     if strcmp(monkey, 'Linus')
+        %typeOfSessions = {'right'};
         typeOfSessions = {'left', 'right', 'all'}; % For control and injection experiments
     elseif strcmp(monkey, 'Bacchus')
         typeOfSessions = {'right'};
@@ -302,7 +303,7 @@ else % 'each_session_separately'
         
         % Call the function to get unique blocks for the day
         uniqueBlocks = countUniqueBlocksForDay(OUTPUT_PATH_raster_dateOfRecording);
-        Blocks_1_2_3 = [1 3 4];
+        
         
         % Loop through each file
         for i = 1:length(files)
@@ -378,7 +379,7 @@ else % 'each_session_separately'
                 
             case '1'
                 list_of_required_files.overlapBlocksFiles = processOverlapBlocksFiles(OUTPUT_PATH_raster_dateOfRecording, OUTPUT_PATH_list_of_required_files, uniqueBlocks);
-                list_of_required_files.overlapBlocksFiles_1_3_4 = findBlocksFiles_1_3_4(OUTPUT_PATH_raster_dateOfRecording, list_of_required_files.allBlocksFiles,  Blocks_1_2_3); % find units that are present in blocks 1, 3, 4 (we are not interested in other blocks such as 5 and 6). 
+                list_of_required_files.overlapBlocksFiles_1_3_4 = findBlocksFiles_1_3_4(OUTPUT_PATH_raster_dateOfRecording, list_of_required_files.allBlocksFiles); % find units that are present in blocks 1, 3, 4 (we are not interested in other blocks such as 5 and 6). 
                 
                 list_of_required_files.overlapBlocksFiles_BeforeInjection = processBeforeInjectionOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles);
                 list_of_required_files.overlapBlocksFiles_AfterInjection = processAfterInjectionOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles); % select only files recorded after injection from overlapBlocksFiles
@@ -516,7 +517,7 @@ overlapFiles  = vertcat(uniqueFileGroups(validGroups).files);
 end
 
 
-function overlapBlocksFiles_1_3_4 = findBlocksFiles_1_3_4(OUTPUT_PATH_raster_dateOfRecording, allBlocksFiles, uniqueBlocks)
+function overlapBlocksFiles_1_3_4 = findBlocksFiles_1_3_4(OUTPUT_PATH_raster_dateOfRecording, allBlocksFiles)
 overlapBlocksFiles_1_3_4 = allBlocksFiles ;
 
 % Loop through each file in overlapBlocksFiles
@@ -552,10 +553,15 @@ for prefixIdx = 1:numel(uniquePrefixes)
     % Check if the file names start with the prefix
     files_with_prefix = overlapBlocksFiles_1_3_4(startsWith(overlapFileNames, [prefix, '_']));
     
-    % Check if files with blocks 1, 3, and 4 exist for this prefix
-    if any(contains(files_with_prefix, 'block_1')) && any(contains(files_with_prefix, 'block_3')) && any(contains(files_with_prefix, 'block_4'))
-        % Add valid files to the list
-        validFileNames = [validFileNames, files_with_prefix];
+    % Check if files with blocks 1 and 3 exist for this prefix
+    if any(contains(files_with_prefix, 'block_1')) && any(contains(files_with_prefix, 'block_3'))
+        % If block 4 also exists, include it
+        if any(contains(files_with_prefix, 'block_4'))
+            validFileNames = [validFileNames, files_with_prefix];
+        else
+            % Include only blocks 1 and 3 if block 4 is not present
+            validFileNames = [validFileNames, files_with_prefix(contains(files_with_prefix, 'block_1') | contains(files_with_prefix, 'block_3'))];
+        end
     end
 end
 

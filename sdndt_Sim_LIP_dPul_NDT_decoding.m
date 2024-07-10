@@ -57,6 +57,7 @@ listOfRequiredFiles = {%'firstBlockFiles', 'secondBlockFiles', ...
 % Calculate typeOfSessions based on the injection parameter
 if strcmp(injection, '1')
     if strcmp(monkey, 'Linus')
+       % typeOfSessions = {'right'};
         typeOfSessions = {'right', 'left', 'all'}; % For control and injection experiments
     elseif strcmp(monkey, 'Bacchus')
         typeOfSessions = {'right'};

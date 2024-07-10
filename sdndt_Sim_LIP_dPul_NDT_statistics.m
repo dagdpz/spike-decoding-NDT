@@ -4,7 +4,7 @@ function sdndt_Sim_LIP_dPul_NDT_statistics(monkey, injection, typeOfDecoding)
 
 % HOW TO CALL THE FUNCTION?
 % If we decode within a session:
-% sdndt_Sim_LIP_dPul_NDT_statistics('Bacchus', '0', 'each_session_separately');
+% sdndt_Sim_LIP_dPul_NDT_statistics('Bacchus', '0', 'each_session_separately_bins_together');
 
 % If we decode across sessions:
 % sdndt_Sim_LIP_dPul_NDT_statistics('Bacchus', '0', 'merged_files_across_sessions');
@@ -16,7 +16,7 @@ function sdndt_Sim_LIP_dPul_NDT_statistics(monkey, injection, typeOfDecoding)
 % injection: '0' - control sessions, '1' - inactivation sessions (for inactivation experiment),
 %            '2' - for functional interaction experiment
 
-% typeOfDecoding: 'each_session_separately', 'merged_files_across_sessions'
+% typeOfDecoding: 'each_session_separately_bins_together', 'merged_files_across_sessions'
 % target_brain_structure = 'dPul_L', 'LIP_L', 'LIP_R',
 %                  if both 'LIP_L_dPul_L' (functional interaction experiment) or 'LIP_L_LIP_R' (inactivation experiment)
 % labels_to_use: 'instr_R_instr_L'
@@ -134,7 +134,7 @@ totalIterations = 0; % Initialize progress
 
 %% Check if decoding should be performed for each session separately
 
-if strcmp(typeOfDecoding, 'each_session_separately')
+if strcmp(typeOfDecoding, 'each_session_separately_bins_together')
     datesForSessions = {};
     if strcmp(injection, '1')
         for type = 1:numel(typeOfSessions)
@@ -212,7 +212,7 @@ for file_gr_1_index = 1:numFile_for_group_1
                             %                             for comp_gr_index = 1:numComparisonGroups
                             %                                 current_comparison_group = comparison_groups{comp_gr_index};
                             
-                            if strcmp(typeOfDecoding, 'each_session_separately') % typeOfDecoding
+                            if strcmp(typeOfDecoding, 'each_session_separately_bins_together') % typeOfDecoding
                                 
                                 current_set_of_date = datesForSessions{j}; % Get the corresponding set of dates !!!!!
                                 % totalIterations = totalIterations + numel(current_set_of_date) * numLabels * numApproach * numFieldNames;
@@ -235,7 +235,7 @@ for file_gr_1_index = 1:numFile_for_group_1
                             else % strcmp(typeOfDecoding, 'merged_files_across_sessions')
                                 current_date = [];
                                 % Call the internal decoding function only once
-                                sdndt_Sim_LIP_dPul_NDT_statistics_internal(monkey, current_injection, current_type_of_session, current_date, typeOfDecoding, current_target_brain_structure, target_state, current_label, current_approach, current_file_group_1, current_file_group_2);
+                                sdndt_Sim_LIP_dPul_NDT_statistics_internal(monkey, current_injection, current_type_of_session, typeOfDecoding, current_date, current_target_brain_structure, target_state, current_label, current_approach, current_file_group_1, current_file_group_2);
                                 
                                 
                                 % Update progress for each iteration
@@ -243,7 +243,7 @@ for file_gr_1_index = 1:numFile_for_group_1
                                 waitbar(overallProgress / totalIterations, h, sprintf('Processing... %.2f%%', overallProgress / totalIterations * 100));
                                 
                                 
-                            end % if strcmp(typeOfDecoding, 'each_session_separately')
+                            end % if strcmp(typeOfDecoding, 'each_session_separately_bins_together')
                             % end % comp_gr_index = 1:numComparisonGroups
                         end % for j = 1:numTypesOfSessions
                     end % for i = 1:numFieldNames
@@ -313,7 +313,7 @@ file_for_group = [OUTPUT_PATH_binned monkey_prefix dateOfRecording];
 
 % Define folder pair mappings
 folder_mapping = struct( ...
-    'each_session_separately', struct( ...
+    'each_session_separately_bins_together', struct( ...
     'overlapBlocksFiles_BeforeInjection', 'Overlap_blocks_BeforeInjection', ...
     'overlapBlocksFiles_AfterInjection', 'Overlap_blocks_AfterInjection', ...
     'overlapBlocksFiles_BeforeInjection_3_4', 'Overlap_blocks_BeforeInjection_3_4', ...
@@ -467,8 +467,15 @@ for fg_idx = 1:2
     
     
     
-    if  strcmp(typeOfDecoding, 'each_session_separately')
+    
+    if  strcmp(typeOfDecoding, 'each_session_separately_bins_together')
+        % In this case, data from only one session (e.g., samples: pre- and post-inactivation) are taken for statistical analysis
+        % All bins of the first sample are compared to all bins of the second sample (not bin by bin)
+        % In this case, the time course is not taken into account
+        % But the statistical analysis occurs within a single target state (e.g., within cueOn or GOsignal)
         
+    
+    
         % Call the new function to find the decoding results file
         [decodingResultsFilePath, session_num_cv_splits_Info, mean_decoding_results, loadedData] = find_decoding_results_file(monkey_prefix, dateOfRecording, OUTPUT_PATH_binned, block_grouping_folder_in_each_session, target_brain_structure, target_state, combinedLabel, num_block);
         
