@@ -419,24 +419,24 @@ if  strcmp(typeOfDecoding, 'merged_files_across_sessions')
 elseif strcmp(typeOfDecoding, 'two_group_combination')
     
     % Create a combined folder name by comparing parts
-parts_1 = strsplit(grouping_folder(1).block_grouping_folder_for_saving, '_');
-parts_2 = strsplit(grouping_folder(2).block_grouping_folder_for_saving, '_');
-
-common_parts = intersect(parts_1, parts_2);
-diff_parts_1 = setdiff(parts_1, common_parts);
-diff_parts_2 = setdiff(parts_2, common_parts);
-
-% Add common parts in their original order
-combined_folder_name_parts = {};
-for i = 1:length(parts_1)
-    if ismember(parts_1{i}, common_parts)
-        combined_folder_name_parts{end+1} = parts_1{i};
+    parts_1 = strsplit(grouping_folder(1).block_grouping_folder_for_saving, '_');
+    parts_2 = strsplit(grouping_folder(2).block_grouping_folder_for_saving, '_');
+    
+    common_parts = intersect(parts_1, parts_2);
+    diff_parts_1 = setdiff(parts_1, common_parts);
+    diff_parts_2 = setdiff(parts_2, common_parts);
+    
+    % Add common parts in their original order
+    combined_folder_name_parts = {};
+    for i = 1:length(parts_1)
+        if ismember(parts_1{i}, common_parts)
+            combined_folder_name_parts{end+1} = parts_1{i};
+        end
     end
-end
-%combined_folder_name = strjoin([common_parts, strcat(diff_parts_1, '_and_', diff_parts_2)], '_');
-combined_folder_name_parts = [combined_folder_name_parts, strcat(diff_parts_1, '_and_', diff_parts_2)]; % Add the different parts with 'and' in between
-combined_folder_name = strjoin(combined_folder_name_parts, '_'); % Construct the combined folder name
-
+    %combined_folder_name = strjoin([common_parts, strcat(diff_parts_1, '_and_', diff_parts_2)], '_');
+    combined_folder_name_parts = [combined_folder_name_parts, strcat(diff_parts_1, '_and_', diff_parts_2)]; % Add the different parts with 'and' in between
+    combined_folder_name = strjoin(combined_folder_name_parts, '_'); % Construct the combined folder name
+    
     
     % create output folder
     typeOfDecoding_monkey = [monkey_prefix 'merged_files_across_sessions'];
@@ -814,7 +814,7 @@ end
 tickPositions = 0:200:1000; % Calculate the tick positions every 200 ms
 xticks(tickPositions);  % Set the tick positions on the X-axis
 
-xlabel('Time (ms)', 'FontSize', 18); % Set the font size to 14 for the xlabel
+xlabel('Time (ms)', 'FontSize', 17); % Set the font size to 14 for the xlabel
 ylabel('Classification Accuracy', 'FontSize', 18); % Set the font size to 14 for the ylabel
 
 
@@ -1109,8 +1109,8 @@ end
 tickPositions = 0:200:1000; % Calculate the tick positions every 200 ms
 xticks(tickPositions);  % Set the tick positions on the X-axis
 
-xlabel('Time (ms)', 'FontSize', 18); % Set the font size to 14 for the xlabel
-ylabel('Classification Accuracy', 'FontSize', 18); % Set the font size to 14 for the ylabel
+xlabel('Time (ms)', 'FontSize', 30); % Set the font size to 14 for the xlabel
+ylabel('Classification Accuracy', 'FontSize', 35); % Set the font size to 14 for the ylabel
 
 
 box off;  % Remove the box around the axes
@@ -1118,12 +1118,14 @@ ax = gca; % Display only the X and Y axes
 ax.YAxis.Visible = 'on';  % Show Y-axis
 ax.XAxis.Visible = 'on';  % Show X-axis
 
+ax.FontSize = 12; % Set the font size for the axis tick labels
+
 xline(500); % draw a vertical line at 500
 yline(50); % draw a horizontal line at 50
 set(gca,'Xlim',settings.time_lim, 'Ylim',settings.y_lim); % limitation of the X (from 0 to 1000) and Y (from 20 to 100) axes
 
 % change the size of the figure
-set(gcf,'position',[450,400,800,600]) % [x0,y0,width,height]
+set(gcf,'position',[450,400,800,650]) % [x0,y0,width,height]
 
 %         % Add text using the annotation function
 %         positionOfAnnotation = [0.76, 0.5, 0.26, 0.26]; % [x position, y position, size x, size y]
@@ -1142,7 +1144,7 @@ block_info_combined_after = reshape(block_info_after.', 1, []);
 
 target_info = [target_brain_structure '; ' target_state];
 block_info_before = [block_info_combined_before];
-VS_sign = [' vs ' ];
+VS_sign = [' vs '];
 block_info_after = [block_info_combined_after];
 
 
@@ -1168,12 +1170,12 @@ drawnow; % Ensure the title position is updated
 % Change title position
 %Increase the vertical position of the combinedLabel_for_Title
 titlePos = get(t, 'Position');
-titlePos(2) = titlePos(2) + 5; % Increase the vertical position by 5
+titlePos(2) = titlePos(2) + 10; % Increase the vertical position by 5
 set(t, 'Position', titlePos);
 
 % Increase the vertical position of the target_info
 sPos = get(s, 'Position');
-sPos(2) = sPos(2) + 5; % Increase the vertical position by 5
+sPos(2) = sPos(2) + 10; % Increase the vertical position by 5
 set(s, 'Position', sPos);
 
 
@@ -1188,17 +1190,17 @@ set(s, 'Position', sPos);
 % Before inactivation
 positionOfAnnotation = [0.76, 0.5, 0.26, 0.26]; % [x position, y position, size x, size y]
 annotation('textbox', positionOfAnnotation, 'String', data_for_plotting_averages_before.numOfUnits_and_numOfTrials_info_labelsAppears, ...
-    'FontSize', 10, 'HorizontalAlignment', 'left', 'FitBoxToText','on', 'Color', [0, 0, 0.8039]);
+    'FontSize', 12, 'HorizontalAlignment', 'left', 'FitBoxToText','on', 'Color', [0, 0, 0.8039]);
 
 
 
 % After inactivation
 positionOfAnnotation = [0.76, 0.2, 0.26, 0.26]; % [x position, y position, size x, size y]
 annotation('textbox', positionOfAnnotation, 'String', data_for_plotting_averages_after.numOfUnits_and_numOfTrials_info_labelsAppears, ...
-    'FontSize', 10, 'HorizontalAlignment', 'left', 'FitBoxToText','on', 'Color', [0.8627, 0.0784, 0.2353]);
+    'FontSize', 12, 'HorizontalAlignment', 'left', 'FitBoxToText','on', 'Color', [0.8627, 0.0784, 0.2353]);
 
 
-set(gca, 'Position', [0.1, 0.13, 0.65, 0.72] ) % change the position of the axes to fit the annotation into the figure too.
+set(gca, 'Position', [0.1, 0.09, 0.65, 0.72] ) % change the position of the axes to fit the annotation into the figure too.
 
 
 
@@ -1207,30 +1209,50 @@ axPos = get(gca, 'Position');   % Dimensions of current axes
 centerX = axPos(1) + axPos(3) / 2; % Find the centre of the horizontal and vertical axes
 centerY = axPos(2) + axPos(4) / 2;
 
-annotation('textbox', [centerX - 0.23, centerY + 0.22, 0.2, 0.2], ... % [annotationPosX, annotationPosY, 0.1, 0.1]
+annotation('textbox', [centerX - 0.23, centerY + 0.26, 0.2, 0.2], ... % [annotationPosX, annotationPosY, 0.1, 0.1]
     'String', block_info_before, 'FontSize', 11, 'EdgeColor', 'none', 'HorizontalAlignment', 'center', 'Color', [0, 0, 0.8039]);
 
-annotation('textbox', [centerX + 0.05, centerY + 0.22, 0.2, 0.2], ...
+annotation('textbox', [centerX + 0.05, centerY + 0.26, 0.2, 0.2], ...
     'String', block_info_after, 'FontSize', 11, 'EdgeColor', 'none', 'HorizontalAlignment', 'center', 'Color', [0.8627, 0.0784, 0.2353]);
 
-annotation('textbox', [centerX - 0.1, centerY + 0.22, 0.2, 0.2], ...
+annotation('textbox', [centerX - 0.1 , centerY + 0.26, 0.2, 0.2], ...
     'String', VS_sign, 'FontSize', 11, 'EdgeColor', 'none', 'HorizontalAlignment', 'center');
 
 
 
+% Plot an annotation with information about munber of sessions
+numOfSessions_before = size(data_for_plotting_averages_before.session_info,2);
+numOfSessions_after = size(data_for_plotting_averages_after.session_info,2);
 
-% plotting session names on the graph 
+numOfSessions_before_annotation = sprintf('Num of Sessions: %d', numOfSessions_before);
+numOfSessions_after_annotation = sprintf('Num of Sessions: %d', numOfSessions_after);
+
+annotation('textbox', [centerX - 0.28, centerY + 0.31, 0.2, 0.2], ... % [annotationPosX, annotationPosY, 0.1, 0.1]
+    'String', numOfSessions_before_annotation, 'FontSize', 11, 'EdgeColor', 'none', 'HorizontalAlignment', 'center', 'Color', [0, 0, 0.8039]);
+
+annotation('textbox', [centerX + 0.08, centerY + 0.31, 0.2, 0.2], ...
+    'String', numOfSessions_after_annotation, 'FontSize', 11, 'EdgeColor', 'none', 'HorizontalAlignment', 'center', 'Color', [0.8627, 0.0784, 0.2353]);
+
+
+
+
+
+% plotting session names on the graph
+session_info_before = {data_for_plotting_averages_before.session_info.name};
+session_info_after = {data_for_plotting_averages_after.session_info.name};
+combined_session_info = union(session_info_before, session_info_after, 'stable'); combined_session_info = combined_session_info';
+
 if isequal(curves_per_session, 'Color')
     % Label each line with the session name
     % colorOrder = get(gca, 'ColorOrder');
     xPosition = data_for_plotting_averages_before.timeValues(1);  % X position for the annotations (same for all)
-    yPosition = 100 - 4*(numel(dateOfRecording)-1) : 4 : 100;  % Y positions for the annotations (spaced vertically)
+    yPosition = 100 - 4*(numel(combined_session_info)-1) : 4 : 100;  % Y positions for the annotations (spaced vertically)
     
-    for i = numel(dateOfRecording):-1:1
+    for i = numel(combined_session_info):-1:1
         
-        session_name = dateOfRecording{i};
+        session_name = combined_session_info{i};
         
-        text(xPosition, yPosition(numel(dateOfRecording) - i + 1), session_name, ...
+        text(xPosition, yPosition(numel(combined_session_info) - i + 1), session_name, ...
             'Interpreter', 'none', ...  % Disable interpreter to avoid processing special characters
             'Color', 'k', ...    % Set text color to black
             'FontSize', 9, ...
@@ -1240,28 +1262,46 @@ end
 
 
 
-%% creating a universal name for the output file 
+%% creating a universal name for the output file
 
 % Modernisation of the basic file name using an existing file name
 meanResultsFilename_before = generateMeanFilename(data_for_plotting_averages_before.decodingResultsFilename); % Remove "_DECODING_RESULTS".
-meanResultsFilename_after = generateMeanFilename(data_for_plotting_averages_after.decodingResultsFilename); 
+meanResultsFilename_after = generateMeanFilename(data_for_plotting_averages_after.decodingResultsFilename);
 
 
 % Find differences in the filenames
 [diff_1, diff_2, common_prefix, common_suffix] = find_filename_differences(meanResultsFilename_before, meanResultsFilename_after);
 
 % Create the name of the output file
-basicNameForOutputFile = [common_prefix diff_1 '_and_' diff_2 common_suffix(1:end-4)]; 
+basicNameForOutputFile = [common_prefix diff_1 '_and_' diff_2 common_suffix(1:end-4)];
 %output_file_Statistical_results = [output_folder common_prefix diff_1 '_and_' diff_2 common_suffix '_Wilcoxon_Signed-Rank_Test.txt'];
 
 
 %% Perform Wilcoxon Signed-Rank Test
-% Null hypothesis - there is no statistically significant difference between the before and after inactivation data
+% Null hypothesis (H₀): The difference between paired samples X and Y has a median equal to zero. In other words, it states that there is no significant difference between the two samples X and Y.
+% Alternative hypothesis (H₁): The difference between paired samples X and Y has a median different from zero. That is, there is a significant difference between the two samples X and Y.
+
 % A small p-value (typically ≤ 0.05) suggests that the differences are statistically significant
 % h = 0: Fail to reject the null hypothesis, indicating that there is no statistically significant difference between the before and after inactivation data.
 % h = 1: Reject the null hypothesis, indicating that there is a statistically significant difference between the before and after inactivation data
-perform_paired_wilcoxon_test(data_for_plotting_averages_before.mean_decoding_results_100, data_for_plotting_averages_after.mean_decoding_results_100, data_for_plotting_averages_before.timeValues, basicNameForOutputFile, OUTPUT_PATH_binned_data_for_saving);
+[p_crit_Wilcoxon] = perform_paired_wilcoxon_test(data_for_plotting_averages_before.mean_decoding_results_100, data_for_plotting_averages_after.mean_decoding_results_100, data_for_plotting_averages_before.timeValues, basicNameForOutputFile, OUTPUT_PATH_binned_data_for_saving);
 
+% test_Wilcoxon_annotation = ['Wilcoxon (p = 0.05),'];
+test_Wilcoxon_annotation = sprintf('Wilcoxon (* - p<%.2f),', p_crit_Wilcoxon);
+annotation('textbox', [centerX - 0.18, centerY + 0.22, 0.2, 0.2], ...
+    'String', test_Wilcoxon_annotation, 'FontSize', 10, 'EdgeColor', 'none', 'HorizontalAlignment', 'center');
+
+
+%% Perform cluster-based permutation test
+% [clusters, p_values, t_sums, permutation_distribution ] = permutest( decoding_before, decoding_after, 1, 0.05, 500);
+
+
+[p_crit_permutation] = perform_permutation_test(data_for_plotting_averages_before.mean_decoding_results_100, data_for_plotting_averages_after.mean_decoding_results_100, data_for_plotting_averages_before.timeValues)
+
+%test_Perut_annotation = ['Permutest (p = 0.05)'];
+test_Perut_annotation = sprintf('Permutest (* - p<%.2f)', p_crit_permutation);
+annotation('textbox', [centerX - 0.01, centerY + 0.22, 0.2, 0.2], ...
+    'String', test_Perut_annotation, 'FontSize', 10, 'EdgeColor', 'none', 'HorizontalAlignment', 'center', 'Color', [0.2, 0.6, 0.2]);
 
 %% Plotting the average curve
 
@@ -1276,7 +1316,7 @@ sem_after = std(data_for_plotting_averages_after.mean_decoding_results_100, 0, 2
 
 
 darkBlueColor = [0, 0, 0.5]; % Define a darker shade of blue
-darkRedColor = [0.6350 0.0780 0.1840]; 
+darkRedColor = [0.6350 0.0780 0.1840];
 
 
 % Plot the average dynamics with error bars on the same figure
@@ -1298,7 +1338,7 @@ hold off;
 session_info_combined_for_text_Num_CV_Splits_before = strjoin(data_for_plotting_averages_before.session_info_combined, '\n');
 session_info_combined_for_text_Num_CV_Splits_after = strjoin(data_for_plotting_averages_after.session_info_combined, '\n');
 
-
+drawnow;
 
 %% Saving
 % Save the session information to a text file
@@ -1375,7 +1415,7 @@ function perform_wilcoxon_test(mean_decoding_results_100, timeValues, meanResult
 %   - meanResultsFilename: Filename for saving results
 %   - OUTPUT_PATH_binned_data_for_saving: Output path for saving files
 
-% Output: 
+% Output:
 %    returns the p-value of a two-sided Wilcoxon signed rank test
 
 
@@ -1434,58 +1474,58 @@ end
 
 
 function [diff_1, diff_2, common_prefix, common_suffix] = find_filename_differences(filename_prefix_1, filename_prefix_2)
-    % Split the filenames into parts
-    parts_1 = strsplit(filename_prefix_1, '_');
-    parts_2 = strsplit(filename_prefix_2, '_');
-    
-    % Initialize variables to store the common prefix and suffix
-    common_prefix = '';
-    common_suffix = '';
-    
-    % Find the common prefix
-    i = 1;
-    while i <= min(length(parts_1), length(parts_2)) && strcmp(parts_1{i}, parts_2{i})
-        common_prefix = [common_prefix, parts_1{i}, '_'];
-        i = i + 1;
-    end
-    
-    % Find the common suffix
-    j = 1;
-    while j <= min(length(parts_1), length(parts_2)) && strcmp(parts_1{end - j + 1}, parts_2{end - j + 1})
-        common_suffix = ['_', parts_1{end - j + 1}, common_suffix];
-        j = j + 1;
-    end
-    
-       % Isolate the different parts
-    diff_1 = strjoin(parts_1(i:end-j+1), '_');
-    diff_2 = strjoin(parts_2(i:end-j+1), '_');
-    
-    % Add 'block' prefix if not already present
+% Split the filenames into parts
+parts_1 = strsplit(filename_prefix_1, '_');
+parts_2 = strsplit(filename_prefix_2, '_');
+
+% Initialize variables to store the common prefix and suffix
+common_prefix = '';
+common_suffix = '';
+
+% Find the common prefix
+i = 1;
+while i <= min(length(parts_1), length(parts_2)) && strcmp(parts_1{i}, parts_2{i})
+    common_prefix = [common_prefix, parts_1{i}, '_'];
+    i = i + 1;
+end
+
+% Find the common suffix
+j = 1;
+while j <= min(length(parts_1), length(parts_2)) && strcmp(parts_1{end - j + 1}, parts_2{end - j + 1})
+    common_suffix = ['_', parts_1{end - j + 1}, common_suffix];
+    j = j + 1;
+end
+
+% Isolate the different parts
+diff_1 = strjoin(parts_1(i:end-j+1), '_');
+diff_2 = strjoin(parts_2(i:end-j+1), '_');
+
+% Add 'block' prefix if not already present
 %     if ~startsWith(diff_1, 'block')
 %         diff_1 = ['block_', diff_1];
 %     end
-    if ~startsWith(diff_2, 'block')
-        diff_2 = ['block_', diff_2];
-    end
-    
-    % Remove any leading or trailing underscores
-    if ~isempty(diff_1) && diff_1(1) == '_'
-        diff_1 = diff_1(2:end);
-    end
-    if ~isempty(diff_2) && diff_2(1) == '_'
-        diff_2 = diff_2(2:end);
-    end
-    if ~isempty(diff_1) && diff_1(end) == '_'
-        diff_1 = diff_1(1:end-1);
-    end
-    if ~isempty(diff_2) && diff_2(end) == '_'
-        diff_2 = diff_2(1:end-1);
-    end
+if ~startsWith(diff_2, 'block')
+    diff_2 = ['block_', diff_2];
+end
+
+% Remove any leading or trailing underscores
+if ~isempty(diff_1) && diff_1(1) == '_'
+    diff_1 = diff_1(2:end);
+end
+if ~isempty(diff_2) && diff_2(1) == '_'
+    diff_2 = diff_2(2:end);
+end
+if ~isempty(diff_1) && diff_1(end) == '_'
+    diff_1 = diff_1(1:end-1);
+end
+if ~isempty(diff_2) && diff_2(end) == '_'
+    diff_2 = diff_2(1:end-1);
+end
 end
 
 
 
-function perform_paired_wilcoxon_test (mean_decoding_results_100_before, mean_decoding_results_100_after, timeValues, meanResultsFilename, OUTPUT_PATH_binned_data_for_saving)
+function [p_crit]= perform_paired_wilcoxon_test (mean_decoding_results_100_before, mean_decoding_results_100_after, timeValues, meanResultsFilename, OUTPUT_PATH_binned_data_for_saving)
 
 % Perform Wilcoxon Signed-Rank Test
 % Input:
@@ -1494,9 +1534,10 @@ function perform_paired_wilcoxon_test (mean_decoding_results_100_before, mean_de
 %   - meanResultsFilename: Filename for saving results
 %   - OUTPUT_PATH_binned_data_for_saving: Output path for saving files
 
-% Output: 
+% Output:
 %     returns the p-value of a paired, two-sided test for the null hypothesis that x – y comes from a distribution with zero median
 
+p_crit = 0.05;
 
 % Initialize arrays to store p-values and test statistics
 p_values = zeros(size(mean_decoding_results_100_before, 1), 1);
@@ -1518,13 +1559,27 @@ end
 % Plot asterisks for significant p-values
 hold on;
 for binIndex = 1:size(mean_decoding_results_100_before, 1)
-    if p_values(binIndex) < 0.05
+    if p_values(binIndex) < p_crit
+        
         % Find the y position (above the highest point in the bin)
-        yMax = max(mean_decoding_results_100_before(binIndex, :));
+        yMax_bef = max(mean_decoding_results_100_before(binIndex, :));
+        yMax_aft = max(mean_decoding_results_100_after(binIndex, :));
+        yMax = max(yMax_bef, yMax_aft);
+        
+        yMin_bef = min(mean_decoding_results_100_before(binIndex, :));
+        yMin_aft = min(mean_decoding_results_100_after(binIndex, :));
+        yMin = max(yMin_bef, yMin_aft);
+        
         % Add a small offset for the asterisk position
-        yAsterisk = yMax + 2;
+        %yAsterisk = yMax + 2;
+        if yMin > 45
+            yAsterisk = 44;
+        else
+            yAsterisk = yMin - 2;
+        end
+        
         xAsterisk = timeValues(binIndex); % X position corresponding to the bin
-        text(xAsterisk, yAsterisk, '*', 'Color', 'k', 'FontSize', 14, 'HorizontalAlignment', 'center');
+        text(xAsterisk, yAsterisk, '*', 'Color', 'k', 'FontSize', 23, 'HorizontalAlignment', 'center');
     end
 end
 hold off;
@@ -1535,20 +1590,94 @@ sessionInfoFilePath_Statistics_Wilcoxon = fullfile(OUTPUT_PATH_binned_data_for_s
 fileID = fopen(sessionInfoFilePath_Statistics_Wilcoxon, 'w');
 
 fprintf(fileID, 'Wilcoxon Signed-Rank Test result:\n');
-fprintf(fileID, '\nh = %d (0: fail to reject null, 1: reject null)\n', h);
+% fprintf(fileID, '\nh = %d (0: fail to reject null, 1: reject null)\n', h);
+%
+% if h == 0 % Interpretation
+%     fprintf(fileID, 'Interpretation: Fail to reject the null hypothesis: No significant difference between the paired samples.\n');
+% else
+%     fprintf(fileID, 'Interpretation: Reject the null hypothesis: Significant difference between the paired samples.\n');
+% end
+%
+% fprintf(fileID, '\nP-values for each bin:\n');
+% fprintf(fileID, '%.4f\n', p_values);
+%
+% fprintf(fileID, '\nTest statistics (W) for each bin:\n');
+% fprintf(fileID, '%.4f\n', stats);
 
-if h == 0 % Interpretation
-    fprintf(fileID, 'Interpretation: Fail to reject the null hypothesis: No significant difference between the paired samples.\n');
-else
-    fprintf(fileID, 'Interpretation: Reject the null hypothesis: Significant difference between the paired samples.\n');
+fprintf(fileID, '\nh = 0: No significant difference between the paired samples\n');
+fprintf(fileID, 'h = 1: Significant difference between the paired samples\n');
+
+% Initialize an array to store significant bin indices
+significant_bins = [];
+
+for binIndex = 1:size(mean_decoding_results_100_before, 1)
+    fprintf(fileID, '\nBin %d:\n', binIndex);
+    fprintf(fileID, 'h = %d\n', p_values(binIndex) < 0.05);
+    fprintf(fileID, 'P-value: %.4f\n', p_values(binIndex));
+    fprintf(fileID, 'Test statistic (W): %.4f\n', stats(binIndex));
+    
+    if p_values(binIndex) < 0.05
+        fprintf(fileID, 'Interpretation: Significant difference between the paired samples.\n');
+        significant_bins = [significant_bins, binIndex]; % Add significant bin index
+    else
+        fprintf(fileID, 'Interpretation: No significant difference between the paired samples.\n');
+    end
 end
 
-fprintf(fileID, '\nP-values for each bin:\n');
-fprintf(fileID, '%.4f\n', p_values);
-
-fprintf(fileID, '\nTest statistics (W) for each bin:\n');
-fprintf(fileID, '%.4f\n', stats);
+% Provide a summary of significant bins at the end of the file
+if ~isempty(significant_bins)
+    fprintf(fileID, '\nSummary: Significant difference between paired samples for bins: %s\n', num2str(significant_bins));
+else
+    fprintf(fileID, '\nSummary: No significant differences found between paired samples for any bins.\n');
+end
 
 fclose(fileID);
 
-end 
+end
+
+
+function [p_crit] = perform_permutation_test(mean_decoding_results_100_before, mean_decoding_results_100_after, timeValues)
+
+p_crit = 0.05; % Significance level
+
+% Loop through each bin (row) and perform the signrank test
+for binIndex = 1:size(mean_decoding_results_100_before, 1)
+    % Extract the values for the current bin across all sessions
+    currentBinValues_before = mean_decoding_results_100_before(binIndex, :);
+    currentBinValues_after = mean_decoding_results_100_after(binIndex, :);
+    
+    % Perform the permutest
+    % 1 - direction of the test (1 means two-sided test)
+    % 0.05 is the significance level
+    % 500 - number of permutations
+    [clusters, p_values, t_sums, permutation_distribution] = permutest(currentBinValues_before, currentBinValues_after, 1, 0.05, 500, true);
+    
+    % Selection of significant clusters
+    valid_clusters = [clusters{p_values < p_crit}];
+    
+    % Plotting of significant clusters
+    hold on;
+    if ~isempty(valid_clusters)
+        % plot(timeValues(binIndex), 50, 'r*', 'MarkerSize', 10);
+        
+        % Find the y position (above the highest point in the bin)
+        yMin_bef = min(mean_decoding_results_100_before(binIndex, :));
+        yMin_aft = min(mean_decoding_results_100_after(binIndex, :));
+        yMin = max(yMin_bef, yMin_aft);
+        
+        % Add a small offset for the asterisk position
+        %yAsterisk = yMax + 2;
+        if yMin > 45
+            yAsterisk = 45;
+        else
+            yAsterisk = yMin - 2;
+        end
+        
+        yAsterisk = 41;
+        xAsterisk = timeValues(binIndex);
+        text(xAsterisk, yAsterisk, '*', 'Color', [0.2, 0.6, 0.2], 'FontSize', 23, 'HorizontalAlignment', 'center');
+    end
+    hold off;
+end
+
+end
