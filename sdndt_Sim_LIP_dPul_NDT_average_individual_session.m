@@ -1296,7 +1296,7 @@ annotation('textbox', [centerX - 0.18, centerY + 0.22, 0.2, 0.2], ...
 % [clusters, p_values, t_sums, permutation_distribution ] = permutest( decoding_before, decoding_after, 1, 0.05, 500);
 
 
-[p_crit_permutation] = perform_permutation_test(data_for_plotting_averages_before.mean_decoding_results_100, data_for_plotting_averages_after.mean_decoding_results_100, data_for_plotting_averages_before.timeValues)
+[p_crit_permutation] = perform_permutation_test(data_for_plotting_averages_before.mean_decoding_results_100, data_for_plotting_averages_after.mean_decoding_results_100, data_for_plotting_averages_before.timeValues, basicNameForOutputFile, OUTPUT_PATH_binned_data_for_saving)
 
 %test_Perut_annotation = ['Permutest (p = 0.05)'];
 test_Perut_annotation = sprintf('Permutest (* - p<%.2f)', p_crit_permutation);
@@ -1636,9 +1636,16 @@ fclose(fileID);
 end
 
 
-function [p_crit] = perform_permutation_test(mean_decoding_results_100_before, mean_decoding_results_100_after, timeValues)
+function [p_crit] = perform_permutation_test(mean_decoding_results_100_before, mean_decoding_results_100_after, timeValues, meanResultsFilename, OUTPUT_PATH_binned_data_for_saving)
 
 p_crit = 0.05; % Significance level
+
+
+% Initialize arrays to store clusters, p-values, and significant bin indices
+all_clusters = {};
+all_p_values = [];
+significant_bins = [];
+
 
 % Loop through each bin (row) and perform the signrank test
 for binIndex = 1:size(mean_decoding_results_100_before, 1)
@@ -1646,11 +1653,16 @@ for binIndex = 1:size(mean_decoding_results_100_before, 1)
     currentBinValues_before = mean_decoding_results_100_before(binIndex, :);
     currentBinValues_after = mean_decoding_results_100_after(binIndex, :);
     
+    
     % Perform the permutest
     % 1 - direction of the test (1 means two-sided test)
     % 0.05 is the significance level
     % 500 - number of permutations
     [clusters, p_values, t_sums, permutation_distribution] = permutest(currentBinValues_before, currentBinValues_after, 1, 0.05, 500, true);
+    
+    % Store clusters and p-values
+    all_clusters{binIndex} = clusters;
+    all_p_values(binIndex) = min(p_values); % Assume we use the minimum p-value for the bin
     
     % Selection of significant clusters
     valid_clusters = [clusters{p_values < p_crit}];
@@ -1680,4 +1692,42 @@ for binIndex = 1:size(mean_decoding_results_100_before, 1)
     hold off;
 end
 
+% Save the results of Wilcoxon to a text file
+name_of_txt_Permutation_test = ['Permutation_test_Splits_Info_' meanResultsFilename '.txt'];
+sessionInfoFilePath_Statistics_Permutation = fullfile(OUTPUT_PATH_binned_data_for_saving, name_of_txt_Permutation_test);
+fileID = fopen(sessionInfoFilePath_Statistics_Permutation, 'w');
+
+fprintf(fileID, 'Permutation Test result:\n');
+fprintf(fileID, '\nFor each bin, the permutation test is conducted to determine whether there is a significant difference \n');
+fprintf(fileID, 'between the decoding results before and after inactivation.\n');
+fprintf(fileID, '\nClusters: represent groups of consecutive bins where significant differences were found\n');
+fprintf(fileID, '   - Empty cell: if there are no significant clusters\n');
+fprintf(fileID, '   - Numerical values: indices (e.g., time points or bins) where meaningful differences are found\n');
+fprintf(fileID, '\np-values: indicate the statistical significance of these differences\n');
+fprintf(fileID, '\n__________________________________________________________________________________________________\n');
+
+%fprintf(fileID, '\nclusters - identified clusters of significant differences between two datasets\n');
+
+% Loop through each bin and write results to the file
+for binIndex = 1:size(mean_decoding_results_100_before, 1)
+    fprintf(fileID, '\nBin %d:\n', binIndex);
+    fprintf(fileID, 'P-value: %.4f\n', all_p_values(binIndex));
+    fprintf(fileID, 'Clusters: %s\n', mat2str(cell2mat(all_clusters{binIndex})));
+    
+    if all_p_values(binIndex) < p_crit
+        fprintf(fileID, 'Interpretation: Significant difference between the paired samples in this bin.\n');
+        significant_bins = [significant_bins, binIndex]; % Add significant bin index
+    else
+        fprintf(fileID, 'Interpretation: No significant difference between the paired samples in this bin.\n');
+    end
+end
+
+
+% Provide a summary of significant bins at the end of the file
+if ~isempty(significant_bins)
+    fprintf(fileID, '\nSummary: Significant differences between paired samples were found in bins: %s\n', num2str(significant_bins));
+else
+    fprintf(fileID, '\nSummary: No significant differences were found between paired samples for any bins.\n');
+end
+fclose(fileID);
 end
