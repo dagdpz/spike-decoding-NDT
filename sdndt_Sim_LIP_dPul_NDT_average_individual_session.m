@@ -81,8 +81,8 @@ labels_to_use = {'instr_R_instr_L', 'choice_R_choice_L'};
 
 %% Define valid combinations of injection and target_brain_structure
 if strcmp(injection, '1') || strcmp(injection, '0')
-    combinations_inj_and_target_brain_structure = struct('injection', {injection, injection}, 'target_brain_structure', {'LIP_L', 'LIP_R'});
-    %   combinations_inj_and_target_brain_structure = struct('injection', { injection}, 'target_brain_structure', {'LIP_L'});
+   combinations_inj_and_target_brain_structure = struct('injection', {injection, injection}, 'target_brain_structure', {'LIP_L', 'LIP_R'});
+  %     combinations_inj_and_target_brain_structure = struct('injection', { injection}, 'target_brain_structure', {'LIP_R'});
     
 elseif strcmp(injection, '2')
     combinations_inj_and_target_brain_structure = struct('injection', {injection, injection}, 'target_brain_structure', {'dPul_L', 'LIP_L'});
@@ -537,11 +537,13 @@ totalNumOfTrials = 0; % Initialize the total number of trials
 sum_first_numbers = 0; % Initialize variables to store sums of the first and second numbers
 sum_second_numbers = 0;
 
+
+
 for numOfData = 1:numel(dateOfRecording)
     
     current_dateOfRecording = dateOfRecording{numOfData};
     current_dateOfRecording_monkey = [monkey_prefix current_dateOfRecording];
-    OUTPUT_PATH_binned_data = fullfile(OUTPUT_PATH_binned, current_dateOfRecording_monkey, block_grouping_folder);
+    OUTPUT_PATH_binned_data = fullfile(OUTPUT_PATH_binned, current_dateOfRecording_monkey, block_grouping_folder, settings.num_cv_splits_approach_folder);
     
     % List the contents of the All_blocks_BeforeInjection folder
     cvSplitsFolders = dir(OUTPUT_PATH_binned_data);
@@ -1274,6 +1276,7 @@ meanResultsFilename_after = generateMeanFilename(data_for_plotting_averages_afte
 
 % Create the name of the output file
 basicNameForOutputFile = [common_prefix diff_1 '_and_' diff_2 common_suffix(1:end-4)];
+basicNameForOutputFile = [basicNameForOutputFile, '_same_cv'];
 %output_file_Statistical_results = [output_folder common_prefix diff_1 '_and_' diff_2 common_suffix '_Wilcoxon_Signed-Rank_Test.txt'];
 
 
@@ -1323,7 +1326,7 @@ darkRedColor = [0.6350 0.0780 0.1840];
 hold on; % Add the new plot to the existing one
 %             plot_average_dynamics = errorbar(timeValues, average_dynamics_by_day, sem, 'LineWidth', 2, 'Color', darkBlueColor); % Use a thicker line and blue color for the average dynamics with error bars
 %             plot_average_dynamics.LineWidth = 1;
-[hp1_bef hp2_bef] =  ig_errorband(data_for_plotting_averages_before.timeValues, average_dynamics_by_day_before, sem_before, 0);
+[hp1_bef, hp2_bef] =  ig_errorband(data_for_plotting_averages_before.timeValues, average_dynamics_by_day_before, sem_before, 0);
 hp1_bef.Color = [0, 0, 0.5]; % darkBlueColor
 hp2_bef.FaceColor = [0, 0, 0.5]; % darkBlueColor
 

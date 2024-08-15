@@ -48,7 +48,7 @@ startTime = tic;
 listOfRequiredFiles = {%'firstBlockFiles', 'secondBlockFiles', ...
     %     'thirdBlockFiles', 'fourthBlockFiles', ...
     %     'fifthBlockFiles', 'sixthBlockFiles', ...
-    %     'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection', ...
+   %    'overlapBlocksFiles_BeforeInjection',          'overlapBlocksFiles_AfterInjection' %, ...
     'overlapBlocksFiles_BeforeInjection_3_4',  'overlapBlocksFiles_AfterInjection_3_4'%, ...
     %     'allBlocksFiles_BeforeInjection', 'allBlocksFiles_AfterInjection'
     };  %'allBlocksFiles', 'overlapBlocksFiles', ...
@@ -57,8 +57,8 @@ listOfRequiredFiles = {%'firstBlockFiles', 'secondBlockFiles', ...
 % Calculate typeOfSessions based on the injection parameter
 if strcmp(injection, '1')
     if strcmp(monkey, 'Linus')
-       % typeOfSessions = {'right'};
-        typeOfSessions = {'right', 'left', 'all'}; % For control and injection experiments
+        % typeOfSessions = {'right'};
+        typeOfSessions = {'right'} %, 'left', 'all'}; % For control and injection experiments
     elseif strcmp(monkey, 'Bacchus')
         typeOfSessions = {'right'};
     end
@@ -73,8 +73,14 @@ end
 numTypesOfSessions = numel(typeOfSessions);
 
 %% Define approach parameters
-approach_to_use = {'all_approach', 'overlap_approach'};
-
+% approach_to_use = {'all_approach', 'overlap_approach'};
+if any(contains(listOfRequiredFiles, {'overlapBlocksFiles_BeforeInjection_3_4', 'overlapBlocksFiles_AfterInjection_3_4', 'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection', 'overlapBlocksFiles'}))
+    approach_to_use = {'overlap_approach'};
+elseif any(contains(listOfRequiredFiles, {'allBlocksFiles_BeforeInjection', 'allBlocksFiles_AfterInjection', 'allBlocksFiles'}))
+    approach_to_use = {'all_approach'};
+else
+    approach_to_use = {'all_approach', 'overlap_approach'};
+end
 
 %% Define target_state parameters
 targetParams = struct();
@@ -102,7 +108,7 @@ else
 end
 
 
-%% 
+%%
 h = waitbar(0, 'Processing...'); % Initialize progress bar
 
 numCombinations = numel(combinations_inj_and_target_brain_structure);
@@ -683,7 +689,9 @@ OUTPUT_PATH_binned_dateOfRecording = [OUTPUT_PATH_binned monkey_prefix dateOfRec
 % Create num_cv_splits_folder
 num_cv_splits_folder = sprintf('num_cv_splits_%d(%d)', settings.num_cv_splits, settings.num_cv_splits * settings.num_times_to_repeat_each_label_per_cv_split);
 
-Binned_data_dir = [OUTPUT_PATH_binned_dateOfRecording block_grouping_folder num_cv_splits_folder '/'];
+num_cv_splits_approach = settings.num_cv_splits_approach_folder;
+
+Binned_data_dir = [OUTPUT_PATH_binned_dateOfRecording block_grouping_folder num_cv_splits_approach num_cv_splits_folder '/'];
 save_prefix_name = [Binned_data_dir 'Binned_Sim_LIP_dPul__NDT_data_for_' target_brain_structure '_' target_state_name '_' targetBlockUsed];
 
 if ~exist(Binned_data_dir,'dir')
@@ -874,70 +882,94 @@ fclose(fileID); % Close the file
 
 
 
-%% Automatic detection of the maximum possible number of num_cv_splits
+%% Detection of possible number of num_cv_splits
+
+% Automatic detection of the maximum possible number of num_cv_splits
 % Determine the maximum number of units and repetitions
-data_from_text_document = [];
-for i = 1:numel(lines)
-    line_parts = split(lines{i}, {' units has ', ' repetitions of the stimuli'});
-    data_from_text_document = [data_from_text_document; str2double(line_parts{1}), str2double(line_parts{2})];
+
+if isequal(num_cv_splits_approach, 'max_num_cv_splits/') || ...
+        (isequal(num_cv_splits_approach, 'same_num_cv_splits/') && ...
+        (isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection') || isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection_3_4')))
+  
+    data_from_text_document = [];
+    for i = 1:numel(lines)
+        line_parts = split(lines{i}, {' units has ', ' repetitions of the stimuli'});
+        data_from_text_document = [data_from_text_document; str2double(line_parts{1}), str2double(line_parts{2})];
+    end
+    
+    % Extract the number of units and repetitions
+    num_units = data_from_text_document(:, 1);
+    num_repetitions = data_from_text_document(:, 2);
+    
+    % Filter out rows where the number of repetitions is less than 8
+    valid_indices = num_repetitions >= 4*settings.num_times_to_repeat_each_label_per_cv_split;
+    num_units = num_units(valid_indices);
+    num_repetitions = num_repetitions(valid_indices);
+    
+    % Check if all units are zeros
+    if all(num_units == 0)
+        % If all units are zeros, return from the function
+        return;
+    end
+    
+    
+    % Determine the maximum number of units
+    max_units = max(num_units);
+    
+    % Find the corresponding number of repetitions for the maximum number of units
+    max_repetitions_index = find(num_units == max_units, 1);
+    max_repetitions = num_repetitions(max_repetitions_index);
+    
+    % Determine the maximum possible num_cv_splits based on the maximum number of units and repetitions
+    max_cv_splits = max_repetitions / settings.num_times_to_repeat_each_label_per_cv_split;
+    
+    % % Set num_cv_splits to 16 if max_cv_splits is greater than 16
+    % if max_cv_splits > 16
+    %     num_cv_splits = 16;
+    % else
+    %     num_cv_splits = max_cv_splits;
+    % end
+    
+    % Ensure num_cv_splits is an even number or less than 16
+    num_cv_splits = min(floor(max_cv_splits), 16);  % Take the floor of max_cv_splits and cap it at 16
+    
+    % Make sure num_cv_splits is even
+    if mod(num_cv_splits, 2) ~= 0  % If num_cv_splits is odd
+        num_cv_splits = num_cv_splits - 1;  % Subtract 1 to make it even
+    end
+    
+    % Check if num_cv_splits is less than 4
+    if num_cv_splits < 4
+        % If less than 4, return to the calling function sdndt_Sim_LIP_dPul_NDT_decoding
+        return; % Exit the current function and return to the calling function
+    end
+    
+    
+    
+    
+elseif isequal(num_cv_splits_approach, 'same_num_cv_splits/') && ...
+        isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection') || isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection_3_4')
+  
+     block_grouping_folder_Before = strrep(block_grouping_folder, 'After', 'Before'); % Replacing "After" with "Before"
+    folder_where_search_CV_file = [OUTPUT_PATH_binned_dateOfRecording block_grouping_folder_Before num_cv_splits_approach ];
+        
+    [num_cv_splits] = find_num_cv_splits(folder_where_search_CV_file, target_brain_structure, target_state_name, labels_to_use_string, dateOfRecording);
+    
+    
 end
 
-% Extract the number of units and repetitions
-num_units = data_from_text_document(:, 1);
-num_repetitions = data_from_text_document(:, 2);
+%num_cv_splits = 6; 
 
-% Filter out rows where the number of repetitions is less than 8
-valid_indices = num_repetitions >= 4*settings.num_times_to_repeat_each_label_per_cv_split;
-num_units = num_units(valid_indices);
-num_repetitions = num_repetitions(valid_indices);
-
-% Check if all units are zeros
-if all(num_units == 0)
-    % If all units are zeros, return from the function
-    return;
-end
-
-
-% Determine the maximum number of units
-max_units = max(num_units);
-
-% Find the corresponding number of repetitions for the maximum number of units
-max_repetitions_index = find(num_units == max_units, 1);
-max_repetitions = num_repetitions(max_repetitions_index);
-
-% Determine the maximum possible num_cv_splits based on the maximum number of units and repetitions
-max_cv_splits = max_repetitions / settings.num_times_to_repeat_each_label_per_cv_split;
-
-% % Set num_cv_splits to 16 if max_cv_splits is greater than 16
-% if max_cv_splits > 16
-%     num_cv_splits = 16;
-% else
-%     num_cv_splits = max_cv_splits;
-% end
-
-% Ensure num_cv_splits is an even number or less than 16
-num_cv_splits = min(floor(max_cv_splits), 16);  % Take the floor of max_cv_splits and cap it at 16
-
-% Make sure num_cv_splits is even
-if mod(num_cv_splits, 2) ~= 0  % If num_cv_splits is odd
-    num_cv_splits = num_cv_splits - 1;  % Subtract 1 to make it even
-end
-
-% Check if num_cv_splits is less than 4
-if num_cv_splits < 4
-    % If less than 4, return to the calling function sdndt_Sim_LIP_dPul_NDT_decoding
-    return; % Exit the current function and return to the calling function
-end
 %% moving binned files from the old folder to the new one if the num_cv_splits variable did not correspond to the specified settings.num_cv_splits
 % Check if num_cv_splits is different from settings.num_cv_splits
 if num_cv_splits ~= settings.num_cv_splits
-    
+   
     % Move files from unsuitable directory to new one to match new num_cv_splits_folder
     Binned_data_dir_old = [Binned_data_dir];
     old_dir = [Binned_data_dir_old];
     
     num_cv_splits_folder = sprintf('num_cv_splits_%d(%d)', num_cv_splits, num_cv_splits * settings.num_times_to_repeat_each_label_per_cv_split);
-    Binned_data_dir = [OUTPUT_PATH_binned_dateOfRecording block_grouping_folder num_cv_splits_folder '/'];
+    Binned_data_dir = [OUTPUT_PATH_binned_dateOfRecording block_grouping_folder num_cv_splits_approach num_cv_splits_folder '/'];
     if ~exist(Binned_data_dir,'dir')
         mkdir(Binned_data_dir);
     end
@@ -948,10 +980,11 @@ if num_cv_splits ~= settings.num_cv_splits
     
     % Delete old unnecessary folder
     folder_name_to_delete = sprintf('num_cv_splits_%d(%d)', settings.num_cv_splits, settings.num_cv_splits * settings.num_times_to_repeat_each_label_per_cv_split);
-    dir_to_delete = fullfile(OUTPUT_PATH_binned_dateOfRecording, block_grouping_folder, folder_name_to_delete);
+    dir_to_delete = fullfile(OUTPUT_PATH_binned_dateOfRecording, block_grouping_folder, num_cv_splits_approach, folder_name_to_delete);
     if exist(dir_to_delete, 'dir') % Delete the directory
         rmdir(dir_to_delete, 's'); % 's' option deletes the directory and all its contents
     end
+    
 end
 
 
@@ -1034,6 +1067,11 @@ DECODING_RESULTS = the_cross_validator.run_cv_decoding;
 
 save_file_name = [Binned_data_dir filename_binned_data '_' labels_to_use_string string_to_add_to_filename '_DECODING_RESULTS.mat'];
 save(save_file_name, 'DECODING_RESULTS');
+
+% Save num_cv_splits to a .mat file
+filename_binned_data_cv = regexp(filename_binned_data, '_for.*_sampled', 'match');
+save_num_cv_splits_file = [Binned_data_dir 'num_cv_splits'  filename_binned_data_cv{1} '_' labels_to_use_string string_to_add_to_filename '.mat'];
+save(save_num_cv_splits_file, 'num_cv_splits');
 
 
 % Plot decoding
@@ -1206,3 +1244,96 @@ else
 end
 end
 
+
+function [num_cv_splits] = find_num_cv_splits(folder_where_search_CV_file, target_brain_structure, target_state_name, labels_to_use_string, dateOfRecording)
+
+% List the contents of the All_blocks_BeforeInjection folder
+cvSplitsFolders = dir(folder_where_search_CV_file);
+
+% Filter out current directory '.' and parent directory '..'
+cvSplitsFolders = cvSplitsFolders(~ismember({cvSplitsFolders.name}, {'.', '..'}));
+
+% Extract numeric values from folder names
+values_outside_parentheses = zeros(1, numel(cvSplitsFolders));
+
+
+for idx = 1:numel(cvSplitsFolders)
+    cvSplitFolderName = cvSplitsFolders(idx).name;
+    if startsWith(cvSplitFolderName, 'num_cv_splits_')
+        values_outside_parentheses(idx) = str2double(extractBetween(cvSplitFolderName, 'num_cv_splits_', '('));
+    end
+end
+
+% Filter out zeros
+nonZeroValues = values_outside_parentheses(values_outside_parentheses > 0);
+
+% Sort non-zero values in ascending order
+[sorted_nonZeroValues, sorted_idx] = sort(nonZeroValues);
+
+% Get the corresponding indices in the original array
+sorted_idx = find(values_outside_parentheses > 0);
+
+% Iterate over sorted folders and check for the file
+data_for_plotting_averages.decodingResultsFilePath = '';
+session_num_cv_splits_Info = '';
+
+% Initialize a flag to check if the file is found
+fileFound = false;
+
+for idx = sorted_idx
+    cvSplitFolderName = cvSplitsFolders(idx).name;
+    cvSplitFolderPath = fullfile(folder_where_search_CV_file, cvSplitFolderName);
+    
+    % List the contents of the current folder
+    decodingResultsFiles = dir(fullfile(cvSplitFolderPath, 'num_cv_splits_for_*.mat'));
+    
+    % Check if the required file exists in this folder
+    for fileIndex = 1:numel(decodingResultsFiles)
+        data_for_plotting_averages.decodingResultsFilename = decodingResultsFiles(fileIndex).name;
+        
+        % Check if the file name contains the desired target structure, state, and label
+        if contains(data_for_plotting_averages.decodingResultsFilename, target_brain_structure) && ...
+                contains(data_for_plotting_averages.decodingResultsFilename, target_state_name) && ...
+                contains(data_for_plotting_averages.decodingResultsFilename, labels_to_use_string) %&& ...
+            %contains(data_for_plotting_averages.decodingResultsFilename, num_block)
+            
+            
+            data_for_plotting_averages.decodingResultsFilePath = fullfile(cvSplitFolderPath, data_for_plotting_averages.decodingResultsFilename);
+            
+            % Now you have the path to the suitable DECODING_RESULTS.mat file
+            % You can process or load this file as needed
+            fileFound = true;  % Set flag to true
+            
+            % Extract data about session and num_cv_splits
+            num_cv_splits = str2double(extractBetween(cvSplitFolderName, 'num_cv_splits_', '('));
+            
+            break; % Exit the loop once the file is found
+        end
+    end
+    
+    
+    if fileFound
+        break; % Exit the loop if the file is found
+    end
+end
+
+
+
+% If no file was found in any folder, display error message
+if isempty(data_for_plotting_averages.decodingResultsFilePath)
+    
+    data_for_plotting_averages.session_info = [];
+    
+    % disp('ERROR: No suitable decoding results file found.');
+    disp(['No suitable decoding results file found for session: ', dateOfRecording]);
+    %continue; % Move to the next iteration of the loop
+    
+else
+    
+    % Load the file
+    loaded_num_cv_splits = load(data_for_plotting_averages.decodingResultsFilePath);
+    num_cv_splits = loaded_num_cv_splits.num_cv_splits;
+    
+end
+
+end
