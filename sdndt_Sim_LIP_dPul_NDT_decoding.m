@@ -48,8 +48,8 @@ startTime = tic;
 listOfRequiredFiles = {%'firstBlockFiles', 'secondBlockFiles', ...
     %     'thirdBlockFiles', 'fourthBlockFiles', ...
     %     'fifthBlockFiles', 'sixthBlockFiles', ...
-   %    'overlapBlocksFiles_BeforeInjection',          'overlapBlocksFiles_AfterInjection' %, ...
-    'overlapBlocksFiles_BeforeInjection_3_4',  'overlapBlocksFiles_AfterInjection_3_4'%, ...
+       'overlapBlocksFiles_BeforeInjection',          'overlapBlocksFiles_AfterInjection' %, ...
+   %  'overlapBlocksFiles_BeforeInjection_3_4',  'overlapBlocksFiles_AfterInjection_3_4'%, ...
     %     'allBlocksFiles_BeforeInjection', 'allBlocksFiles_AfterInjection'
     };  %'allBlocksFiles', 'overlapBlocksFiles', ...
 
@@ -958,7 +958,7 @@ elseif isequal(num_cv_splits_approach, 'same_num_cv_splits/') && ...
     
 end
 
-%num_cv_splits = 6; 
+% num_cv_splits = 6; % for Linus: Lin_20210709
 
 %% moving binned files from the old folder to the new one if the num_cv_splits variable did not correspond to the specified settings.num_cv_splits
 % Check if num_cv_splits is different from settings.num_cv_splits
@@ -1065,6 +1065,8 @@ the_cross_validator.test_only_at_training_times = 1;
 DECODING_RESULTS = the_cross_validator.run_cv_decoding;
 
 
+
+
 save_file_name = [Binned_data_dir filename_binned_data '_' labels_to_use_string string_to_add_to_filename '_DECODING_RESULTS.mat'];
 save(save_file_name, 'DECODING_RESULTS');
 
@@ -1072,6 +1074,27 @@ save(save_file_name, 'DECODING_RESULTS');
 filename_binned_data_cv = regexp(filename_binned_data, '_for.*_sampled', 'match');
 save_num_cv_splits_file = [Binned_data_dir 'num_cv_splits'  filename_binned_data_cv{1} '_' labels_to_use_string string_to_add_to_filename '.mat'];
 save(save_num_cv_splits_file, 'num_cv_splits');
+
+
+
+
+% Save unit_ID as a txt-file
+% Define the prefix for the file name
+prefix_for_file_with_units_IDs = ['units_IDs_for_' target_brain_structure '_' target_state_name '_' targetBlockUsed '_' labels_to_use_string];
+
+% Define the file name
+file_name = fullfile(Binned_data_dir, [prefix_for_file_with_units_IDs '.txt']);
+fileID = fopen(file_name, 'w'); % Open the file for writing
+fprintf(fileID, 'unit_ID:\n\n'); % Write header ‘unit_ID:’
+
+for i = 1:numel(DECODING_RESULTS.DS_PARAMETERS.binned_site_info.unit_ID) % Write each unit_ID in a column
+    fprintf(fileID, '%s\n', DECODING_RESULTS.DS_PARAMETERS.binned_site_info.unit_ID{i});
+end
+fprintf(fileID, '\nIn total: %d units\n', numel(DECODING_RESULTS.DS_PARAMETERS.binned_site_info.unit_ID));
+fclose(fileID);
+
+
+
 
 
 % Plot decoding
