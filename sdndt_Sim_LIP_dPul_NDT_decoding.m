@@ -48,7 +48,8 @@ startTime = tic;
 listOfRequiredFiles = {%'firstBlockFiles', 'secondBlockFiles', ...
     %     'thirdBlockFiles', 'fourthBlockFiles', ...
     %     'fifthBlockFiles', 'sixthBlockFiles', ...
-       'overlapBlocksFiles_BeforeInjection',          'overlapBlocksFiles_AfterInjection' %, ...
+     %  'overlapBlocksFiles_BeforeInjection',         
+     'overlapBlocksFiles_AfterInjection' %, ...
    %  'overlapBlocksFiles_BeforeInjection_3_4',  'overlapBlocksFiles_AfterInjection_3_4'%, ...
     %     'allBlocksFiles_BeforeInjection', 'allBlocksFiles_AfterInjection'
     };  %'allBlocksFiles', 'overlapBlocksFiles', ...
@@ -218,16 +219,7 @@ for file_index = 1:numFiles % Loop through each file in listOfRequiredFiles
                                     % Call the internal decoding function for each day
                                     sdndt_Sim_LIP_dPul_NDT_decoding_internal(monkey, current_injection, current_type_of_session, typeOfDecoding, current_date, current_target_brain_structure, target_state, current_label, current_approach, current_file); % typeOfSessions{j}
                                     
-                                    % Update progress bar
-                                    %                                     progress = ((file_index - 1) * numCombinations * numLabels * numFieldNames * numTypesOfSessions * numel(current_set_of_date) + ...
-                                    %                                         (comb_index - 1) * numLabels * numFieldNames * numTypesOfSessions * numel(current_set_of_date) + ...
-                                    %                                         (label_index - 1) * numFieldNames * numTypesOfSessions * numel(current_set_of_date) + ...
-                                    %                                         (approach_index - 1) * numFieldNames * numTypesOfSessions * numel(current_set_of_date) + ...
-                                    %                                         (i - 1) * numTypesOfSessions * numel(current_set_of_date) + ...
-                                    %                                         (j - 1) * numel(current_set_of_date) + numDays) / ...
-                                    %                                         (numFiles * numCombinations * numLabels * numFieldNames * numTypesOfSessions * numel(current_set_of_date));
-                                    % waitbar(progress, h, sprintf('Processing... %.2f%%', progress * 100));
-                                    
+                                  
                                     % Update progress for each iteration
                                     overallProgress = overallProgress + 1;
                                     waitbar(overallProgress / totalIterations, h, sprintf('Processing... %.2f%%', overallProgress / totalIterations * 100));
@@ -240,22 +232,7 @@ for file_index = 1:numFiles % Loop through each file in listOfRequiredFiles
                                 % Call the internal decoding function only once
                                 sdndt_Sim_LIP_dPul_NDT_decoding_internal(monkey, current_injection, current_type_of_session, current_date, typeOfDecoding, current_target_brain_structure, target_state, current_label, current_approach, current_file);
                                 
-                                %                             % Update progress bar for merged files scenario
-                                %                             progress = ((file_index - 1) * numCombinations + (comb_index - 1)) / (numFiles * numCombinations);
-                                %                             waitbar(progress, h, sprintf('Processing... %.2f%%', progress * 100));
-                                
-                                % Update progress for each combination
-                                %                                 overallProgress = ((file_index - 1) * numCombinations * numLabels * numFieldNames * numTypesOfSessions + ...
-                                %                                     (comb_index - 1) * numLabels * numFieldNames * numTypesOfSessions + ...
-                                %                                     (label_index - 1) * numFieldNames * numTypesOfSessions + ...
-                                %                                     (approach_index - 1) * numFieldNames * numTypesOfSessions + ...
-                                %                                     (i - 1) * numTypesOfSessions + ...
-                                %                                     (j - 1)) / ...
-                                %                                     (numFiles * numCombinations * numLabels * numFieldNames * numTypesOfSessions);
-                                %
-                                %                                 % Update progress bar
-                                %                                 waitbar(overallProgress, h, sprintf('Processing... %.2f%%', overallProgress * 100));
-                                
+                               
                                 % Update progress for each iteration
                                 overallProgress = overallProgress + 1;
                                 waitbar(overallProgress / totalIterations, h, sprintf('Processing... %.2f%%', overallProgress / totalIterations * 100));
@@ -380,20 +357,7 @@ allDateOfRecording = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(monk
 
 % Call the settings function with the chosen set
 [base_path, INPUT_PATH, OUTPUT_PATH_raster, OUTPUT_PATH_binned, monkey_prefix, settings] = sdndt_Sim_LIP_dPul_NDT_settings(monkey, injection, typeOfSessions);
-%run('sdndt_Sim_LIP_dPul_NDT_settings');
-%run('sdndt_Sim_LIP_dPul_NDT_make_raster');
 
-% if isequal(listOfRequiredFiles, 'overlapBlocksFilesAcrossSessions')
-%     partOfName = 'allOverlapBlocksFiles';
-%     dateOfRecording = 'merged_files_across_sessions';  % Set a default value for the dateOfRecording in this case
-
-
-
-% for numDays = 1:numel(allDateOfRecording)
-%     current_date = allDateOfRecording{numDays};
-
-%     if strcmp(dateOfRecording, 'each_session_separately')
-%         partOfName = current_date;
 if  strcmp(dateOfRecording, 'merged_files_across_sessions')
     partOfName = 'allSessionsBlocksFiles';
 else

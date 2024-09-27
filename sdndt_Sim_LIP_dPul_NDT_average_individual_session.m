@@ -21,9 +21,9 @@ startTime = tic;
 if strcmp(typeOfDecoding, 'merged_files_across_sessions')
     listOfRequiredFiles = {%'firstBlockFiles', 'secondBlockFiles', 'thirdBlockFiles', ...
         %     'fourthBlockFiles', 'fifthBlockFiles', 'sixthBlockFiles', ...
-        %'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection' %, ...
+        'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection' %, ...
         %'allBlocksFiles_BeforeInjection', 'allBlocksFiles_AfterInjection'...
-        'overlapBlocksFiles_BeforeInjection_3_4',  'overlapBlocksFiles_AfterInjection_3_4'
+       % 'overlapBlocksFiles_BeforeInjection_3_4',  'overlapBlocksFiles_AfterInjection_3_4'
         %'allBlocksFiles', 'overlapBlocksFiles'
         };
     
@@ -281,7 +281,7 @@ allDateOfRecording = filelist_of_days_from_Simultaneous_dPul_PPC_recordings(monk
 
 
 % Call the settings function with the chosen set
-[base_path, INPUT_PATH, OUTPUT_PATH_raster, OUTPUT_PATH_binned, monkey_prefix, settings] = sdndt_Sim_LIP_dPul_NDT_settings(monkey, injection, typeOfSessions);
+[base_path, ~, OUTPUT_PATH_raster, OUTPUT_PATH_binned, monkey_prefix, settings] = sdndt_Sim_LIP_dPul_NDT_settings(monkey, injection, typeOfSessions);
 
 %% find grouping_folder
 
