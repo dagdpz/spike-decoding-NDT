@@ -1,15 +1,15 @@
-function sdndt_Sim_LIP_dPul_NDT_spiking_activity(monkey, injection, typeOfDecoding)
+ function sdndt_Sim_LIP_dPul_NDT_spiking_activity(monkey, injection, typeOfDecoding)
 
 % The code converts the received raster data into binned data and then performs decoding.
 
 % HOW TO CALL THE FUNCTION?
 % Within a session:
-% sdndt_Sim_LIP_dPul_NDT_spiking_activity('Bacchus', '1', 'each_unit_separately');
-% sdndt_Sim_LIP_dPul_NDT_spiking_activity('Bacchus', '1', 'average_within_session');
+% sdndt_Sim_LIP_dPul_NDT_spiking_activity('Bacchus', '1', 'each_unit_separately');  % firing rate of each unit in each session
+% sdndt_Sim_LIP_dPul_NDT_spiking_activity('Bacchus', '1', 'average_within_session');  % firing rate -> calculation of session averages
 
 % Across sessions:
-% sdndt_Sim_LIP_dPul_NDT_spiking_activity('Bacchus', '1', 'average_across_session');
-% sdndt_Sim_LIP_dPul_NDT_spiking_activity('Bacchus', '1', 'merged_files_across_sessions');
+% sdndt_Sim_LIP_dPul_NDT_spiking_activity('Bacchus', '1', 'average_across_session');  % firing rate -> calculation of session averages -> average of averages 
+% sdndt_Sim_LIP_dPul_NDT_spiking_activity('Bacchus', '1', 'merged_files_across_sessions');  % plotting based on the created pseudopopulation 
 
 
 

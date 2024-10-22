@@ -472,7 +472,6 @@ switch target_brain_structure
 end
 
 
-
 for h = 1:numel(listOfRequiredFiles)
     parts = strsplit(listOfRequiredFiles{h}, '_'); % Split the file name into parts using underscores
     blockIndex = find(contains(parts, 'block'), 1, 'last'); % Find the index of the part containing 'block'
@@ -486,6 +485,9 @@ end
 
 uniqueBlockInformation = strrep(strjoin(unique(blockInformation)), '.mat', ''); % Find unique block information
 targetBlock = uniqueBlockInformation ;
+
+
+
 
 % create variable, which will help to find the required file block for decoding
 switch targetBlock
@@ -1070,6 +1072,7 @@ end
 
 
 %% Supporting functions
+
 
 function copyFilesForCategory(categoryName, destinationFolder, listOfRequiredFiles, list_of_required_files)
 if isfield(list_of_required_files, categoryName) && isequal(listOfRequiredFiles, list_of_required_files.(categoryName))
