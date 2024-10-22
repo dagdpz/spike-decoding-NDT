@@ -55,12 +55,8 @@ startTime = tic;
 % };  %'allBlocksFiles', 'overlapBlocksFiles', ...
 
 if strcmp(monkey, 'Bacchus')
-    training_listOfRequiredFiles = {'overlapBlocksFiles_BeforeInjection' %, 
-       % 'overlapBlocksFiles_AfterInjection'
-       };
-    test_listOfRequiredFiles = {'overlapBlocksFiles_AfterInjection' %, 
-        % 'overlapBlocksFiles_BeforeInjection'
-        };
+    training_listOfRequiredFiles = {'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection'};
+    test_listOfRequiredFiles = {'overlapBlocksFiles_AfterInjection', 'overlapBlocksFiles_BeforeInjection'};
 elseif strcmp(monkey, 'Linus')
     training_listOfRequiredFiles = {'overlapBlocksFiles_BeforeInjection_3_4', 'overlapBlocksFiles_AfterInjection_3_4'};
     test_listOfRequiredFiles = {'overlapBlocksFiles_AfterInjection_3_4', 'overlapBlocksFiles_BeforeInjection_3_4'};
