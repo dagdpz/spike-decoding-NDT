@@ -16,13 +16,17 @@ function sdndt_Sim_LIP_dPul_NDT_cross_decoding(monkey, injection, typeOfDecoding
 % injection: '0' - control sessions, '1' - inactivation sessions (for inactivation experiment),
 %            '2' - for functional interaction experiment
 
-% typeOfDecoding: 'each_session_separately', 'merged_files_across_sessions'
+% typeOfDecoding: 'each_session_separately'- performing cross-decoding for each session separately
+%                 'merged_files_across_sessions' - a pseudo-population is created based on data from each session
+
 % target_brain_structure = 'dPul_L', 'LIP_L', 'LIP_R',
 %                  if both 'LIP_L_dPul_L' (functional interaction experiment) or 'LIP_L_LIP_R' (inactivation experiment)
+
 % labels_to_use: 'instr_R_instr_L'
 %                'choice_R_choice_L'
 %                'instr_R_choice_R'
 %                'instr_L_choice_L'
+
 % listOfRequiredFiles - variable name, which contains the list of necessary files for decoding:
 %                       'firstBlockFiles', 'secondBlockFiles', 'thirdBlockFiles',
 %                       'fourthBlockFiles', 'fifthBlockFiles', 'sixthBlockFiles',
@@ -54,12 +58,28 @@ startTime = tic;
 %     'allBlocksFiles_BeforeInjection', 'allBlocksFiles_AfterInjection'
 % };  %'allBlocksFiles', 'overlapBlocksFiles', ...
 
+
+%  Traning_listofrequireDfiles and Test_ListofRequireDFILES can be set in pairs 
+% (for example, 'Overlapblocksfiles_beforeinjection', 'Overlapblocksfiles_AfternJiding' or 'Thirdblockf iles', 'FourthblockFiles') 
+%  But this is not necessary, since the code does not have to have paired data at the input 
 if strcmp(monkey, 'Bacchus')
-    training_listOfRequiredFiles = {'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection'};
-    test_listOfRequiredFiles = {'overlapBlocksFiles_AfterInjection', 'overlapBlocksFiles_BeforeInjection'};
+    training_listOfRequiredFiles = {'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection' %,...
+       %'firstBlockFiles',
+       % 'thirdBlockFiles', 'fourthBlockFiles'
+       };
+    test_listOfRequiredFiles = {'overlapBlocksFiles_AfterInjection', 'overlapBlocksFiles_BeforeInjection' %,...
+      %  'fourthBlockFiles', 'thirdBlockFiles' 
+        %'firstBlockFiles'
+        };
+    
 elseif strcmp(monkey, 'Linus')
-    training_listOfRequiredFiles = {'overlapBlocksFiles_BeforeInjection_3_4', 'overlapBlocksFiles_AfterInjection_3_4'};
-    test_listOfRequiredFiles = {'overlapBlocksFiles_AfterInjection_3_4', 'overlapBlocksFiles_BeforeInjection_3_4'};
+    training_listOfRequiredFiles = {'overlapBlocksFiles_BeforeInjection_3_4', 'overlapBlocksFiles_AfterInjection_3_4'%,...
+       %'firstBlockFiles', 
+       %'thirdBlockFiles' , 'fourthBlockFiles'
+       };
+    test_listOfRequiredFiles = {'overlapBlocksFiles_AfterInjection_3_4', 'overlapBlocksFiles_BeforeInjection_3_4' %,...
+        % 'fourthBlockFiles', 'thirdBlockFiles' %, 'firstBlockFiles'
+        };
 end
 
 %% Define typeOfSessions
@@ -90,7 +110,8 @@ elseif any(contains(training_listOfRequiredFiles, {'allBlocksFiles_BeforeInjecti
     any(contains(test_listOfRequiredFiles, {'allBlocksFiles_BeforeInjection', 'allBlocksFiles_AfterInjection', 'allBlocksFiles'}))
     approach_to_use = {'all_approach'};
 else
-    approach_to_use = {'all_approach', 'overlap_approach'};
+    approach_to_use = {%'all_approach', 
+        'overlap_approach'};
 end
 
 %% Define target_state parameters
@@ -104,7 +125,7 @@ targetParams.GOSignal = 4;
 numFieldNames = numel(fieldnames(targetParams));
 
 %% Define labels_to_use as a cell array containing both values
-labels_to_use = {'instr_R_instr_L', 'choice_R_choice_L'};
+labels_to_use = {'instr_R_instr_L',  'choice_R_choice_L'};
 
 
 
@@ -394,9 +415,22 @@ add_ndt_paths_and_init_rand_generator;
 if strcmp(given_approach, 'all_approach')
     training_givenListOfRequiredFiles_with_approach = ['all_' training_givenListOfRequiredFiles];
     test_givenListOfRequiredFiles_with_approach = ['all_' test_givenListOfRequiredFiles];
+    group_folder_approach = ['All_blocks\'];
+    
 elseif strcmp(given_approach, 'overlap_approach')
     training_givenListOfRequiredFiles_with_approach = ['overlap_' training_givenListOfRequiredFiles];
     test_givenListOfRequiredFiles_with_approach = ['overlap_' test_givenListOfRequiredFiles];
+    
+    if any(strcmp(training_givenListOfRequiredFiles, {'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection'})) || ...
+            any(strcmp(test_givenListOfRequiredFiles, {'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection'})) || ...
+            any(strcmp(training_givenListOfRequiredFiles, {'overlapBlocksFiles_BeforeInjection_3_4', 'overlapBlocksFiles_AfterInjection_3_4'})) || ...
+            any(strcmp(test_givenListOfRequiredFiles, {'overlapBlocksFiles_BeforeInjection_3_4', 'overlapBlocksFiles_AfterInjection_3_4'}))
+        group_folder_approach = 'Overlap_blocks_3_4\';    
+    elseif any(strcmp(training_givenListOfRequiredFiles, {'firstBlockFiles', 'thirdBlockFiles'})) || ...
+            any(strcmp(test_givenListOfRequiredFiles, {'firstBlockFiles', 'thirdBlockFiles'}))
+        group_folder_approach = 'Overlap_By_block\';
+    end
+        
 end
 
 
@@ -459,7 +493,6 @@ switch target_brain_structure
         end
 end
 
-
 %     % Upload the necessary files: only cueON or only GOsignal
 %     file_list = dir(fullfile(OUTPUT_PATH_raster, ['*' target_state_name '*.mat'])); %  Use dir to list all files in the directory
 %     for f = 1:numel(file_list) % Loop through the files and load them
@@ -487,12 +520,12 @@ end
 
 % For training
 training_targetBlock = extractBlockInformation(training_listOfRequiredFiles);
-[training_targetBlockUsed, training_targetBlockUsed_among_raster_data] = processBlockInformation(training_targetBlock, list_of_required_files, training_givenListOfRequiredFiles, dateOfRecording);
+[training_targetBlockUsed, training_targetBlockUsed_among_raster_data] = processBlockInformation(training_targetBlock, list_of_required_files, training_givenListOfRequiredFiles, dateOfRecording, monkey, injection);
 training_block_grouping_folder = createBlockGroupingFolder(dateOfRecording, allDateOfRecording, training_givenListOfRequiredFiles, given_approach, list_of_required_files);
 
 % For test
 test_targetBlock = extractBlockInformation(test_listOfRequiredFiles);
-[test_targetBlockUsed, test_targetBlockUsed_among_raster_data] = processBlockInformation(test_targetBlock, list_of_required_files, test_givenListOfRequiredFiles, dateOfRecording);
+[test_targetBlockUsed, test_targetBlockUsed_among_raster_data] = processBlockInformation(test_targetBlock, list_of_required_files, test_givenListOfRequiredFiles, dateOfRecording, monkey, injection);
 test_block_grouping_folder = createBlockGroupingFolder(dateOfRecording, allDateOfRecording, test_givenListOfRequiredFiles, given_approach, list_of_required_files);
 
 
@@ -515,7 +548,7 @@ else
     additional_folder = '';
 end
 
-Binned_data_dir = [OUTPUT_PATH_binned_dateOfRecording additional_folder grouping_folder '/' num_cv_splits_approach num_cv_splits_folder '/'];
+Binned_data_dir = [OUTPUT_PATH_binned_dateOfRecording additional_folder grouping_folder '/' num_cv_splits_approach group_folder_approach num_cv_splits_folder '/'];
 training_save_prefix_name = [Binned_data_dir 'Binned_Sim_LIP_dPul__NDT_data_for_' target_brain_structure '_' target_state_name '_' training_targetBlockUsed];
 test_save_prefix_name = [Binned_data_dir 'Binned_Sim_LIP_dPul__NDT_data_for_' target_brain_structure '_' target_state_name '_' test_targetBlockUsed];
 
@@ -584,10 +617,14 @@ training_and_test_save_prefix_name = ['Binned_Sim_LIP_dPul__NDT_data_for_' targe
 
 switch given_labels_to_use
     case 'instr_R_instr_L'
-        labels_to_use = {'instr_R_training', 'instr_L_training', 'instr_R_test', 'instr_L_test'};
+%         labels_to_use_training = {'instr_R_training', 'instr_L_training'};
+%         labels_to_use_test = {'instr_R_test', 'instr_L_test'};
+        labels_to_use  = {'instr_R_training', 'instr_L_training', 'instr_R_test', 'instr_L_test'};
         labels_to_use_k = {'instr_R', 'instr_L'};
     case 'choice_R_choice_L'
-        labels_to_use = {'choice_R_training', 'choice_L_training', 'choice_R_test', 'choice_L_test'};
+%         labels_to_use_training = {'choice_R_training', 'choice_L_training'};
+%         labels_to_use_test = {'choice_R_test', 'choice_L_test'};
+        labels_to_use  = {'choice_R_training', 'choice_L_training', 'choice_R_test', 'choice_L_test'};
         labels_to_use_k = {'choice_R', 'choice_L'};
 %     case 'instr_R_choice_R'
 %         labels_to_use = {'instr_R', 'choice_R'};
@@ -606,7 +643,7 @@ end
 % end
 
 
-% Формируем новую строку, комбинируя элементы с нужными разделителями
+% We form a new line by combining elements with the necessary delimiters
 parts = split(given_labels_to_use, '_');
 labels_to_use_string = [parts{1} '_' parts{2} ' ' parts{3} '_' parts{4}];
 
@@ -614,11 +651,34 @@ labels_to_use_string = [parts{1} '_' parts{2} ' ' parts{3} '_' parts{4}];
 
 % Determining how many times each condition was repeated
 for k = 1:250
-    inds_of_sites_with_at_least_k_repeats = find_sites_with_k_label_repetitions(test_binned_data.binned_labels.trial_type_side , k, labels_to_use_k);
+%     inds_of_sites_with_at_least_k_repeats = find_sites_with_k_label_repetitions(test_binned_data.binned_labels.trial_type_side , k, labels_to_use_k);
+%     num_sites_with_k_repeats(k) = length(inds_of_sites_with_at_least_k_repeats);
+    inds_of_sites_with_at_least_k_repeats = find_sites_with_k_label_repetitions(training_and_test_binned_labels.trial_type_side , k, labels_to_use);
     num_sites_with_k_repeats(k) = length(inds_of_sites_with_at_least_k_repeats);
+   
     % number of columns - how many times the stimulus was presented (number of repetitions);
     % the value in each column - how many units has this number of repetitions
 end
+
+% for k = 1:250
+% %     inds_of_sites_with_at_least_k_repeats = find_sites_with_k_label_repetitions(test_binned_data.binned_labels.trial_type_side , k, labels_to_use_k);
+% %     num_sites_with_k_repeats(k) = length(inds_of_sites_with_at_least_k_repeats);
+%     inds_of_sites_with_at_least_k_repeats_trsaining = find_sites_with_k_label_repetitions(training_and_test_binned_labels.trial_type_side , k, labels_to_use_training);
+%     num_sites_with_k_repeats_training(k) = length(inds_of_sites_with_at_least_k_repeats_trsaining);
+%    
+%     % number of columns - how many times the stimulus was presented (number of repetitions);
+%     % the value in each column - how many units has this number of repetitions
+% end
+% 
+% for k = 1:250
+% %     inds_of_sites_with_at_least_k_repeats = find_sites_with_k_label_repetitions(test_binned_data.binned_labels.trial_type_side , k, labels_to_use_k);
+% %     num_sites_with_k_repeats(k) = length(inds_of_sites_with_at_least_k_repeats);
+%     inds_of_sites_with_at_least_k_repeats_test = find_sites_with_k_label_repetitions(training_and_test_binned_labels.trial_type_side , k, labels_to_use_test);
+%     num_sites_with_k_repeats_test(k) = length(inds_of_sites_with_at_least_k_repeats_test);
+%    
+%     % number of columns - how many times the stimulus was presented (number of repetitions);
+%     % the value in each column - how many units has this number of repetitions
+% end
 
 
 %% Create a file with information about the number of stimulus repetitions for N number of units
@@ -636,8 +696,8 @@ end
 % Automatic detection of the maximum possible number of num_cv_splits
 % Determine the maximum number of units and repetitions
 
-num_cv_splits_training = detect_num_cv_splits(num_cv_splits_approach, training_givenListOfRequiredFiles, training_lines_output, settings, training_block_grouping_folder, OUTPUT_PATH_binned_dateOfRecording, target_brain_structure, target_state_name, labels_to_use_string, dateOfRecording);
-num_cv_splits_test = detect_num_cv_splits(num_cv_splits_approach, test_givenListOfRequiredFiles, test_lines_output, settings, test_block_grouping_folder, OUTPUT_PATH_binned_dateOfRecording, target_brain_structure, target_state_name, labels_to_use_string, dateOfRecording);
+num_cv_splits_training = detect_num_cv_splits(num_cv_splits_approach, additional_folder, grouping_folder, training_givenListOfRequiredFiles, training_lines_output, settings, group_folder_approach, given_approach, OUTPUT_PATH_binned_dateOfRecording, target_brain_structure, target_state_name, labels_to_use_string, dateOfRecording);
+num_cv_splits_test = detect_num_cv_splits(num_cv_splits_approach, additional_folder, grouping_folder, test_givenListOfRequiredFiles, test_lines_output, settings, group_folder_approach, given_approach, OUTPUT_PATH_binned_dateOfRecording, target_brain_structure, target_state_name, labels_to_use_string, dateOfRecording);
 
 % Checking num_cv_splits equality for training and test
 if isequal(num_cv_splits_approach, 'same_num_cv_splits/')
@@ -662,18 +722,18 @@ if num_cv_splits ~= settings.num_cv_splits
     old_dir = [Binned_data_dir_old];
     
     num_cv_splits_folder = sprintf('num_cv_splits_%d(%d)', num_cv_splits, num_cv_splits * settings.num_times_to_repeat_each_label_per_cv_split);
-    Binned_data_dir = [OUTPUT_PATH_binned_dateOfRecording additional_folder grouping_folder '/' num_cv_splits_approach num_cv_splits_folder '/'];
+    Binned_data_dir = [OUTPUT_PATH_binned_dateOfRecording additional_folder grouping_folder '/' num_cv_splits_approach group_folder_approach num_cv_splits_folder '/'];
     if ~exist(Binned_data_dir,'dir')
         mkdir(Binned_data_dir);
     end
     
     new_dir = fileparts(Binned_data_dir); % Get the parent directory of the new folder
-    movefile([old_dir '/*'], new_dir);  % 'f' для перезаписи
+    movefile([old_dir '/*'], new_dir);  
     
     
     % Delete old unnecessary folder
     folder_name_to_delete = sprintf('num_cv_splits_%d(%d)', settings.num_cv_splits, settings.num_cv_splits * settings.num_times_to_repeat_each_label_per_cv_split);
-    dir_to_delete = fullfile(OUTPUT_PATH_binned_dateOfRecording, additional_folder, grouping_folder, num_cv_splits_approach, folder_name_to_delete);
+    dir_to_delete = fullfile(OUTPUT_PATH_binned_dateOfRecording, additional_folder, grouping_folder, num_cv_splits_approach, group_folder_approach, folder_name_to_delete);
     if exist(dir_to_delete, 'dir') % Delete the directory
         rmdir(dir_to_delete, 's'); % 's' option deletes the directory and all its contents
     end
@@ -697,8 +757,18 @@ specific_label_name_to_use = 'trial_type_side';
 % settings.create_simultaneously_recorded_populations = 1;)
 if isequal(dateOfRecording, 'merged_files_across_sessions')%&& ...
     settings.create_simultaneously_recorded_populations = 0; % data are not recorded simultaneously
-elseif (isequal(typeOfDecoding, 'each_session_separately'))&& ...
-        (isequal(training_givenListOfRequiredFiles, 'allBlocksFiles_AfterInjection') || isequal(test_givenListOfRequiredFiles, 'allBlocksFiles_AfterInjection'))
+elseif (isequal(typeOfDecoding, 'each_session_separately') && ...
+        (isequal(training_givenListOfRequiredFiles, 'firstBlockFiles') && isequal(test_givenListOfRequiredFiles, 'thirdBlockFiles')) || ...
+        (isequal(training_givenListOfRequiredFiles, 'thirdBlockFiles') && isequal(test_givenListOfRequiredFiles, 'firstBlockFiles')) || ...
+        (isequal(training_givenListOfRequiredFiles, 'firstBlockFiles') && isequal(test_givenListOfRequiredFiles, 'fourthBlockFiles')) || ...
+        (isequal(training_givenListOfRequiredFiles, 'fourthBlockFiles') && isequal(test_givenListOfRequiredFiles, 'firstBlockFiles')) || ...
+        (isequal(training_givenListOfRequiredFiles, 'thirdBlockFiles') && isequal(test_givenListOfRequiredFiles, 'fourthBlockFiles')) || ...
+        (isequal(training_givenListOfRequiredFiles, 'fourthBlockFiles') && isequal(test_givenListOfRequiredFiles, 'thirdBlockFiles')) || ...
+        (isequal(training_givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection') && isequal(test_givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection')) || ...
+        (isequal(training_givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection') && isequal(test_givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection')) || ...
+        (isequal(training_givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection_3_4') && isequal(test_givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection_3_4')) || ...
+        (isequal(training_givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection_3_4') && isequal(test_givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection_3_4')))
+    
     settings.create_simultaneously_recorded_populations = 0;
 end
 
@@ -716,9 +786,11 @@ ds.num_times_to_repeat_each_label_per_cv_split = settings.num_times_to_repeat_ea
 % optionally can specify particular sites to use
 % Take only sites with enough repetitions of each condition:
 % for example, if num_cv_splits=20 and ds.num_times_to_repeat_each_label_per_cv_split=2 (20*2 = 40), take only the units of neurons that had 40 presentations of the stimulus:
-%ds.sites_to_use = find_sites_with_k_label_repetitions(training_and_test_binned_labels.trial_type_side, num_cv_splits*ds.num_times_to_repeat_each_label_per_cv_split, labels_to_use); % shows how many units are taken for decoding (size, 2)
-ds.sites_to_use = find_sites_with_k_label_repetitions(test_binned_data.binned_labels.trial_type_side, num_cv_splits*ds.num_times_to_repeat_each_label_per_cv_split, labels_to_use_k); % shows how many units are taken for decoding (size, 2)
-
+ds.sites_to_use = find_sites_with_k_label_repetitions(training_and_test_binned_labels.trial_type_side, num_cv_splits*ds.num_times_to_repeat_each_label_per_cv_split, labels_to_use); % shows how many units are taken for decoding (size, 2)
+%sites_to_use_training = find_sites_with_k_label_repetitions(training_and_test_binned_labels.trial_type_side, num_cv_splits*ds.num_times_to_repeat_each_label_per_cv_split, labels_to_use_training); % shows how many units are taken for decoding (size, 2)
+%sites_to_use_test = find_sites_with_k_label_repetitions(training_and_test_binned_labels.trial_type_side, num_cv_splits*ds.num_times_to_repeat_each_label_per_cv_split, labels_to_use_test); % shows how many units are taken for decoding (size, 2)
+%ds.sites_to_use = [sites_to_use_training, sites_to_use_test];
+%ds.sites_to_use = find_sites_with_k_label_repetitions(test_binned_data.binned_labels.trial_type_side, num_cv_splits*ds.num_times_to_repeat_each_label_per_cv_split, labels_to_use_k); % shows how many units are taken for decoding (size, 2)
 
 % flag, which specifies that the data was recorded at the simultaneously
 % create_simultaneously_recorded_populations = 1; % data are recorded simultaneously
@@ -833,7 +905,7 @@ targetBlock = uniqueBlockInformation; % Return the unique block information
 end
 
 
-function [targetBlockUsed, targetBlockUsed_among_raster_data] = processBlockInformation(targetBlock, list_of_required_files, givenListOfRequiredFiles, dateOfRecording)
+function [targetBlockUsed, targetBlockUsed_among_raster_data] = processBlockInformation(targetBlock, list_of_required_files, givenListOfRequiredFiles, dateOfRecording, monkey, injection)
 all_targetBlock = {'block_1', 'block_2', 'block_3', 'block_4', 'block_5', 'block_6'};
 
 % Defining the target block
@@ -848,6 +920,8 @@ else
 end
 
 % Determining which block to use among raster  data
+
+    
 if ismember(targetBlock, all_targetBlock)
     targetBlockUsed_among_raster_data = targetBlock;
 elseif (isfield(list_of_required_files, 'allBlocksFiles') && isequal(givenListOfRequiredFiles,'allBlocksFiles')) || ...
@@ -856,9 +930,18 @@ elseif (isfield(list_of_required_files, 'allBlocksFiles') && isequal(givenListOf
         (isfield(list_of_required_files, 'overlapBlocksFiles_AfterInjection_3_4') && isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection_3_4')) || ...
         (isfield(list_of_required_files, 'allBlocksFiles_AfterInjection') && isequal(givenListOfRequiredFiles, 'allBlocksFiles_AfterInjection')))
     targetBlockUsed_among_raster_data = [];
+elseif  strcmp(monkey, 'Bacchus') && strcmp(injection, '1')&& (strcmp(givenListOfRequiredFiles, 'thirdBlockFiles') || strcmp(givenListOfRequiredFiles, 'fourthBlockFiles'))
+    if contains(targetBlock, 'block_2 block_3') && strcmp(givenListOfRequiredFiles, 'thirdBlockFiles')
+        targetBlockUsed = 'block_3';
+        targetBlockUsed_among_raster_data = 'block_';
+    elseif contains(targetBlock, 'block_3 block_4') && strcmp(givenListOfRequiredFiles, 'fourthBlockFiles')
+        targetBlockUsed = 'block_4';
+        targetBlockUsed_among_raster_data = 'block_';
+    end
 else
     targetBlockUsed_among_raster_data = targetBlockUsed;
 end
+
 end
 
 function block_grouping_folder = createBlockGroupingFolder(dateOfRecording, allDateOfRecording, givenListOfRequiredFiles, given_approach, list_of_required_files)
@@ -1207,17 +1290,17 @@ end
 
 
 function Raster_data_dir = getRasterDataDir(meta_block_folder, block_grouping_folder, OUTPUT_PATH_raster, monkey_prefix, dateOfRecording, block_grouping_folder_specific)
-% Если meta_block_folder пустая, то используем пути в зависимости от block_grouping_folder
+% If meta_block_folder is empty, we use paths depending on the block_grouping_folder
 if isempty(meta_block_folder)
     if strcmp(block_grouping_folder, 'All_By_block/')
-        % Если block_grouping_folder 'All_By_block/', то путь не зависит от block_grouping_folder_specific
+        % If block_grouping_folder ‘All_By_block/’, the path is independent of block_grouping_folder_specific
         Raster_data_dir = [OUTPUT_PATH_raster, monkey_prefix, dateOfRecording '/'];
     else
-        % Если блок не 'All_By_block/', то добавляем block_grouping_folder_specific
+        % If the block is not ‘All_By_block/’, then add block_grouping_folder_specific
         Raster_data_dir = [OUTPUT_PATH_raster, monkey_prefix, dateOfRecording '/' block_grouping_folder_specific];
     end
 else
-    % Если meta_block_folder не пустая, то используем её как путь
+    % If meta_block_folder is not empty, we use it as a path
     Raster_data_dir = meta_block_folder;
 end
 end
@@ -1383,7 +1466,7 @@ fclose(fileID);  % Close the file
 end
 
 
-function num_cv_splits = detect_num_cv_splits(num_cv_splits_approach, givenListOfRequiredFiles, lines_output, settings, block_grouping_folder, OUTPUT_PATH_binned_dateOfRecording, target_brain_structure, target_state_name, labels_to_use_string, dateOfRecording)
+function num_cv_splits = detect_num_cv_splits(num_cv_splits_approach, additional_folder, grouping_folder, givenListOfRequiredFiles, lines_output, settings, group_folder_approach, given_approach, OUTPUT_PATH_binned_dateOfRecording, target_brain_structure, target_state_name, labels_to_use_string, dateOfRecording)
 
 % Initialize num_cv_splits as empty
 num_cv_splits = [];
@@ -1391,8 +1474,9 @@ num_cv_splits = [];
 %% Detection of possible number of num_cv_splits
 
 % Check if 'same_num_cv_splits/' and given list is before injection
-if isequal(num_cv_splits_approach, 'same_num_cv_splits/') && ...
-        (isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection') || isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection_3_4'))
+if isequal(num_cv_splits_approach, 'same_num_cv_splits/') %&& ...
+%         (isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection') || isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection_3_4')||...
+%         (strcmp(given_approach, 'overlap_approach') && isequal(givenListOfRequiredFiles, 'firstBlockFiles')))
     
     % Use lines_output passed into the function
     data_from_text_document = [];
@@ -1437,18 +1521,251 @@ if isequal(num_cv_splits_approach, 'same_num_cv_splits/') && ...
     end
     
     % Check if 'same_num_cv_splits/' and given list is after injection
-elseif isequal(num_cv_splits_approach, 'same_num_cv_splits/') && ...
-        (isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection') || isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection_3_4'))
-    
-    % Modify block_grouping_folder
-    block_grouping_folder_Before = strrep(block_grouping_folder, 'After', 'Before');
-    
-    % Search for CV files
-    folder_where_search_CV_file = [OUTPUT_PATH_binned_dateOfRecording block_grouping_folder_Before num_cv_splits_approach];
-    [num_cv_splits] = find_num_cv_splits(folder_where_search_CV_file, target_brain_structure, target_state_name, labels_to_use_string, dateOfRecording);
+% elseif isequal(num_cv_splits_approach, 'same_num_cv_splits/') && ...
+%         (isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection') || isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection_3_4')) ||...
+%     (strcmp(given_approach, 'overlap_approach') && (isequal(givenListOfRequiredFiles, 'thirdBlockFiles') || isequal(givenListOfRequiredFiles, 'fourthBlockFiles')))
+%     
+% 
+%     
+%     % Modify block_grouping_folder
+%     block_grouping_folder_Before = strrep(group_folder_approach, 'After', 'Before'); % before was block_grouping_folder (so if you have a mistake with  'After', 'Before'... )
+%     
+%     if isequal(dateOfRecording, 'merged_files_across_sessions')
+%         additional_folders = [additional_folder grouping_folder '/' num_cv_splits_approach block_grouping_folder_Before];
+%     else 
+%        additional_folders = [block_grouping_folder_Before num_cv_splits_approach];
+%         
+%     end 
+%     
+
+  %  [num_cv_splits] = find_num_cv_splits(folder_where_search_CV_file, target_brain_structure, target_state_name, labels_to_use_string, dateOfRecording);
+
+
+%%%%%%%%%%%%%%%%%%%%%%%
+
+
+  
+
+
+
 end
 end
 
+
+
+
+%% the number of cells does not equal the number of units 
+% (it is doubled because each unit (e.g. unit 3 and unit 4) contains the same number of units if it is an overlap approach). 
+
+% function [binned_labels] = merge_training_and_test_data(training_binned_data_smooth, test_binned_data_smooth, training_givenListOfRequiredFiles, test_givenListOfRequiredFiles, Binned_data_dir, save_prefix_name)
+% 
+% % Get the number of cells in binned_data
+% num_cells_training = length(training_binned_data_smooth.binned_data);
+% num_cells_test = length(test_binned_data_smooth.binned_data);
+% num_cells = num_cells_training + num_cells_test;
+% 
+% % Initialisation of the merged variables
+% binned_data = cell(1, num_cells);
+% binned_labels.trial_type = cell(1, num_cells);
+% binned_labels.sideSelected = cell(1, num_cells);
+% binned_labels.trial_type_side = cell(1, num_cells);
+% binned_labels.perturbation = cell(1, num_cells);
+% binned_labels.block = cell(1, num_cells);
+% binned_labels.run = cell(1, num_cells);
+% 
+% binned_site_info.recording_channel = [];
+% binned_site_info.session_ID = cell(1, num_cells);
+% binned_site_info.unit_ID = cell(1, num_cells);
+% binned_site_info.block_unit = cell(1, num_cells);
+% binned_site_info.perturbation_site = cell(1, num_cells);
+% binned_site_info.SNR_rating = [];
+% binned_site_info.Single_rating = []; 
+% binned_site_info.stability_rating = []; 
+% binned_site_info.site_ID = cell(1, num_cells);
+% binned_site_info.target  = cell(1, num_cells);
+% binned_site_info.grid_x = [];
+% binned_site_info.grid_y = [];
+% binned_site_info.electrode_depth = [];
+% binned_site_info.binning_parameters.raster_file_directory_name = [];
+% binned_site_info.binning_parameters.bin_width = [];
+% binned_site_info.binning_parameters.sampling_interval = [];
+% binned_site_info.binning_parameters.start_time = [];
+% binned_site_info.binning_parameters.end_time = [];
+% binned_site_info.binning_parameters.the_bin_start_times = [];
+% binned_site_info.binning_parameters.the_bin_widths = [];
+% 
+% % Go through each cell and combine the data
+% for num_units = 1:num_cells_training
+%     % Write the data from the training set into the first cells
+%     binned_data{num_units} = training_binned_data_smooth.binned_data{num_units};
+%     
+%     % Add information from the training set to binned_labels and binned_site_info
+%     binned_labels.trial_type{num_units} = strcat(training_binned_data_smooth.binned_labels.trial_type{num_units}, '_training');
+%     binned_labels.sideSelected{num_units} = strcat(training_binned_data_smooth.binned_labels.sideSelected{num_units}, '_training');
+%     binned_labels.trial_type_side{num_units} = strcat(training_binned_data_smooth.binned_labels.trial_type_side{num_units}, '_training');
+%     binned_labels.perturbation{num_units} = training_binned_data_smooth.binned_labels.perturbation{num_units};
+%     binned_labels.block{num_units} = training_binned_data_smooth.binned_labels.block{num_units};
+%     binned_labels.run{num_units} = training_binned_data_smooth.binned_labels.run{num_units};
+%     
+%     %  Site info (site info) from the training set
+%     binned_site_info.session_ID{num_units} = training_binned_data_smooth.binned_site_info.session_ID{num_units};
+%     binned_site_info.unit_ID{num_units} = training_binned_data_smooth.binned_site_info.unit_ID{num_units};
+%     binned_site_info.block_unit{num_units} = training_binned_data_smooth.binned_site_info.block_unit{num_units};
+%     binned_site_info.perturbation_site{num_units} = training_binned_data_smooth.binned_site_info.perturbation_site{num_units};
+%     binned_site_info.site_ID{num_units} = training_binned_data_smooth.binned_site_info.site_ID{num_units};
+% 
+%     
+% %     % Add suffixes for sideSelected
+% %     training_labels_sideSelected = strcat(training_binned_data_smooth.binned_labels.sideSelected{num_units}, '_training');
+% %     test_labels_sideSelected = strcat(test_binned_data_smooth.binned_labels.sideSelected{num_units}, '_test');
+% %     binned_labels.sideSelected{num_units} = [training_labels_sideSelected, test_labels_sideSelected];
+% %     
+% %     % Add suffixes for trial_type_side
+% %     training_labels_trial_type_side = strcat(training_binned_data_smooth.binned_labels.trial_type_side{num_units}, '_training');
+% %     test_labels_trial_type_side = strcat(test_binned_data_smooth.binned_labels.trial_type_side{num_units}, '_test');
+% %     binned_labels.trial_type_side{num_units} = [training_labels_trial_type_side, test_labels_trial_type_side];
+% %     
+% %     % Merge the other labels
+% %     binned_labels.perturbation{num_units} = [training_binned_data_smooth.binned_labels.perturbation{num_units}, test_binned_data_smooth.binned_labels.perturbation{num_units}];
+% %     binned_labels.block{num_units} = [training_binned_data_smooth.binned_labels.block{num_units}, test_binned_data_smooth.binned_labels.block{num_units}];
+% %     binned_labels.run{num_units} = [training_binned_data_smooth.binned_labels.run{num_units}, test_binned_data_smooth.binned_labels.run{num_units}];
+% end
+% 
+% 
+% % Now add the test data starting with the following index
+% for num_units = 1:num_cells_test
+%     % Define the index for the test data
+%     test_index = num_units + num_cells_training;
+% 
+%     % Write data from the test set
+%     binned_data{test_index} = test_binned_data_smooth.binned_data{num_units};
+%     
+% 
+%      % Add information from the test set to binned_labels and binned_site_info
+%      binned_labels.trial_type{test_index} = strcat(test_binned_data_smooth.binned_labels.trial_type{num_units}, '_test');
+%      binned_labels.sideSelected{test_index} = strcat(test_binned_data_smooth.binned_labels.sideSelected{num_units}, '_test');
+%      binned_labels.trial_type_side{test_index} = strcat(test_binned_data_smooth.binned_labels.trial_type_side{num_units}, '_test');
+%     binned_labels.perturbation{test_index} = test_binned_data_smooth.binned_labels.perturbation{num_units};
+%     binned_labels.block{test_index} = test_binned_data_smooth.binned_labels.block{num_units};
+%     binned_labels.run{test_index} = test_binned_data_smooth.binned_labels.run{num_units};
+% 
+%     % Information about the site (Site Info) from the test set
+%     binned_site_info.session_ID{test_index} = test_binned_data_smooth.binned_site_info.session_ID{num_units};
+%     binned_site_info.unit_ID{test_index} = test_binned_data_smooth.binned_site_info.unit_ID{num_units};
+%     binned_site_info.block_unit{test_index} = test_binned_data_smooth.binned_site_info.block_unit{num_units};
+%     binned_site_info.perturbation_site{test_index} = test_binned_data_smooth.binned_site_info.perturbation_site{num_units};
+%     binned_site_info.site_ID{test_index} = test_binned_data_smooth.binned_site_info.site_ID{num_units};
+% end
+% 
+% 
+% 
+% 
+% 
+% % Check for 'overlap' in file names
+% if contains(training_givenListOfRequiredFiles, 'overlap') && contains(test_givenListOfRequiredFiles, 'overlap')
+%     % If the names contain 'overlap', copy the values of the recording_channel
+%     binned_site_info.recording_channel = training_binned_data_smooth.binned_site_info.recording_channel;
+% end
+% 
+% % Assign other site info variables sequentially for training and test data
+% % Training data
+% binned_site_info.SNR_rating = [training_binned_data_smooth.binned_site_info.SNR_rating; ...
+%                                test_binned_data_smooth.binned_site_info.SNR_rating];
+% binned_site_info.Single_rating = [training_binned_data_smooth.binned_site_info.Single_rating; ...
+%                                   test_binned_data_smooth.binned_site_info.Single_rating];
+% binned_site_info.stability_rating = [training_binned_data_smooth.binned_site_info.stability_rating; ...
+%                                      test_binned_data_smooth.binned_site_info.stability_rating];
+% binned_site_info.target = [training_binned_data_smooth.binned_site_info.target, ...
+%                            test_binned_data_smooth.binned_site_info.target];
+% binned_site_info.grid_x = [training_binned_data_smooth.binned_site_info.grid_x; ...
+%                            test_binned_data_smooth.binned_site_info.grid_x];
+% binned_site_info.grid_y = [training_binned_data_smooth.binned_site_info.grid_y; ...
+%                            test_binned_data_smooth.binned_site_info.grid_y];
+% binned_site_info.electrode_depth = [training_binned_data_smooth.binned_site_info.electrode_depth; ...
+%                                     test_binned_data_smooth.binned_site_info.electrode_depth];
+% 
+% 
+% % Check each binning parameter and assign only one value if they are identical
+% if isequal(training_binned_data_smooth.binned_site_info.binning_parameters.raster_file_directory_name, ...
+%            test_binned_data_smooth.binned_site_info.binning_parameters.raster_file_directory_name)
+%     binned_site_info.binning_parameters.raster_file_directory_name = ...
+%         training_binned_data_smooth.binned_site_info.binning_parameters.raster_file_directory_name;
+% else
+%     binned_site_info.binning_parameters.raster_file_directory_name = ...
+%         [training_binned_data_smooth.binned_site_info.binning_parameters.raster_file_directory_name, ...
+%          test_binned_data_smooth.binned_site_info.binning_parameters.raster_file_directory_name];
+% end
+% 
+% if isequal(training_binned_data_smooth.binned_site_info.binning_parameters.bin_width, ...
+%            test_binned_data_smooth.binned_site_info.binning_parameters.bin_width)
+%     binned_site_info.binning_parameters.bin_width = ...
+%         training_binned_data_smooth.binned_site_info.binning_parameters.bin_width;
+% else
+%     binned_site_info.binning_parameters.bin_width = ...
+%         [training_binned_data_smooth.binned_site_info.binning_parameters.bin_width, ...
+%          test_binned_data_smooth.binned_site_info.binning_parameters.bin_width];
+% end
+% 
+% if isequal(training_binned_data_smooth.binned_site_info.binning_parameters.sampling_interval, ...
+%            test_binned_data_smooth.binned_site_info.binning_parameters.sampling_interval)
+%     binned_site_info.binning_parameters.sampling_interval = ...
+%         training_binned_data_smooth.binned_site_info.binning_parameters.sampling_interval;
+% else
+%     binned_site_info.binning_parameters.sampling_interval = ...
+%         [training_binned_data_smooth.binned_site_info.binning_parameters.sampling_interval, ...
+%          test_binned_data_smooth.binned_site_info.binning_parameters.sampling_interval];
+% end
+% 
+% if isequal(training_binned_data_smooth.binned_site_info.binning_parameters.start_time, ...
+%            test_binned_data_smooth.binned_site_info.binning_parameters.start_time)
+%     binned_site_info.binning_parameters.start_time = ...
+%         training_binned_data_smooth.binned_site_info.binning_parameters.start_time;
+% else
+%     binned_site_info.binning_parameters.start_time = ...
+%         [training_binned_data_smooth.binned_site_info.binning_parameters.start_time, ...
+%          test_binned_data_smooth.binned_site_info.binning_parameters.start_time];
+% end
+% 
+% if isequal(training_binned_data_smooth.binned_site_info.binning_parameters.end_time, ...
+%            test_binned_data_smooth.binned_site_info.binning_parameters.end_time)
+%     binned_site_info.binning_parameters.end_time = ...
+%         training_binned_data_smooth.binned_site_info.binning_parameters.end_time;
+% else
+%     binned_site_info.binning_parameters.end_time = ...
+%         [training_binned_data_smooth.binned_site_info.binning_parameters.end_time, ...
+%          test_binned_data_smooth.binned_site_info.binning_parameters.end_time];
+% end
+% 
+% if isequal(training_binned_data_smooth.binned_site_info.binning_parameters.the_bin_start_times, ...
+%            test_binned_data_smooth.binned_site_info.binning_parameters.the_bin_start_times)
+%     binned_site_info.binning_parameters.the_bin_start_times = ...
+%         training_binned_data_smooth.binned_site_info.binning_parameters.the_bin_start_times;
+% else
+%     binned_site_info.binning_parameters.the_bin_start_times = ...
+%         [training_binned_data_smooth.binned_site_info.binning_parameters.the_bin_start_times, ...
+%          test_binned_data_smooth.binned_site_info.binning_parameters.the_bin_start_times];
+% end
+% 
+% if isequal(training_binned_data_smooth.binned_site_info.binning_parameters.the_bin_widths, ...
+%            test_binned_data_smooth.binned_site_info.binning_parameters.the_bin_widths)
+%     binned_site_info.binning_parameters.the_bin_widths = ...
+%         training_binned_data_smooth.binned_site_info.binning_parameters.the_bin_widths;
+% else
+%     binned_site_info.binning_parameters.the_bin_widths = ...
+%         [training_binned_data_smooth.binned_site_info.binning_parameters.the_bin_widths, ...
+%          test_binned_data_smooth.binned_site_info.binning_parameters.the_bin_widths];
+% end
+% 
+% 
+% 
+% % Save the merged data
+% save([Binned_data_dir  save_prefix_name], 'binned_data', 'binned_labels', 'binned_site_info');
+% 
+% end
+
+
+%% the number of cells  equal the number of units 
+% all data are collected on a unit-by-unit basis (i.e. each unit (which is one cell) contains data on unit 3 and unit 4, for example).
 
 function [binned_labels] = merge_training_and_test_data(training_binned_data_smooth, test_binned_data_smooth, training_givenListOfRequiredFiles, test_givenListOfRequiredFiles, Binned_data_dir, save_prefix_name)
 
@@ -1554,7 +1871,7 @@ save([Binned_data_dir  save_prefix_name], 'binned_data', 'binned_labels', 'binne
 end
 
 
-
+%%
 function [the_training_label_names, the_test_label_names] = createLabelNames(given_labels_to_use)
     % Split the string by the ‘_’ character
     parts = split(given_labels_to_use, '_');

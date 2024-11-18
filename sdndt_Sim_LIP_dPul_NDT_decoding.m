@@ -4,10 +4,10 @@ function sdndt_Sim_LIP_dPul_NDT_decoding(monkey, injection, typeOfDecoding)
 
 % HOW TO CALL THE FUNCTION?
 % If we decode within a session:
-% sdndt_Sim_LIP_dPul_NDT_decoding('Bacchus', '0', 'each_session_separately');
+% sdndt_Sim_LIP_dPul_NDT_decoding('Bacchus', '1', 'each_session_separately');
 
 % If we decode across sessions:
-% sdndt_Sim_LIP_dPul_NDT_decoding('Bacchus', '0', 'merged_files_across_sessions');
+% sdndt_Sim_LIP_dPul_NDT_decoding('Bacchus', '1', 'merged_files_across_sessions');
 
 
 
@@ -16,13 +16,17 @@ function sdndt_Sim_LIP_dPul_NDT_decoding(monkey, injection, typeOfDecoding)
 % injection: '0' - control sessions, '1' - inactivation sessions (for inactivation experiment),
 %            '2' - for functional interaction experiment
 
-% typeOfDecoding: 'each_session_separately', 'merged_files_across_sessions'
+% typeOfDecoding: 'each_session_separately'- performing cross-decoding for each session separately
+%                 'merged_files_across_sessions' - a pseudo-population is created based on data from each session
+
 % target_brain_structure = 'dPul_L', 'LIP_L', 'LIP_R',
 %                  if both 'LIP_L_dPul_L' (functional interaction experiment) or 'LIP_L_LIP_R' (inactivation experiment)
+
 % labels_to_use: 'instr_R_instr_L'
 %                'choice_R_choice_L'
 %                'instr_R_choice_R'
 %                'instr_L_choice_L'
+
 % listOfRequiredFiles - variable name, which contains the list of necessary files for decoding:
 %                       'firstBlockFiles', 'secondBlockFiles', 'thirdBlockFiles',
 %                       'fourthBlockFiles', 'fifthBlockFiles', 'sixthBlockFiles',
@@ -45,14 +49,19 @@ function sdndt_Sim_LIP_dPul_NDT_decoding(monkey, injection, typeOfDecoding)
 startTime = tic;
 
 %% Define the list of required files
-listOfRequiredFiles = {%'firstBlockFiles', 'secondBlockFiles', ...
-    %     'thirdBlockFiles', 'fourthBlockFiles', ...
-    %     'fifthBlockFiles', 'sixthBlockFiles', ...
-     %  'overlapBlocksFiles_BeforeInjection',         
-     'overlapBlocksFiles_AfterInjection' %, ...
-   %  'overlapBlocksFiles_BeforeInjection_3_4',  'overlapBlocksFiles_AfterInjection_3_4'%, ...
-    %     'allBlocksFiles_BeforeInjection', 'allBlocksFiles_AfterInjection'
-    };  %'allBlocksFiles', 'overlapBlocksFiles', ...
+% When using the ‘same_num_cv_splits/’ approach, be sure that you first put the data on which you will base num_cv_splits.
+% For example, if you are working with block_1 and block_3, then be sure that before you start decoding block 3,
+% you have already created the data for block 1 (and therefore already know the num_cv_splits).
+
+listOfRequiredFiles = {% 'firstBlockFiles' ,... 
+    'thirdBlockFiles' %,   %, 'fourthBlockFiles'
+    }
+%'secondBlockFiles', ...     'thirdBlockFiles', 'fourthBlockFiles' %, ...
+%     'fifthBlockFiles', 'sixthBlockFiles', ...
+%  'overlapBlocksFiles_BeforeInjection',
+% 'overlapBlocksFiles_AfterInjection' %, ...
+%  'overlapBlocksFiles_BeforeInjection_3_4',  'overlapBlocksFiles_AfterInjection_3_4'%, ...
+%     'allBlocksFiles_BeforeInjection', 'allBlocksFiles_AfterInjection'};  %'allBlocksFiles', 'overlapBlocksFiles', ...
 
 %% Define typeOfSessions
 % Calculate typeOfSessions based on the injection parameter
@@ -80,7 +89,8 @@ if any(contains(listOfRequiredFiles, {'overlapBlocksFiles_BeforeInjection_3_4', 
 elseif any(contains(listOfRequiredFiles, {'allBlocksFiles_BeforeInjection', 'allBlocksFiles_AfterInjection', 'allBlocksFiles'}))
     approach_to_use = {'all_approach'};
 else
-    approach_to_use = {'all_approach', 'overlap_approach'};
+    approach_to_use = {%'all_approach',
+        'overlap_approach'};
 end
 
 %% Define target_state parameters
@@ -94,13 +104,15 @@ targetParams.GOSignal = 4;
 numFieldNames = numel(fieldnames(targetParams));
 
 %% Define labels_to_use as a cell array containing both values
-labels_to_use = {'instr_R_instr_L', 'choice_R_choice_L'};
+labels_to_use = {'instr_R_instr_L' , ...
+   %'choice_R_choice_L'
+ };
 % labels_to_use = {'instr_R_instr_L'};
 
 %% Define valid combinations of injection and target_brain_structure
 if strcmp(injection, '1') || strcmp(injection, '0')
     combinations_inj_and_target_brain_structure = struct('injection', {injection, injection}, 'target_brain_structure', {'LIP_L', 'LIP_R'});
-    %combinations_inj_and_target_brain_structure = struct('injection', { injection}, 'target_brain_structure', {'LIP_R'});
+  %  combinations_inj_and_target_brain_structure = struct('injection', { injection}, 'target_brain_structure', {'LIP_R'});
     
 elseif strcmp(injection, '2')
     combinations_inj_and_target_brain_structure = struct('injection', {injection, injection}, 'target_brain_structure', {'dPul_L', 'LIP_L'});
@@ -219,7 +231,7 @@ for file_index = 1:numFiles % Loop through each file in listOfRequiredFiles
                                     % Call the internal decoding function for each day
                                     sdndt_Sim_LIP_dPul_NDT_decoding_internal(monkey, current_injection, current_type_of_session, typeOfDecoding, current_date, current_target_brain_structure, target_state, current_label, current_approach, current_file); % typeOfSessions{j}
                                     
-                                  
+                                    
                                     % Update progress for each iteration
                                     overallProgress = overallProgress + 1;
                                     waitbar(overallProgress / totalIterations, h, sprintf('Processing... %.2f%%', overallProgress / totalIterations * 100));
@@ -232,7 +244,7 @@ for file_index = 1:numFiles % Loop through each file in listOfRequiredFiles
                                 % Call the internal decoding function only once
                                 sdndt_Sim_LIP_dPul_NDT_decoding_internal(monkey, current_injection, current_type_of_session, current_date, typeOfDecoding, current_target_brain_structure, target_state, current_label, current_approach, current_file);
                                 
-                               
+                                
                                 % Update progress for each iteration
                                 overallProgress = overallProgress + 1;
                                 waitbar(overallProgress / totalIterations, h, sprintf('Processing... %.2f%%', overallProgress / totalIterations * 100));
@@ -853,10 +865,11 @@ fclose(fileID); % Close the file
 % Automatic detection of the maximum possible number of num_cv_splits
 % Determine the maximum number of units and repetitions
 
-if isequal(num_cv_splits_approach, 'max_num_cv_splits/') || ...
+if  isequal(num_cv_splits_approach, 'max_num_cv_splits/') || ...
         (isequal(num_cv_splits_approach, 'same_num_cv_splits/') && ...
-        (isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection') || isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection_3_4')))
-  
+        (isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection') || isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_BeforeInjection_3_4')) ||...
+        (strcmp(given_approach, 'overlap_approach') && isequal(givenListOfRequiredFiles, 'firstBlockFiles')))
+    
     data_from_text_document = [];
     for i = 1:numel(lines)
         line_parts = split(lines{i}, {' units has ', ' repetitions of the stimuli'});
@@ -911,25 +924,124 @@ if isequal(num_cv_splits_approach, 'max_num_cv_splits/') || ...
     end
     
     
+    %     if (isequal(dateOfRecording, '20201119') || isequal(dateOfRecording, '20201217')) && isequal(given_labels_to_use, 'choice_R_choice_L')
+    %         num_cv_splits = 10;
+    %     elseif  isequal(dateOfRecording, '20201203') && isequal(given_labels_to_use, 'choice_R_choice_L')
+    %         num_cv_splits = 14;
+    %     end
+    
     
     
 elseif isequal(num_cv_splits_approach, 'same_num_cv_splits/') && ...
         isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection') || isequal(givenListOfRequiredFiles, 'overlapBlocksFiles_AfterInjection_3_4')
-  
-     block_grouping_folder_Before = strrep(block_grouping_folder, 'After', 'Before'); % Replacing "After" with "Before"
+    
+    block_grouping_folder_Before = strrep(block_grouping_folder, 'After', 'Before'); % Replacing "After" with "Before"
     folder_where_search_CV_file = [OUTPUT_PATH_binned_dateOfRecording block_grouping_folder_Before num_cv_splits_approach ];
+    num_block = '';
+    [num_cv_splits] = find_num_cv_splits(folder_where_search_CV_file, target_brain_structure, target_state_name, labels_to_use_string, dateOfRecording, num_block);
+    
+    
+    
+    
+elseif      isequal(num_cv_splits_approach, 'same_num_cv_splits/') && ...
+        (strcmp(given_approach, 'overlap_approach') && (isequal(givenListOfRequiredFiles, 'thirdBlockFiles') || isequal(givenListOfRequiredFiles, 'fourthBlockFiles')))
+    
+    
+    
+    %%% num_cv_splits for  block_1 data :
+    folder_where_search_CV_file = [OUTPUT_PATH_binned_dateOfRecording block_grouping_folder num_cv_splits_approach ];
+    num_block = 'block_1';  % current number of block in variable targetBlockUsed
+    [num_cv_splits_Block_1] = find_num_cv_splits(folder_where_search_CV_file, target_brain_structure, target_state_name, labels_to_use_string, dateOfRecording, num_block);
+    
+    
+    
+    %%% num_cv_splits for current block data :
+    data_from_text_document = [];
+    for i = 1:numel(lines)
+        line_parts = split(lines{i}, {' units has ', ' repetitions of the stimuli'});
+        data_from_text_document = [data_from_text_document; str2double(line_parts{1}), str2double(line_parts{2})];
+    end
+    
+    % Extract the number of units and repetitions
+    num_units = data_from_text_document(:, 1);
+    num_repetitions = data_from_text_document(:, 2);
+    
+    % Filter out rows where the number of repetitions is less than 8
+    valid_indices = num_repetitions >= 4*settings.num_times_to_repeat_each_label_per_cv_split;
+    num_units = num_units(valid_indices);
+    num_repetitions = num_repetitions(valid_indices);
+    
+    % Check if all units are zeros
+    if all(num_units == 0)
+        % If all units are zeros, return from the function
+        return;
+    end
+    
+    
+    % Determine the maximum number of units
+    max_units = max(num_units);
+    
+    % Find the corresponding number of repetitions for the maximum number of units
+    max_repetitions_index = find(num_units == max_units, 1);
+    max_repetitions = num_repetitions(max_repetitions_index);
+    
+    % Determine the maximum possible num_cv_splits based on the maximum number of units and repetitions
+    max_cv_splits = max_repetitions / settings.num_times_to_repeat_each_label_per_cv_split;
+    
+    % % Set num_cv_splits to 16 if max_cv_splits is greater than 16
+    % if max_cv_splits > 16
+    %     num_cv_splits = 16;
+    % else
+    %     num_cv_splits = max_cv_splits;
+    % end
+    
+    % Ensure num_cv_splits is an even number or less than 16
+    num_cv_splits = min(floor(max_cv_splits), 16);  % Take the floor of max_cv_splits and cap it at 16
+    
+    % Make sure num_cv_splits is even
+    if mod(num_cv_splits, 2) ~= 0  % If num_cv_splits is odd
+        num_cv_splits = num_cv_splits - 1;  % Subtract 1 to make it even
+    end
+    
+    % Check if num_cv_splits is less than 4
+    if num_cv_splits < 4
+        % If less than 4, return to the calling function sdndt_Sim_LIP_dPul_NDT_decoding
+        return; % Exit the current function and return to the calling function
+    end
+    
+    
+    % If `num_cv_splits` for the current block differs from block 1
+    if num_cv_splits ~= num_cv_splits_Block_1
+        % Assign the maximum possible value for the current block, as indicated above
+        num_cv_splits = min(num_cv_splits, num_cv_splits_Block_1);
         
-    [num_cv_splits] = find_num_cv_splits(folder_where_search_CV_file, target_brain_structure, target_state_name, labels_to_use_string, dateOfRecording);
+        % Create a filename with information about the difference in num_cv_splits
+        filename_diff = sprintf('NOT_SAME_num_cv_splits_for_%s_%s_%s_%s.txt', ...
+            target_brain_structure, target_state_name, targetBlockUsed, labels_to_use_string);
+        
+        % Full path to the output file
+        fullpath_diff_file = fullfile(Binned_data_dir, filename_diff);
+        
+        % Write information about the difference into a new file
+        fid = fopen(fullpath_diff_file, 'wt');
+        fprintf(fid, 'Difference in num_cv_splits detected:\n');
+        fprintf(fid, 'num_cv_splits for block 1: %d\n', num_cv_splits_Block_1);
+        fprintf(fid, 'num_cv_splits for %s: %d\n', targetBlockUsed, num_cv_splits);
+        fclose(fid);
+        
+        % Output a message to the console for the user
+        fprintf('File created: %s with information about the difference in num_cv_splits\n', filename_diff);
+    end
     
     
 end
 
-% num_cv_splits = 6; % for Linus: Lin_20210709
+ %num_cv_splits = 6; % for Linus: Lin_20210709
 
 %% moving binned files from the old folder to the new one if the num_cv_splits variable did not correspond to the specified settings.num_cv_splits
 % Check if num_cv_splits is different from settings.num_cv_splits
 if num_cv_splits ~= settings.num_cv_splits
-   
+    
     % Move files from unsuitable directory to new one to match new num_cv_splits_folder
     Binned_data_dir_old = [Binned_data_dir];
     old_dir = [Binned_data_dir_old];
@@ -1235,7 +1347,7 @@ end
 end
 
 
-function [num_cv_splits] = find_num_cv_splits(folder_where_search_CV_file, target_brain_structure, target_state_name, labels_to_use_string, dateOfRecording)
+function [num_cv_splits] = find_num_cv_splits(folder_where_search_CV_file, target_brain_structure, target_state_name, labels_to_use_string, dateOfRecording, num_block)
 
 % List the contents of the All_blocks_BeforeInjection folder
 cvSplitsFolders = dir(folder_where_search_CV_file);
@@ -1284,8 +1396,8 @@ for idx = sorted_idx
         % Check if the file name contains the desired target structure, state, and label
         if contains(data_for_plotting_averages.decodingResultsFilename, target_brain_structure) && ...
                 contains(data_for_plotting_averages.decodingResultsFilename, target_state_name) && ...
-                contains(data_for_plotting_averages.decodingResultsFilename, labels_to_use_string) %&& ...
-            %contains(data_for_plotting_averages.decodingResultsFilename, num_block)
+                contains(data_for_plotting_averages.decodingResultsFilename, labels_to_use_string) && ...
+                contains(data_for_plotting_averages.decodingResultsFilename, num_block)
             
             
             data_for_plotting_averages.decodingResultsFilePath = fullfile(cvSplitFolderPath, data_for_plotting_averages.decodingResultsFilename);

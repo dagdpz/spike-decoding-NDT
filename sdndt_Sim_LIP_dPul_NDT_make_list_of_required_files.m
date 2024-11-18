@@ -2,6 +2,12 @@ function sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files(monkey, injection, m
 % If I plan to decode within one session:
 % sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files('Bacchus', '1', 'each_session_separately');
 
+
+% at the moment variables overlap_firstBlockFiles, overlap_thirdBlockFiles, overlap_fourthBlockFiles
+% !!! are created by units that survive only during these three blocks !!!
+%(important for Linus, because in his case there is sometimes also block 5).  
+
+
 % If I plan to decode across all sessions:
 % !(To do this action, you must first have filelists for each session individually)!
 % sdndt_Sim_LIP_dPul_NDT_make_list_of_required_files('Bacchus', '0', 'merged_files_across_sessions');
@@ -396,13 +402,44 @@ else % 'each_session_separately'
 %                 end
         end
         
-        list_of_required_files.overlap_firstBlockFiles = processSpecificOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles,'block_1');
+        
+        
+        % It's important for Linus (not required for Bacchus) 
+        % Since for my current purposes I need to compare blocks 1 and 3, 3 and 4 (but based on the units that were present during blocks 1, 3 and 4 - overlap approach), 
+        % I temporarily modify the code by commenting out the old version, for which the overlapBlocksFiles variable was used. 
+        list_of_required_files.overlap_firstBlockFiles = processSpecificOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles_1_3_4  ,'block_1');
+        list_of_required_files.overlap_thirdBlockFiles = processSpecificOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles_1_3_4  ,'block_3');
+        list_of_required_files.overlap_fourthBlockFiles = processSpecificOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles_1_3_4  , 'block_4');
+       
+%         list_of_required_files.overlap_firstBlockFiles = processSpecificOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles,'block_1');
         list_of_required_files.overlap_secondBlockFiles = processSpecificOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles,'block_2');
-        list_of_required_files.overlap_thirdBlockFiles = processSpecificOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles,'block_3');
-        list_of_required_files.overlap_fourthBlockFiles = processSpecificOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles, 'block_4');
+%         list_of_required_files.overlap_thirdBlockFiles = processSpecificOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles,'block_3');
+%         list_of_required_files.overlap_fourthBlockFiles = processSpecificOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles, 'block_4');
         list_of_required_files.overlap_fifthBlockFiles = processSpecificOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles,'block_5');
         list_of_required_files.overlap_sixthBlockFiles = processSpecificOverlapBlocksFiles(list_of_required_files.overlapBlocksFiles, 'block_6');
         
+        
+        
+        
+        % Checking for specific conditions for moving files
+        if strcmp(monkey, 'Bacchus') && strcmp(dateOfRecording{day}, '20201112')
+            % Move data from overlap_secondBlockFiles to overlap_thirdBlockFiles
+            list_of_required_files.overlap_thirdBlockFiles_new = list_of_required_files.overlap_secondBlockFiles;
+            list_of_required_files.overlap_fourthBlockFiles_new = list_of_required_files.overlap_thirdBlockFiles;
+            
+            list_of_required_files.overlap_thirdBlockFiles = list_of_required_files.overlap_thirdBlockFiles_new;
+            list_of_required_files.overlap_fourthBlockFiles = list_of_required_files.overlap_fourthBlockFiles_new;
+            
+            % Clear migrated data from overlap_secondBlockFiles
+            list_of_required_files.overlap_secondBlockFiles = {};
+            
+            % Delete variable overlap_fourthBlockFiles_new
+            list_of_required_files = rmfield(list_of_required_files, 'overlap_thirdBlockFiles_new');
+            list_of_required_files = rmfield(list_of_required_files, 'overlap_fourthBlockFiles_new');
+        end
+
+
+
         % Save the structure to a .mat file in the specified folder
         nameOfFinalFile = ['sdndt_Sim_LIP_dPul_NDT_' dateOfRecording{day} '_list_of_required_files.mat'];
         save(fullfile(OUTPUT_PATH_list_of_required_files, nameOfFinalFile), 'list_of_required_files');
@@ -523,7 +560,7 @@ overlapBlocksFiles_1_3_4 = allBlocksFiles ;
 % Loop through each file in overlapBlocksFiles
 for i = numel(overlapBlocksFiles_1_3_4):-1:1
     if contains(overlapBlocksFiles_1_3_4{i}, 'block_5') || contains(overlapBlocksFiles_1_3_4{i}, 'block_6')
-    overlapBlocksFiles_1_3_4(i) = [];  % Remove files containing 'block_5'
+        overlapBlocksFiles_1_3_4(i) = [];  % Remove files containing 'block_5'
     end
 end
 
@@ -553,19 +590,63 @@ for prefixIdx = 1:numel(uniquePrefixes)
     % Check if the file names start with the prefix
     files_with_prefix = overlapBlocksFiles_1_3_4(startsWith(overlapFileNames, [prefix, '_']));
     
-    % Check if files with blocks 1 and 3 exist for this prefix
-    if any(contains(files_with_prefix, 'block_1')) && any(contains(files_with_prefix, 'block_3'))
-        % If block 4 also exists, include it
-        if any(contains(files_with_prefix, 'block_4'))
-            validFileNames = [validFileNames, files_with_prefix];
+    
+    %     % Check if files with blocks 1 and 3 exist for this prefix
+    %     if any(contains(files_with_prefix, 'block_1')) && any(contains(files_with_prefix, 'block_3'))
+    %         % If block 4 also exists, include it
+    %         if any(contains(files_with_prefix, 'block_4'))
+    %             validFileNames = [validFileNames, files_with_prefix(:)];
+    %         else
+    %             % Include only blocks 1 and 3 if block 4 is not present
+    %            % validFileNames = [validFileNames, files_with_prefix(contains(files_with_prefix, 'block_1') | contains(files_with_prefix, 'block_3'))];
+    %        % Включаем только блоки 1 и 3, если блок 4 отсутствует
+    %                 selected_files = files_with_prefix(contains(files_with_prefix, 'block_1') | contains(files_with_prefix, 'block_3'));
+    %
+    %
+    %         end
+    %     end
+    % end
+    %
+    % overlapBlocksFiles_1_3_4 = validFileNames(:); % Assign valid file names to overlapBlocksFiles_1_3_4
+    
+    
+    % Check if the prefix corresponds to 'Bac_20201112' and adjust the block selection
+    if contains(prefix, 'Bac_20201112')  && ...
+            (any(contains(files_with_prefix, 'block_1')) && ...
+            any(contains(files_with_prefix, 'block_2')) && ...
+            any(contains(files_with_prefix, 'block_3')))
+        
+        % Select files with blocks 1, 2, and 3 for 'Bac_20201112'
+        selected_files = files_with_prefix(contains(files_with_prefix, 'block_1') | ...
+            contains(files_with_prefix, 'block_2') | ...
+            contains(files_with_prefix, 'block_3'));
+        
+    elseif contains(prefix, 'Lin_20210709')
+        if any(contains(files_with_prefix, 'block_1')) && any(contains(files_with_prefix, 'block_3'))
+            selected_files = files_with_prefix(contains(files_with_prefix, 'block_1') | ...
+                contains(files_with_prefix, 'block_3'));
+        end
+        
+    else
+        % For other prefixes, select files with blocks 1, 3, and 4
+        if any(contains(files_with_prefix, 'block_1')) && any(contains(files_with_prefix, 'block_3'))
+            % Include block 4 if it exists; otherwise, include only blocks 1 and 3
+            if any(contains(files_with_prefix, 'block_4'))
+                selected_files = files_with_prefix(contains(files_with_prefix, 'block_1') | ...
+                    contains(files_with_prefix, 'block_3') | ...
+                    contains(files_with_prefix, 'block_4'));
+            end
         else
-            % Include only blocks 1 and 3 if block 4 is not present
-            validFileNames = [validFileNames, files_with_prefix(contains(files_with_prefix, 'block_1') | contains(files_with_prefix, 'block_3'))];
+            selected_files = {}; % If no blocks 1 or 3 are present, skip this prefix
         end
     end
+    
+    % Append selected files to validFileNames
+    validFileNames = [validFileNames; selected_files(:)];
 end
 
-overlapBlocksFiles_1_3_4 = validFileNames(:); % Assign valid file names to overlapBlocksFiles_1_3_4
+% Assign valid file names to overlapBlocksFiles_1_3_4
+overlapBlocksFiles_1_3_4 = validFileNames(:);
 end
 
 

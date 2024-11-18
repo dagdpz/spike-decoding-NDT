@@ -28,20 +28,20 @@ if isfield(DECODING_RESULTS.DS_PARAMETERS,'the_training_label_names')
     % labels_to_use_string = sprintf('train: %s, test: %s', train_str, test_str);
     
     
-   % Найти уникальные блоки в тренировочной и тестировочной выборках
+   % Find unique blocks in the training and testing samples
     unique_train_blocks = unique([training_block{:}]);
     unique_test_blocks = unique([test_block{:}]);
     
-   % Преобразовать уникальные тренировочные блоки в строку формата 'block_X'
-    train_str = sprintf('block_%d', unique_train_blocks(1)); % Первое значение для тренировочного блока
+   %Convert unique training blocks to ‘block_X’ format string
+    train_str = sprintf('block_%d', unique_train_blocks(1)); %First value for the training block
     for i = 2:length(unique_train_blocks)
-        train_str = [train_str, sprintf(', block_%d', unique_train_blocks(i))]; % Добавить остальные блоки
+        train_str = [train_str, sprintf(', block_%d', unique_train_blocks(i))]; %Add the rest of the blocks
     end
     
-    % Преобразовать уникальные тестовые блоки в строку формата 'block_X'
-    test_str = sprintf('block_%d', unique_test_blocks(1)); % Первое значение тестового блока
+    % Convert unique test blocks to ‘block_X’ format string
+    test_str = sprintf('block_%d', unique_test_blocks(1)); % First value of the test block
     for i = 2:length(unique_test_blocks)
-        test_str = [test_str, sprintf(', block_%d', unique_test_blocks(i))]; % Добавить остальные блоки
+        test_str = [test_str, sprintf(', block_%d', unique_test_blocks(i))]; 
     end
     
     
@@ -139,7 +139,7 @@ numOfTrials_for_test_label = count_trials(sites_to_use, trial_type_side, label_n
 
 %% search target_brain_structure from the file name
 path_parts = strsplit(save_file_name, '_'); % Split the file path
-required_parts =  path_parts(10:end-9);
+required_parts =  path_parts(24:end-9);
 index_containing_O = find(cellfun(@(x) any(contains(x, 'O')), required_parts), 1); % Find a cell that contains an "O": 
 if ~isempty(index_containing_O)
     cell_with_O = required_parts{index_containing_O};
@@ -187,8 +187,8 @@ numOfUnits_and_numOfTrials_info = sprintf('Num of Units: %s\nNum of Trials (trai
 set(gcf,'position',[450,400,700,560]) % [x0,y0,width,height]
 
 
-% Установим размер шрифта для осей
-set(gca, 'FontSize', 11); % Здесь 11 — размер шрифта
+% Set font size for axes
+set(gca, 'FontSize', 11); % Here 11 is font size
 
 
 % Add text using the annotation function
@@ -275,22 +275,22 @@ end
 
 function labels_info = create_labels_info(DECODING_RESULTS)
 
-    % Инициализация пустого массива для хранения имен меток
+    %Initialising an empty array to store label names
     label_names = {};
 
-    % Проход по каждой метке в the_test_label_names
+    % Passing through each label in the_test_label_names
     for i = 1:length(DECODING_RESULTS.DS_PARAMETERS.the_test_label_names)
-        % Извлечение текущей метки
+        % Retrieving the current tag
         current_label = DECODING_RESULTS.DS_PARAMETERS.the_test_label_names{i}{1};
         
-        % Убираем суффикс '_test'
+        % Remove the ‘_test’ suffix.
         cleaned_label = strrep(current_label, '_test', '');
         
-        % Добавляем очищенную метку в массив
+        % Add the cleared label to the array
         label_names{end+1} = cleaned_label;
     end
 
-    % Объединяем все метки в одну строку, разделяя их запятыми
+    % Combine all labels into one line, separating them with commas
     labels_info = strjoin(label_names, ', ');
 
 end
