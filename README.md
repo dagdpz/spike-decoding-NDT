@@ -113,6 +113,23 @@ txt-file:
 - like Statistics_Wilcoxon_Splits_Info_Binned_Sim_LIP_dPul_MEAN_data_for_LIP_L_GOsignal_choice_R_choice_L_train_block_3_test_block_4_smoothed.txt (contains information about the results of the Wilcoxon paired t-test analysis for each bin)
 - like Permutation_test_Splits_Info_Binned_Sim_LIP_dPul_MEAN_data_for_LIP_R_GOsignal_block_1_and_block_3_block_4_100ms_bins_25ms_sampled_instr_R instr_L_same_cv.txt (contains information about the results of permutation test analysis for each bin)
 
+# sdndt_Sim_LIP_dPul_NDT_spiking_activity.m 
+The code allows to plot spiking activity.                                                                                                         
+                                                                                                                                                                     
+**Input:**                                                                                                                                                                    
+many mat-files:                                                                                                                                                                    
+- like Binned_Sim_LIP_dPul__NDT_data_for_LIP_L_cueON_block_3_100ms_bins_25ms_sampled.mat, which contains variables binned_data, binned_labels, binned_site_info.
+
+**Output:**                                                                                                                                                                         
+                                                                                                                                                                                                                
+mat-files:                                                                                                                                    
+- like spiking_activity_data_for_merged_files_across_sessions_LIP_L_GOsignal_block_1_instr_R instr_L.mat
+- like spiking_activity_data_for_merged_files_across_sessions_LIP_L_GOsignal_block_3_block_4_choice_R choice_L.mat
+
+png-files:                                                                                                                                               
+- like spiking_activity_for_merged_files_across_sessions_LIP_R_cueON_choice_R choice_L.png
+- like spiking_activity_for_merged_files_across_sessions_LIP_L_cueON_instr_R instr_L.png 
+                                                                                                                                                           
 # sdndt_Sim_LIP_dPul_NDT_cross_decoding.m
 Converts data from raster data into binned data (including merging binned data, if necessary), which it then uses for cross-decoding. It is possible to decode both within a single session and across multiple sessions (by creating a pseudo-population).                                                                        
 
