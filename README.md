@@ -95,6 +95,23 @@ picture:
 - Binned_Sim_LIP_dPul__NDT_data_for_LIP_L_cueON_block_3_block_4_block_5_100ms_bins_25ms_sampled_instr_R instr_L_Normality_plot.png
 - Binned_Sim_LIP_dPul_NDT_data_for_LIP_L_cueON_block_1_and_block_3_block_4_block_5_100ms_bins_25ms_sampled_instr_R instr_L_Left-tailed_T-test.png
 
+# sdndt_Sim_LIP_dPul_NDT_average_individual_session.m 
+Plots the average values based on the mat files obtained by performing cross-decoding for each session separately.  
+                                                                                                                                                                              
+**Input:**                                                                                                                                                                                            
+many mat-files:                                                                                                                                                                    
+- like Binned_Sim_LIP_dPul__NDT_data_for_LIP_L_cueON_block_3_100ms_bins_25ms_sampled.mat, which contains variables binned_data, binned_labels, binned_site_info.
+                                                                                                                                                                                     
+**Output:**                                                                                                                                                                         
+                                                                                                                                                                                                                
+png-files:                                                                                                                                                   
+- Binned_Sim_LIP_dPul_MEAN_data_for_LIP_L_cueON_block_1_and_block_3_block_4_100ms_bins_25ms_sampled_choice_R choice_L_AverageDynamics_Stat.png
+- Binned_Sim_LIP_dPul_MEAN_data_for_LIP_L_GOsignal_block_1_and_block_3_block_4_100ms_bins_25ms_sampled_choice_R choice_L_same_cv_AverageDynamics_Color_Stat.png
+
+txt-file:  
+- like Sessions_Num_CV_Splits_Info_Binned_Sim_LIP_dPul_MEAN_data_for_LIP_R_cueON_block_1_and_block_3_block_4_100ms_bins_25ms_sampled_choice_R choice_L_same_cv.txt (contains information about num_cv_splits for each session taken in analysis) 
+- like Statistics_Wilcoxon_Splits_Info_Binned_Sim_LIP_dPul_MEAN_data_for_LIP_L_GOsignal_choice_R_choice_L_train_block_3_test_block_4_smoothed.txt (contains information about the results of the Wilcoxon paired t-test analysis for each bin)
+- like Permutation_test_Splits_Info_Binned_Sim_LIP_dPul_MEAN_data_for_LIP_R_GOsignal_block_1_and_block_3_block_4_100ms_bins_25ms_sampled_instr_R instr_L_same_cv.txt (contains information about the results of permutation test analysis for each bin)
 
 # sdndt_Sim_LIP_dPul_NDT_cross_decoding.m
 Converts data from raster data into binned data (including merging binned data, if necessary), which it then uses for cross-decoding. It is possible to decode both within a single session and across multiple sessions (by creating a pseudo-population).                                                                        
@@ -119,3 +136,20 @@ picture:
 
 # sdndt_Sim_LIP_dPul_NDT_plot_cross_decoding_results.m                   
 The function contains additional settings for plotting decoding results.   
+
+# sdndt_Sim_LIP_dPul_NDT_average_individ_session_cross_decoding.m 
+Plots the average values based on the mat files obtained by performing cross-decoding for each session separately.  
+                                                                                                                                                                              
+**Input:**                                                                                                                                                                                            
+many mat-files:                                                                                                                                                                    
+- like Binned_Sim_LIP_dPul__NDT_data_for_LIP_L_cueON_block_3_100ms_bins_25ms_sampled.mat, which contains variables binned_data, binned_labels, binned_site_info.
+                                                                                                                                                                                     
+**Output:**                                                                                                                                                                         
+                                                                                                                                                                                                                
+png-files:                                                                                                                                                   
+- Binned_Sim_LIP_dPul_MEAN_data_for_LIP_L_cueON_choice_R_choice_L_train_block_3_test_block_4_smoothed_AverageDynamics_nis_Stat.png
+- Binned_Sim_LIP_dPul_MEAN_data_for_LIP_L_cueON_instr_R_instr_L_train_block_3_test_block_4_smoothed_AverageDynamics_Color_Stat_0.png
+
+txt-file:  
+- like Sessions_Num_CV_Splits_Info_MEAN_data_for_LIP_L_cueON_instr_R_instr_L_train_block_3_test_block_4_smoothed.txt (contains information about num_cv_splits for each session taken in analysis) 
+- like Statistics_Wilcoxon_Splits_Info_Binned_Sim_LIP_dPul_MEAN_data_for_LIP_L_GOsignal_choice_R_choice_L_train_block_3_test_block_4_smoothed.txt (сontains information about the results of statistical analysis for each bin) 
