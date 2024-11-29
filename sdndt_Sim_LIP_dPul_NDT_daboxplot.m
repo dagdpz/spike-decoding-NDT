@@ -132,7 +132,7 @@ numApproach = numel(approach_to_use);
 if strcmp(typeOfDecoding, 'сollected_files_across_sessions')
     numTypeBlocks = numel(listOfRequiredFiles.group_1); % Get the number of files in the group
     
-    % Проверка, что группы файлов для обоих обезьян одинаковые
+    % Check that the file groups for both monkeys are the same
     if numel(listOfRequiredFiles_all.Linus.group_1) ~= numel(listOfRequiredFiles_all.Bacchus.group_1)
         error('Groups for Linus and Bacchus must have the same number of files.');
     end
@@ -163,14 +163,14 @@ for file_index = 1:numTypeBlocks % Loop through each file in listOfRequiredFiles
         %         current_file_1_monk_2 = listOfRequiredFiles_all.Bacchus.group_1{file_index};
         %         current_file_2_monk_2 = listOfRequiredFiles_all.Bacchus.group_2{file_index};
         
-        % Инициализация массивов для хранения файлов всех обезьян
+        % Initialising arrays to store the files of all monkeys
         current_file_1_all_monkeys = cell(1, numel(monkey_list));
         current_file_2_all_monkeys = cell(1, numel(monkey_list));
         
-        % Цикл по каждой обезьяне
+        % Cycle for each monkey
         for monkey_idx = 1:numel(monkey_list)
             monkey = monkey_list{monkey_idx};
-            % Извлечение данных для текущей обезьяны
+            % Extract data for the current monkey
             current_file_1_all_monkeys{monkey_idx} = listOfRequiredFiles_all.(monkey).group_1{file_index};
             current_file_2_all_monkeys{monkey_idx} = listOfRequiredFiles_all.(monkey).group_2{file_index};
         end
@@ -370,22 +370,21 @@ end
 % [grouping_folder_gr_2, num_block_gr_2] = processRequiredFiles(monkey, current_approach, ...
 %     block_grouping_folder_prefix, givenListOfRequiredFiles_gr_2);
 
-% Инициализация структуры для хранения данных
+% Initialising the structure for storing data
 grouping_data = struct();
 
-% Цикл по обезьянам
 for monkey_idx = 1:length(monkey_list)
     current_monkey = monkey_list{monkey_idx};
     
-    % Обработка для группы 1 (для текущей обезьяны)
+    % for group 1 (for current monkeys)
     data_gr_1 = processRequiredFiles(current_monkey, current_approach, ...
         block_grouping_folder_prefix, givenListOfRequiredFiles_gr_1{monkey_idx});
     
-    % Обработка для группы 2 (для текущей обезьяны)
+    %  for group 1 (for current monkeys)
     data_gr_2 = processRequiredFiles(current_monkey, current_approach, ...
         block_grouping_folder_prefix, givenListOfRequiredFiles_gr_2{monkey_idx});
     
-    % Сохранение данных в структуру
+    % Saving data to a structure
     grouping_data.(current_monkey).gr_1 = data_gr_1;
     grouping_data.(current_monkey).gr_2 = data_gr_2;
 end
@@ -430,7 +429,7 @@ if  strcmp(typeOfDecoding, 'сollected_files_across_sessions')
     
     
     
-    % Определяем monkey_prefix
+   % Define monkey_prefix
     if length(monkey_list) == 2
         monkey_prefix = 'Both_';  % Если две обезьяны, указываем префикс "Both"
     else
@@ -451,20 +450,19 @@ if  strcmp(typeOfDecoding, 'сollected_files_across_sessions')
     %     plotingAveragesAcrossSessions(dateOfRecording, target_brain_structure, target_state, combinedLabel, data_for_plotting_averages, settings, OUTPUT_PATH_binned_data_for_saving, numOfData, curves_per_session)
     
     
-    % Цикл по обезьянам
     for monkey_idx = 1:length(monkey_list)
         current_monkey = monkey_list{monkey_idx};
         
         % Before injection (group 1)
         [~, target_brain_structure, target_state, combinedLabel, ...
-            data_for_plotting_averages_before.(current_monkey), settings, ~, numOfData_before.(current_monkey)] = collectingAveragesAcrossSessions( ...
+            data_for_plotting_averages_before.(current_monkey), settings, ~] = collectingAveragesAcrossSessions( ...
             current_monkey, injection, typeOfSessions, dateOfRecording.(current_monkey), typeOfDecoding, method_of_decoding, ...
             target_brain_structure, target_state, combinedLabel, grouping_data.(current_monkey).gr_1, ...
             OUTPUT_PATH_binned_data_for_saving, type_of_graphs);
         
         
         % After injection (group 2)
-        [~, ~, ~, ~, data_for_plotting_averages_after.(current_monkey), ~, ~, numOfData_after.(current_monkey)] = collectingAveragesAcrossSessions( ...
+        [~, ~, ~, ~, data_for_plotting_averages_after.(current_monkey), ~, ~] = collectingAveragesAcrossSessions( ...
             current_monkey, injection, typeOfSessions, dateOfRecording.(current_monkey), typeOfDecoding, method_of_decoding, ...
             target_brain_structure, target_state, combinedLabel, grouping_data.(current_monkey).gr_2, ...
             OUTPUT_PATH_binned_data_for_saving, type_of_graphs);
@@ -482,7 +480,7 @@ if  strcmp(typeOfDecoding, 'сollected_files_across_sessions')
     
     
     % Plotting both sets of data on the same figure
-    daboxplotAveragesAcrossSessions(monkey_list, dateOfRecording, target_brain_structure, target_state, combinedLabel, data_for_plotting_averages_before, data_for_plotting_averages_after, settings, OUTPUT_PATH_binned_data_for_saving, numOfData_before, numOfData_after);
+    daboxplotAveragesAcrossSessions(monkey_list, typeOfDecoding, dateOfRecording, target_brain_structure, target_state, combinedLabel, data_for_plotting_averages_before, data_for_plotting_averages_after, settings, OUTPUT_PATH_binned_data_for_saving);
     
 else
     partOfName = dateOfRecording;
@@ -516,11 +514,13 @@ elseif strcmp(currentFile, 'secondBlockFiles')
     num_block_suffix = '2';
     block_grouping_folder = sprintf('%sBy_block', block_grouping_folder_prefix);
 elseif strcmp(currentFile, 'thirdBlockFiles') && strcmp(current_approach, 'overlap_approach')
+    block_grouping_folder = sprintf('%sBy_block', block_grouping_folder_prefix);
     num_block_suffix = '3';
-    block_grouping_folder = sprintf('%sBy_block', block_grouping_folder_prefix);
+    block_data = 'block: 3';
 elseif strcmp(currentFile, 'fourthBlockFiles') && strcmp(current_approach, 'overlap_approach')
-    num_block_suffix = '4';
     block_grouping_folder = sprintf('%sBy_block', block_grouping_folder_prefix);
+    num_block_suffix = '4';
+    block_data = 'block: 4';
 elseif strcmp(currentFile, 'fifthBlockFiles')
     num_block_suffix = '5';
     block_grouping_folder = sprintf('%sBy_block', block_grouping_folder_prefix);
@@ -587,7 +587,7 @@ end
 
 
 
-function [dateOfRecording, target_brain_structure, target_state, combinedLabel, data_for_plotting_averages, settings, OUTPUT_PATH_binned_data_for_saving, numOfData] = collectingAveragesAcrossSessions(monkey, injection, typeOfSessions, dateOfRecording, typeOfDecoding, method_of_decoding, target_brain_structure, target_state, combinedLabel, block_grouping, OUTPUT_PATH_binned_data_for_saving, type_of_decoding)
+function [dateOfRecording, target_brain_structure, target_state, combinedLabel, data_for_plotting_averages, settings, OUTPUT_PATH_binned_data_for_saving] = collectingAveragesAcrossSessions(monkey, injection, typeOfSessions, dateOfRecording, typeOfDecoding, method_of_decoding, target_brain_structure, target_state, combinedLabel, block_grouping, OUTPUT_PATH_binned_data_for_saving, type_of_decoding)
 
 %% Path
 % Call the function to get the dates
@@ -607,12 +607,12 @@ for stateIdx = 1:numel(target_state)
     data_for_plotting_averages.(current_target_state).decodingResultsFilePath = '';  % Initialize as an empty string
     
     
-    % Инициализация структуры для текущего состояния
+    % Initializing the structure for the current state
     if ~isfield(data_for_plotting_averages, current_target_state)
         data_for_plotting_averages.(current_target_state) = struct();
     end
     
-    % Сохранение текущего состояния для дальнейшего использования
+    % Saving the current state 
     data_for_plotting_averages.(current_target_state).target_state = current_target_state;
     
     
@@ -702,10 +702,10 @@ for stateIdx = 1:numel(target_state)
         %  pattern_block = ['test_.*' num_block '.*'];
         
         if strcmp(method_of_decoding, 'Cross_decoding')
-            % Для кросс-декодирования используем более универсальный шаблон
+            % For cross-decoding we use a more universal template
             pattern_block = ['test_.*' num_block '.*'];
         else
-            % Для обычных блоков используем шаблон
+            % For decoding
             pattern_block = ['.*' num_block '.*'];
         end
         
@@ -1136,24 +1136,24 @@ end
 
 
 
-function daboxplotAveragesAcrossSessions(monkey, dateOfRecording, target_brain_structure, target_state, combinedLabel, data_for_plotting_averages_before, data_for_plotting_averages_after, settings, OUTPUT_PATH_binned_data_for_saving, numOfData_before, numOfData_after);
+function daboxplotAveragesAcrossSessions(monkey, typeOfDecoding, dateOfRecording, target_brain_structure, target_state, combinedLabel, data_for_plotting_averages_before, data_for_plotting_averages_after, settings, OUTPUT_PATH_binned_data_for_saving);
 %% Plot the results
 
 % Define a colormap for the sessions before inactivation
 % RGB palette for 7 shades of blue
 
 color_fig1.color_RGB = [
-    0.4666, 0.6627, 0.3098;  % тёмный светло-зелёный
-    0.2921, 0.5058, 0.2921;  % тёмный зелёный
-    0.2705, 0.5058, 0.6627;  % тёмный светло-голубой
-    0.1745, 0.3313, 0.5058;  % тёмный синий
+    0.4666, 0.6627, 0.3098;  % dark light green
+    0.2921, 0.5058, 0.2921;  % dark green
+    0.2705, 0.5058, 0.6627;  % dark light blue
+    0.1745, 0.3313, 0.5058;  % dark blue
     ];
 
 color_fig1.colors_appearance = {
-    'dark light green';  % для первой группы данных (Monkey 1)
-    'dark green';        % для второй группы данных (Monkey 1)
-    'dark light blue';   % для первой группы данных (Monkey 2)
-    'dark blue';         % для первой группы данных (Monkey 2)
+    'dark light green';  % for the first data group (Monkey 1)
+    'dark green';        % for the second data group (Monkey 1)
+    'dark light blue';   % for the first data group (Monkey 2)
+    'dark blue';         % for the second data group (Monkey 2)
     };
 
 
@@ -1173,30 +1173,30 @@ color_fig2.colors_appearance = {
     'blue';            % for the first group of data (Monkey 2)
     };
 
-% an alternative color scheme for some plots
-% c =  [0.45, 0.80, 0.69;...
-%       0.98, 0.40, 0.35;...
-%       0.55, 0.60, 0.79;...
-%       0.90, 0.70, 0.30];
 
-
-% Updating session_info for data_for_plotting_averages_before
-% numSessionsBefore = numel(data_for_plotting_averages_before.session_info);
-% for b = 1:numSessionsBefore
-%     if b <= size(Palette, 1)
-%         % Update RGB values from the blue palette
-%         data_for_plotting_averages_before.session_info(b).color_RGB = Palette(b, :);
-%         data_for_plotting_averages_before.session_info(b).color_appearance = session_colors_Appearance(b, :);
-%     else
-%         % If blue palette is not enough for all sessions, use the last color of the palette
-%         data_for_plotting_averages_before.session_info(b).color_RGB = Palette(end, :);
-%         data_for_plotting_averages_before.session_info(b).color_appearance = session_colors_Appearance(end, :);
-%     end
-% end
 
 
 % group_names = {'Before, M_1', 'After, M_1' , 'M_2', 'M_2'};
 epoch_names = {'Cue', 'Delay', 'PostSac'};
+epochs_str = strjoin(epoch_names, '_'); % Join epoch names with underscores
+
+
+% Initialize an empty string for concatenation
+monkey_str = '';
+
+% Loop through all monkey names
+for i = 1:length(monkey)
+    % Extract the first three characters of each monkey's name
+    monkey_str = strcat(monkey_str, monkey{i}(1:3));
+    % Add an underscore if it's not the last name
+    if i < length(monkey)
+        monkey_str = strcat(monkey_str, '_');
+    end
+end
+
+
+
+
 
 
 % Name of monkey 
@@ -1232,19 +1232,12 @@ end
 blocks_before = unique(blocks_before);
 blocks_after = unique(blocks_after);
 
- 
-% % Data about blocks
-% blocks_before = unique({
-%     data_for_plotting_averages_before.cueON.block_data_Cue, ...
-%     data_for_plotting_averages_before.GOsignal.block_data_Delay, ...
-%     data_for_plotting_averages_before.GOsignal.block_data_PostSac
-%     });
-% 
-% blocks_after = unique({
-%     data_for_plotting_averages_after.cueON.block_data_Cue, ...
-%     data_for_plotting_averages_after.GOsignal.block_data_Delay, ...
-%     data_for_plotting_averages_after.GOsignal.block_data_PostSac
-%     });
+% Replace colon with underscore
+blocks_before_clean = strrep(blocks_before{1}, 'block: ', ''); % Убираем "block: "
+blocks_after_clean = strrep(blocks_after{1}, 'block: ', '');   % Убираем "block: "
+block_str = ['block_', blocks_before_clean, '_and_block_', strrep(blocks_after_clean, ',', '_')];
+
+
 
 
 
@@ -1278,34 +1271,34 @@ group_names = {
 
 
 
-% Инициализация переменной data
+% Initialization of the data variable
 data = {};
 
-% Цикл по обезьянам
+% For each monkeys
 for monkey_idx = 1:length(monkey)
     current_monkey = monkey{monkey_idx};
     
-    % Формируем первую клетку с данными data_for_plotting_averages_before для текущей обезьяны
+    % Create the first cell with data_for_plotting_averages_before for the current monkey
     data_before = [
-        data_for_plotting_averages_before.(current_monkey).cueON.mean_decoding_results_Cue(:), ...
-        data_for_plotting_averages_before.(current_monkey).GOsignal.mean_decoding_results_Delay(:), ...
-        data_for_plotting_averages_before.(current_monkey).GOsignal.mean_decoding_results_PostSac(:)
+        data_for_plotting_averages_before.(current_monkey).cueON.mean_decoding_results_100_Cue(:), ...
+        data_for_plotting_averages_before.(current_monkey).GOsignal.mean_decoding_results_100_Delay(:), ...
+        data_for_plotting_averages_before.(current_monkey).GOsignal.mean_decoding_results_100_PostSac(:)
     ];
 
-    % Формируем вторую клетку с данными data_for_plotting_averages_after для текущей обезьяны
+    % Create the second cell with data_for_plotting_averages_before for the current monkey
     data_after = [
-        data_for_plotting_averages_after.(current_monkey).cueON.mean_decoding_results_Cue(:), ...
-        data_for_plotting_averages_after.(current_monkey).GOsignal.mean_decoding_results_Delay(:), ...
-        data_for_plotting_averages_after.(current_monkey).GOsignal.mean_decoding_results_PostSac(:)
+        data_for_plotting_averages_after.(current_monkey).cueON.mean_decoding_results_100_Cue(:), ...
+        data_for_plotting_averages_after.(current_monkey).GOsignal.mean_decoding_results_100_Delay(:), ...
+        data_for_plotting_averages_after.(current_monkey).GOsignal.mean_decoding_results_100_PostSac(:)
     ];
 
-    % Объединяем данные этой обезьяны в соответствующие клетки в переменной data
+    % Combine the data of this monkey into the corresponding cells in the variable data
     if monkey_idx == 1
-        % Для первой обезьяны (данные до и после инъекции)
+        % For the first monkey (data for first and second data group)
         data{1} = data_before;
         data{2} = data_after;
     elseif monkey_idx == 2
-        % Для второй обезьяны (данные до и после инъекции)
+        % For the second monkey (data for first and second data group)
         data{3} = data_before;
         data{4} = data_after;
     end
@@ -1313,352 +1306,253 @@ end
 
 
 
-
-% different color scheme, a color flip, different outlier symbol
-% 1. different color scheme, a color flip, different outlier symbol
-f1 = figure;
-h = daboxplot(data,'xtlabels', epoch_names,...
-    'colors',color_fig1.color_RGB,'fill',0,'whiskers',0,'scatter',2,'outsymbol','k+',...
-    'outliers',1,'scattersize',50,'flipcolors',1,'boxspacing',1.5, 'boxwidth', 0.8, ...
-     'legend',group_names);
-ylabel('Performance');
-xl = xlim; xlim([xl(1), xl(2)+1.3]); % make more space for the legend
-
-% Формирование заголовка
-title_text = sprintf('%s; %s', target_brain_structure, strrep(combinedLabel, ' ', ', '));
-title(title_text);
-
-set(gca,'FontSize',13);
-set(gcf,'position',[610,420,770,500])
-set(gca, 'Position', [0.08, 0.08, 0.9, 0.8] )
-tickPositions = 0.5:0.1:1; % Calculate the tick positions every 200 ms
-yticks(tickPositions);
-ylim([0.5 1])
-ylabel('Performance', 'Position', [0.2, 0.75]) % отодвигаем подпись от оси Y
-h_title = title(title_text);
-title_pos = get(h_title, 'Position'); % Получаем текущие координаты положения заголовка
-set(h_title, 'Position', [title_pos(1) - 0.5, title_pos(2), title_pos(3)]); % Сдвигаем заголовок влево (уменьшаем X-координату)
-
-
-
-% 2. transparent boxplots with no whiskers and jittered datapoints underneath
-f2 = figure;
-h = daboxplot(data,'scatter',2,'whiskers',0,'boxalpha',0.7,...
-    'xtlabels', epoch_names, 'colors',color_fig2.color_RGB, 'outsymbol','k*', ...
-    'scattersize',40, 'boxspacing',1.5, 'boxwidth', 0.8);
-ylabel('Performance');
-xl = xlim; xlim([xl(1), xl(2)+1.3]);       % make space for the legend
-legend([h.bx(1,:)],group_names);            % add the legend manually
-
-set(gca,'FontSize',13);
-set(gcf,'position',[610,420,770,500])
-set(gca, 'Position', [0.08, 0.08, 0.9, 0.8] )
-tickPositions = 0.5:0.1:1; % Calculate the tick positions every 200 ms
-yticks(tickPositions);
-ylim([0.5 1])
-ylabel('Performance', 'Position', [0.2, 0.75]) % отодвигаем подпись от оси Y
-h_title = title(title_text);
-title_pos = get(h_title, 'Position'); % Get the current coordinates of the header position
-set(h_title, 'Position', [title_pos(1) - 0.5, title_pos(2), title_pos(3)]); % Сдвигаем заголовок влево (уменьшаем X-координату)
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-tickPositions = 0:200:1000; % Calculate the tick positions every 200 ms
-xticks(tickPositions);  % Set the tick positions on the X-axis
-
-xlabel('Time (ms)', 'FontSize', 30); % Set the font size to 14 for the xlabel
-ylabel('Classification Accuracy', 'FontSize', 35); % Set the font size to 14 for the ylabel
-
-
-box off;  % Remove the box around the axes
-ax = gca; % Display only the X and Y axes
-ax.YAxis.Visible = 'on';  % Show Y-axis
-ax.XAxis.Visible = 'on';  % Show X-axis
-
-ax.FontSize = 12; % Set the font size for the axis tick labels
-
-xline(500); % draw a vertical line at 500
-yline(50); % draw a horizontal line at 50
-set(gca,'Xlim',settings.time_lim, 'Ylim',settings.y_lim); % limitation of the X (from 0 to 1000) and Y (from 20 to 100) axes
-
-% change the size of the figure
-set(gcf,'position',[450,400,800,650]) % [x0,y0,width,height]
-
-%         % Add text using the annotation function
-%         positionOfAnnotation = [0.76, 0.5, 0.26, 0.26]; % [x position, y position, size x, size y]
-%         annotation('textbox', positionOfAnnotation, 'String', numOfUnits_and_numOfTrials_info_labelsAppears, ...
-%             'FontSize', 10, 'HorizontalAlignment', 'left','FitBoxToText','on');
-%         set(gca, 'Position', [0.1, 0.13, 0.65, 0.72] ) % change the position of the axes to fit the annotation into the figure too.
-
-% create a title
-block_info_before = char(regexp(data_for_plotting_averages_before.decodingResultsFilePath, 'block_\d+', 'match'));
-block_info_after = char(regexp(data_for_plotting_averages_after.decodingResultsFilePath, 'block_\d+', 'match'));
-
-% Reshape the character array into a single row
-block_info_combined_before = reshape(block_info_before.', 1, []);
-block_info_combined_after = reshape(block_info_after.', 1, []);
-
-
-target_info = [target_brain_structure '; ' target_state];
-block_info_before = [block_info_combined_before];
-VS_sign = [' vs '];
-block_info_after = [block_info_combined_after];
-
-
-
-
-
-combinedLabel_for_Title = rearrangeCombinedLabel(combinedLabel);
-
-%[t,s] = title(combinedLabel_for_Title, {target_info; block_info});
-[t, s] = title(combinedLabel_for_Title, target_info);
-t.FontSize = 14;
-s.FontSize = 11;
-
-
-
-
-drawnow; % Ensure the title position is updated
-
-
-
-
-
-% Change title position
-%Increase the vertical position of the combinedLabel_for_Title
-titlePos = get(t, 'Position');
-titlePos(2) = titlePos(2) + 10; % Increase the vertical position by 5
-set(t, 'Position', titlePos);
-
-% Increase the vertical position of the target_info
-sPos = get(s, 'Position');
-sPos(2) = sPos(2) + 10; % Increase the vertical position by 5
-set(s, 'Position', sPos);
-
-
-
-
-
-
-
-% Draw annotation window only on the last iteration
-%if numOfData == numel(dateOfRecording)
-
-% Before inactivation
-positionOfAnnotation = [0.76, 0.5, 0.26, 0.26]; % [x position, y position, size x, size y]
-annotation('textbox', positionOfAnnotation, 'String', data_for_plotting_averages_before.numOfUnits_and_numOfTrials_info_labelsAppears, ...
-    'FontSize', 12, 'HorizontalAlignment', 'left', 'FitBoxToText','on', 'Color', [0, 0, 0.8039]);
-
-
-
-% After inactivation
-positionOfAnnotation = [0.76, 0.2, 0.26, 0.26]; % [x position, y position, size x, size y]
-annotation('textbox', positionOfAnnotation, 'String', data_for_plotting_averages_after.numOfUnits_and_numOfTrials_info_labelsAppears, ...
-    'FontSize', 12, 'HorizontalAlignment', 'left', 'FitBoxToText','on', 'Color', [0.8627, 0.0784, 0.2353]);
-
-
-set(gca, 'Position', [0.1, 0.09, 0.65, 0.72] ) % change the position of the axes to fit the annotation into the figure too.
-
-
-
-% Plot an annotation with information about the blocks
-axPos = get(gca, 'Position');   % Dimensions of current axes
-centerX = axPos(1) + axPos(3) / 2; % Find the centre of the horizontal and vertical axes
-centerY = axPos(2) + axPos(4) / 2;
-
-annotation('textbox', [centerX - 0.23, centerY + 0.26, 0.2, 0.2], ... % [annotationPosX, annotationPosY, 0.1, 0.1]
-    'String', block_info_before, 'FontSize', 11, 'EdgeColor', 'none', 'HorizontalAlignment', 'center', 'Color', [0, 0, 0.8039]);
-
-annotation('textbox', [centerX + 0.05, centerY + 0.26, 0.2, 0.2], ...
-    'String', block_info_after, 'FontSize', 11, 'EdgeColor', 'none', 'HorizontalAlignment', 'center', 'Color', [0.8627, 0.0784, 0.2353]);
-
-annotation('textbox', [centerX - 0.1 , centerY + 0.26, 0.2, 0.2], ...
-    'String', VS_sign, 'FontSize', 11, 'EdgeColor', 'none', 'HorizontalAlignment', 'center');
-
-
-
-% Plot an annotation with information about munber of sessions
-numOfSessions_before = size(data_for_plotting_averages_before.session_info,2);
-numOfSessions_after = size(data_for_plotting_averages_after.session_info,2);
-
-numOfSessions_before_annotation = sprintf('Num of Sessions: %d', numOfSessions_before);
-numOfSessions_after_annotation = sprintf('Num of Sessions: %d', numOfSessions_after);
-
-annotation('textbox', [centerX - 0.28, centerY + 0.31, 0.2, 0.2], ... % [annotationPosX, annotationPosY, 0.1, 0.1]
-    'String', numOfSessions_before_annotation, 'FontSize', 11, 'EdgeColor', 'none', 'HorizontalAlignment', 'center', 'Color', [0, 0, 0.8039]);
-
-annotation('textbox', [centerX + 0.08, centerY + 0.31, 0.2, 0.2], ...
-    'String', numOfSessions_after_annotation, 'FontSize', 11, 'EdgeColor', 'none', 'HorizontalAlignment', 'center', 'Color', [0.8627, 0.0784, 0.2353]);
-
-
-
-
-
-% plotting session names on the graph
-session_info_before = {data_for_plotting_averages_before.session_info.name};
-session_info_after = {data_for_plotting_averages_after.session_info.name};
-combined_session_info = union(session_info_before, session_info_after, 'stable'); combined_session_info = combined_session_info';
-
-if isequal(curves_per_session, 'Color')
-    % Label each line with the session name
-    % colorOrder = get(gca, 'ColorOrder');
-    xPosition = data_for_plotting_averages_before.timeValues(1);  % X position for the annotations (same for all)
-    yPosition = 100 - 4*(numel(combined_session_info)-1) : 4 : 100;  % Y positions for the annotations (spaced vertically)
+% Initialize a vector to store the number of sessions per monkey
+num_sessions = zeros(1, length(data) / 2); % Divide by 2 since each monkey has two groups (before and after)
+
+% Loop through the data and count the number of sessions for each monkey
+for monkey_idx = 1:length(data) / 2
+    % Extract data for "before" and "after" conditions
+    data_before = data{(monkey_idx - 1) * 2 + 1};
+    data_after = data{monkey_idx * 2};
     
-    for i = numel(combined_session_info):-1:1
-        
-        session_name = combined_session_info{i};
-        
-        text(xPosition, yPosition(numel(combined_session_info) - i + 1), session_name, ...
-            'Interpreter', 'none', ...  % Disable interpreter to avoid processing special characters
-            'Color', 'k', ...    % Set text color to black
-            'FontSize', 9, ...
-            'VerticalAlignment', 'top');  % Align text to the top
+    % Check the number of rows in either condition to count sessions
+    num_sessions(monkey_idx) = size(data_before, 1); % Rows represent the number of sessions
+end
+
+% Create a string to use in the annotation
+session_annotation = "";
+for monkey_idx = 1:length(num_sessions)
+    session_annotation = session_annotation + ...
+        sprintf('Monkey %s: %d sessions\n', first_letters{monkey_idx}, num_sessions(monkey_idx));
+end
+
+
+
+% Initializing
+session_annotation_Bac = "";
+session_annotation_Lin = "";
+
+% Info about session
+for monkey_idx = 1:length(num_sessions)
+    if monkey_idx == 1
+        % for Bacchus
+        session_annotation_Bac = sprintf('Monkey %s: %d sessions\n', first_letters{monkey_idx}, num_sessions(monkey_idx));
+    elseif monkey_idx == 2
+        % for Linus
+        session_annotation_Lin = sprintf('Monkey %s: %d sessions\n', first_letters{monkey_idx}, num_sessions(monkey_idx));
     end
 end
 
 
 
-%% creating a universal name for the output file
+% Initializing the structure 
+monkey_Units_Trials_info = struct();
 
-% Modernisation of the basic file name using an existing file name
-meanResultsFilename_before = generateMeanFilename(data_for_plotting_averages_before.decodingResultsFilename); % Remove "_DECODING_RESULTS".
-meanResultsFilename_after = generateMeanFilename(data_for_plotting_averages_after.decodingResultsFilename);
+for monkey_idx = 1:length(monkey)
+    current_monkey = monkey{monkey_idx};
 
-
-% Find differences in the filenames
-[diff_1, diff_2, common_prefix, common_suffix] = find_filename_differences(meanResultsFilename_before, meanResultsFilename_after);
-
-% Create the name of the output file
-basicNameForOutputFile = [common_prefix diff_1 '_and_' diff_2 common_suffix(1:end-4)];
-basicNameForOutputFile = [basicNameForOutputFile, '_same_cv'];
-%output_file_Statistical_results = [output_folder common_prefix diff_1 '_and_' diff_2 common_suffix '_Wilcoxon_Signed-Rank_Test.txt'];
-
-
-%% Perform Wilcoxon Signed-Rank Test
-% Null hypothesis (H₀): The difference between paired samples X and Y has a median equal to zero. In other words, it states that there is no significant difference between the two samples X and Y.
-% Alternative hypothesis (H₁): The difference between paired samples X and Y has a median different from zero. That is, there is a significant difference between the two samples X and Y.
-
-% A small p-value (typically ≤ 0.05) suggests that the differences are statistically significant
-% h = 0: Fail to reject the null hypothesis, indicating that there is no statistically significant difference between the before and after inactivation data.
-% h = 1: Reject the null hypothesis, indicating that there is a statistically significant difference between the before and after inactivation data
-[p_crit_Wilcoxon] = perform_paired_wilcoxon_test(data_for_plotting_averages_before.mean_decoding_results_100, data_for_plotting_averages_after.mean_decoding_results_100, data_for_plotting_averages_before.timeValues, basicNameForOutputFile, OUTPUT_PATH_binned_data_for_saving);
-
-% test_Wilcoxon_annotation = ['Wilcoxon (p = 0.05),'];
-test_Wilcoxon_annotation = sprintf('Wilcoxon (* - p<%.2f),', p_crit_Wilcoxon);
-annotation('textbox', [centerX - 0.18, centerY + 0.22, 0.2, 0.2], ...
-    'String', test_Wilcoxon_annotation, 'FontSize', 10, 'EdgeColor', 'none', 'HorizontalAlignment', 'center');
-
-
-%% Perform cluster-based permutation test
-% [clusters, p_values, t_sums, permutation_distribution ] = permutest( decoding_before, decoding_after, 1, 0.05, 500);
-
-
-[p_crit_permutation] = perform_permutation_test(data_for_plotting_averages_before.mean_decoding_results_100, data_for_plotting_averages_after.mean_decoding_results_100, data_for_plotting_averages_before.timeValues, basicNameForOutputFile, OUTPUT_PATH_binned_data_for_saving)
-
-%test_Perut_annotation = ['Permutest (p = 0.05)'];
-test_Perut_annotation = sprintf('Permutest (* - p<%.2f)', p_crit_permutation);
-annotation('textbox', [centerX - 0.01, centerY + 0.22, 0.2, 0.2], ...
-    'String', test_Perut_annotation, 'FontSize', 10, 'EdgeColor', 'none', 'HorizontalAlignment', 'center', 'Color', [0.2, 0.6, 0.2]);
-
-%% Plotting the average curve
-
-% Calculate the average dynamics by day
-average_dynamics_by_day_before = mean(data_for_plotting_averages_before.mean_decoding_results_100, 2);
-average_dynamics_by_day_after = mean(data_for_plotting_averages_after.mean_decoding_results_100, 2);
-
-% Calculate the standard error of the mean (SEM)
-sem_before = std(data_for_plotting_averages_before.mean_decoding_results_100, 0, 2) / sqrt(size(data_for_plotting_averages_before.mean_decoding_results_100, 2));
-sem_after = std(data_for_plotting_averages_after.mean_decoding_results_100, 0, 2) / sqrt(size(data_for_plotting_averages_after.mean_decoding_results_100, 2));
-
-
-
-darkBlueColor = [0, 0, 0.5]; % Define a darker shade of blue
-darkRedColor = [0.6350 0.0780 0.1840];
-
-
-% Plot the average dynamics with error bars on the same figure
-hold on; % Add the new plot to the existing one
-%             plot_average_dynamics = errorbar(timeValues, average_dynamics_by_day, sem, 'LineWidth', 2, 'Color', darkBlueColor); % Use a thicker line and blue color for the average dynamics with error bars
-%             plot_average_dynamics.LineWidth = 1;
-[hp1_bef, hp2_bef] =  ig_errorband(data_for_plotting_averages_before.timeValues, average_dynamics_by_day_before, sem_before, 0);
-hp1_bef.Color = [0, 0, 0.5]; % darkBlueColor
-hp2_bef.FaceColor = [0, 0, 0.5]; % darkBlueColor
-
-[hp1_aft hp2_aft] =  ig_errorband(data_for_plotting_averages_after.timeValues, average_dynamics_by_day_after, sem_after, 0);
-hp1_aft.Color = [0.6350 0.0780 0.1840]; % darkRedColor
-hp2_aft.FaceColor = [0.6350 0.0780 0.1840]; % darkRedColor
-
-plot(data_for_plotting_averages_before.timeValues, average_dynamics_by_day_before, 'LineWidth', 3, 'Color', darkBlueColor);
-plot(data_for_plotting_averages_after.timeValues, average_dynamics_by_day_after, 'LineWidth', 3, 'Color', darkRedColor);
-hold off;
-
-session_info_combined_for_text_Num_CV_Splits_before = strjoin(data_for_plotting_averages_before.session_info_combined, '\n');
-session_info_combined_for_text_Num_CV_Splits_after = strjoin(data_for_plotting_averages_after.session_info_combined, '\n');
-
-drawnow;
-
-%% Saving
-% Save the session information to a text file
-name_of_txt_Num_CV_Splits = ['Sessions_Num_CV_Splits_Info_' basicNameForOutputFile '.txt'];
-sessionInfoFilePath_Num_CV_Splits = fullfile(OUTPUT_PATH_binned_data_for_saving, name_of_txt_Num_CV_Splits);
-fid = fopen(sessionInfoFilePath_Num_CV_Splits, 'w');
-fprintf(fid, '%s:\n', block_info_before);
-fprintf(fid, '\n');
-fprintf(fid, '%s\n', session_info_combined_for_text_Num_CV_Splits_before);
-fprintf(fid, '\n');
-fprintf(fid, '%s:\n', block_info_after);
-fprintf(fid, '\n');
-fprintf(fid, '%s\n', session_info_combined_for_text_Num_CV_Splits_after);
-fclose(fid);
-
-
-
-
-% Making up an ending to the name of the picture depending on the colour of the curve
-if isequal(curves_per_session, 'Color')
-    Color_curves_name = '_Color';
-elseif isequal(curves_per_session, 'Same')
-    Color_curves_name = '';
-elseif isequal(curves_per_session, 'nis') % no individual session
-    Color_curves_name = '_nis';
+    info_str_after = data_for_plotting_averages_after.(current_monkey).cueON.numOfUnits_and_numOfTrials_info_labelsAppears;
+    info_str_before = data_for_plotting_averages_before.(current_monkey).cueON.numOfUnits_and_numOfTrials_info_labelsAppears;
+    
+    monkey_Units_Trials_info.(current_monkey).before = info_str_before;
+    monkey_Units_Trials_info.(current_monkey).after = info_str_after;
 end
 
 
-% Save the pic
-path_name_to_save = fullfile (OUTPUT_PATH_binned_data_for_saving,[basicNameForOutputFile '_AverageDynamics' Color_curves_name '_Stat.png']);
-saveas(gcf, path_name_to_save);
 
-close(gcf);
+
+
+
+%% Plot
+
+% title
+title_text = sprintf('%s; %s', target_brain_structure, strrep(combinedLabel, ' ', ', '));
+
+% plot 
+f1 = create_boxplot(data, epoch_names, group_names, title_text, session_annotation_Bac, session_annotation_Lin, monkey_Units_Trials_info, color_fig1.color_RGB, 0, 50, 0, 1, 1);
+f2 = create_boxplot(data, epoch_names, group_names, title_text, session_annotation_Bac, session_annotation_Lin, monkey_Units_Trials_info, color_fig2.color_RGB, 1, 40, 0, 0.7, 0);
+
+% save
+filename1 = sprintf('boxplot_for_%s_%s_%s_%s_%s_%s_clear_boxes.png', monkey_str, typeOfDecoding, target_brain_structure, epochs_str, block_str, combinedLabel);
+saveas(f1, fullfile(OUTPUT_PATH_binned_data_for_saving, filename1));
+filename2 = sprintf('boxplot_for_%s_%s_%s_%s_%s_%s_color_boxes.png', monkey_str, typeOfDecoding, target_brain_structure, epochs_str, block_str, combinedLabel);
+saveas(f2, fullfile(OUTPUT_PATH_binned_data_for_saving, filename2));
+
+
+
+close(f1);
+close(f2);
+
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% % different color scheme, a color flip, different outlier symbol
+% % 1. different color scheme, a color flip, different outlier symbol
+% f1 = figure;
+% h = daboxplot(data,'xtlabels', epoch_names,...
+%     'colors',color_fig1.color_RGB,'fill',0,'whiskers',0,'scatter',2,'outsymbol','k+',...
+%     'outliers',1,'scattersize',50,'flipcolors',1,'boxspacing',1.5, 'boxwidth', 0.8, ...
+%      'legend',group_names);
+% xl = xlim; xlim([xl(1), xl(2)+1.1]); % make more space for the legend
+% 
+% 
+% set(gca,'FontSize',13);
+% set(gcf,'position',[550, 185, 925, 805])  % set(gcf,'position',[610,420,770,500])
+% set(gca, 'Position', [0.08, 0.045, 0.9, 0.52])  % set(gca, 'Position', [0.08, 0.08, 0.9, 0.8] )
+% tickPositions = 50:10:100; % Calculate the tick positions every 200 ms
+% yticks(tickPositions);
+% ylim([50 100])
+% ylabel('Classification Accuracy', 'Position', [0.2, 75]) % move the label of OY axis  away from the Y axis [X Y same as axis] !!
+% title_text = sprintf('%s; %s', target_brain_structure, strrep(combinedLabel, ' ', ', ')); % Create the title
+% title(title_text);
+% h_title = title(title_text);
+% title_pos = get(h_title, 'Position'); % Get the current coordinates of the heading position
+% set(h_title, 'Position', [title_pos(1) - 0.5, title_pos(2) + 1.4, title_pos(3)]); % Move the title to the left (decrease the X-coordinate)
+% 
+% annotation('textbox', [0.11, 0.87, 0.2, 0.1], 'String', session_annotation_Bac, ...
+%     'FitBoxToText', 'on', 'FontSize', 11, 'EdgeColor', 'none', 'FontWeight', 'bold'); % No box around the annotation
+% 
+% annotation('textbox', [0.55, 0.87, 0.2, 0.1], 'String', session_annotation_Lin, ...
+%     'FitBoxToText', 'on', 'FontSize', 11, 'EdgeColor', 'none', 'FontWeight', 'bold'); % No box around the annotation
+% 
+% 
+%  
+% annotation('textbox', [0.12, 0.73, 0.3, 0.2], 'String', monkey_Units_Trials_info.Bacchus.before, ...
+%     'FitBoxToText', 'on', 'FontSize', 10, 'EdgeColor', 'none', 'Color', [0.4666, 0.6627, 0.3098], 'FontWeight', 'bold');
+% 
+% annotation('textbox', [0.12, 0.58, 0.3, 0.2], 'String', monkey_Units_Trials_info.Bacchus.after, ...
+%     'FitBoxToText', 'on', 'FontSize', 10, 'EdgeColor', 'none', 'Color', [0.2921, 0.5058, 0.2921], 'FontWeight', 'bold');
+% 
+% annotation('textbox', [0.56, 0.73, 0.3, 0.2], 'String', monkey_Units_Trials_info.Linus.before, ...
+%     'FitBoxToText', 'on', 'FontSize', 10, 'EdgeColor', 'none', 'Color', [0.2705, 0.5058, 0.6627], 'FontWeight', 'bold');
+% 
+% annotation('textbox', [0.56, 0.58, 0.3, 0.2], 'String', monkey_Units_Trials_info.Linus.after, ...
+%     'FitBoxToText', 'on', 'FontSize', 10, 'EdgeColor', 'none', 'Color', [0.1745, 0.3313, 0.5058], 'FontWeight', 'bold');
+% 
+% 
+% filename1 = sprintf('boxplot_for_%s_%s_%s_%s_%s_%s_clear_boxes.png', monkey_str, typeOfDecoding, target_brain_structure, epochs_str, block_str, combinedLabel);
+% 
+% 
+% 
+% 
+% % 2. transparent boxplots with no whiskers and jittered datapoints underneath
+% f2 = figure;
+% h = daboxplot(data,'scatter',2,'whiskers',0,'boxalpha',0.7,...
+%     'xtlabels', epoch_names, 'colors',color_fig2.color_RGB, 'outsymbol','k*', ...
+%     'scattersize',40, 'flipcolors',0, 'boxspacing',1.5, 'boxwidth', 0.8);
+% xl = xlim; xlim([xl(1), xl(2)+1.1]);       % make space for the legend
+% legend([h.bx(1,:)],group_names);            % add the legend manually
+% 
+% set(gca,'FontSize',13);
+% set(gcf,'position',[550, 185, 925, 805]) % set(gcf,'position',[610,420,770,650])
+% set(gca, 'Position', [0.08, 0.045, 0.9, 0.52])
+% %tickPositions = 50:10:100; % Calculate the tick positions every 200 ms
+% yticks(tickPositions);
+% ylim([50 100])
+% ylabel('Classification Accuracy', 'Position', [0.2, 75]) % move the label of OY axis  away from the Y axis
+% h_title = title(title_text);
+% title_pos = get(h_title, 'Position'); % Get the current coordinates of the header position
+% set(h_title, 'Position', [title_pos(1) - 0.5, title_pos(2) + 1.4, title_pos(3)]); % Move the title to the left (decrease the X-coordinate)
+% 
+% % titlePos = get(t, 'Position');
+% % titlePos(2) = titlePos(2) + 10; % Increase the vertical position by 5
+% % set(t, 'Position', titlePos);
+% 
+% annotation('textbox', [0.11, 0.87, 0.2, 0.1], 'String', session_annotation_Bac, ...
+%     'FitBoxToText', 'on', 'FontSize', 11, 'EdgeColor', 'none', 'FontWeight', 'bold'); % No box around the annotation
+% 
+% annotation('textbox', [0.55, 0.87, 0.2, 0.1], 'String', session_annotation_Lin, ...
+%     'FitBoxToText', 'on', 'FontSize', 11, 'EdgeColor', 'none', 'FontWeight', 'bold'); % No box around the annotation
+% 
+% 
+% 
+% annotation('textbox', [0.12, 0.73, 0.3, 0.2], 'String', monkey_Units_Trials_info.Bacchus.before, ...
+%     'FitBoxToText', 'on', 'FontSize', 10, 'EdgeColor', 'none', 'Color', [0.4666, 0.6627, 0.3098], 'FontWeight', 'bold');
+% 
+% annotation('textbox', [0.12, 0.58, 0.3, 0.2], 'String', monkey_Units_Trials_info.Bacchus.after, ...
+%     'FitBoxToText', 'on', 'FontSize', 10, 'EdgeColor', 'none', 'Color', [0.2921, 0.5058, 0.2921], 'FontWeight', 'bold');
+% 
+% annotation('textbox', [0.56, 0.73, 0.3, 0.2], 'String', monkey_Units_Trials_info.Linus.before, ...
+%     'FitBoxToText', 'on', 'FontSize', 10, 'EdgeColor', 'none', 'Color', [0.2705, 0.5058, 0.6627], 'FontWeight', 'bold');
+% 
+% annotation('textbox', [0.56, 0.58, 0.3, 0.2], 'String', monkey_Units_Trials_info.Linus.after, ...
+%     'FitBoxToText', 'on', 'FontSize', 10, 'EdgeColor', 'none', 'Color', [0.1745, 0.3313, 0.5058], 'FontWeight', 'bold');
+% 
+% 
+% 
+% 
+% 
+% 
+% filename2 = sprintf('boxplot_for_%s_%s_%s_%s_%s_%s_color_boxes.png', monkey_str, typeOfDecoding, target_brain_structure, epochs_str, block_str, combinedLabel);
+% 
+% % Save the figures
+% saveas(f1, fullfile(OUTPUT_PATH_binned_data_for_saving, filename1));
+% saveas(f2, fullfile(OUTPUT_PATH_binned_data_for_saving, filename2));
+% 
+% 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%close(gcf);
 %end
 
 end
 
 
+function f = create_boxplot(data, epoch_names, group_names, title_text, session_annotation_Bac, session_annotation_Lin, monkey_Units_Trials_info, color_fig, fill_flag, scatter_size, whisker_flag, box_alpha, flipcolors_flag)
+   % Plot a graph with parameters
+    f = figure;
+    h = daboxplot(data, 'xtlabels', epoch_names, ...
+        'colors', color_fig, 'fill', fill_flag, 'whiskers', whisker_flag, 'boxalpha',box_alpha, 'scatter', 2, 'outsymbol', 'k*', ...
+        'outliers', 1, 'scattersize', scatter_size, 'flipcolors', flipcolors_flag, 'boxspacing', 1.5, 'boxwidth', 0.8, ...
+        'legend', group_names);
 
-% % for Cue :
-% % Определяем временное окно
-% window_start = 20;
-% window_end = 200;
-%
-% % Получаем времена начала бинов и их ширину
-% bin_start_times = DECODING_RESULTS.DS_PARAMETERS.binned_site_info.binning_parameters.the_bin_start_times;
-% bin_width = DECODING_RESULTS.DS_PARAMETERS.binned_site_info.binning_parameters.bin_width;
-%
-% % Находим индексы бинов, которые полностью находятся внутри нашего окна
-% valid_bins = find((bin_start_times >= window_start) & (bin_start_times + bin_width <= window_end));
-%
-% % Добавляем по одному бину с каждого конца
-% extended_valid_bins = [valid_bins(1)-1, valid_bins, valid_bins(end)+1];
-%
-% % Выводим результаты
-% disp('Индексы подходящих бинов:');
-% disp(extended_valid_bins');
-%
-% disp('Времена начала подходящих бинов:');
-% disp(bin_start_times(extended_valid_bins)');
-%
-% % Выводим времена окончания бинов
-% bin_end_times = bin_start_times + bin_width;
-% disp('Времена окончания подходящих бинов:');
-% disp(bin_end_times(extended_valid_bins)');
+    xl = xlim; xlim([xl(1), xl(2) + 1.0]); % make more space for the legend
+    set(gca, 'FontSize', 13);
+    set(gcf, 'position', [550, 185, 925, 805])  % set(gcf,'position',[610,420,770,500])
+    set(gca, 'Position', [0.08, 0.045, 0.9, 0.52])  % set(gca, 'Position', [0.08, 0.08, 0.9, 0.8] )
+    tickPositions = 20:10:100; % Calculate the tick positions every 200 ms
+    yticks(tickPositions);
+    ylim([20 100])
+    ylabel('Classification Accuracy', 'Position', [0.2, 75]) % move the label of OY axis  away from the Y axis [X Y same as axis]
+
+    % Title
+    title(title_text);
+    h_title = title(title_text);
+    title_pos = get(h_title, 'Position'); % Get the current coordinates of the heading position
+    set(h_title, 'Position', [title_pos(1) - 0.5, title_pos(2) + 1.4, title_pos(3)]); % Move the title to the left (decrease the X-coordinate)
+
+    % Adding annotations
+    add_annotations(session_annotation_Bac, session_annotation_Lin, monkey_Units_Trials_info);
+end
+
+
+
+function add_annotations(session_annotation_Bac, session_annotation_Lin, monkey_Units_Trials_info)
+    % Adding annotations for Bacchus (session info)
+    annotation('textbox', [0.11, 0.87, 0.2, 0.1], 'String', session_annotation_Bac, ...
+        'FitBoxToText', 'on', 'FontSize', 11, 'EdgeColor', 'none', 'FontWeight', 'bold'); % No box around the annotation
+
+    % Adding annotations for Linus (session info)
+    annotation('textbox', [0.57, 0.87, 0.2, 0.1], 'String', session_annotation_Lin, ...
+        'FitBoxToText', 'on', 'FontSize', 11, 'EdgeColor', 'none', 'FontWeight', 'bold'); % No box around the annotation
+
+    
+    
+    % Coloring the annotation for Bacchus (before) in light green
+    annotation('textbox', [0.13, 0.73, 0.3, 0.2], 'String', monkey_Units_Trials_info.Bacchus.before, ...
+        'FitBoxToText', 'on', 'FontSize', 10, 'EdgeColor', 'none', 'Color', [0.4666, 0.6627, 0.3098], 'FontWeight', 'bold');
+
+    % Coloring the annotation for Bacchus (after) in dark green
+    annotation('textbox', [0.13, 0.58, 0.3, 0.2], 'String', monkey_Units_Trials_info.Bacchus.after, ...
+        'FitBoxToText', 'on', 'FontSize', 10, 'EdgeColor', 'none', 'Color', [0.2921, 0.5058, 0.2921], 'FontWeight', 'bold');
+
+    % Coloring the annotation for Linus (before) in light blue
+    annotation('textbox', [0.59, 0.73, 0.3, 0.2], 'String', monkey_Units_Trials_info.Linus.before, ...
+        'FitBoxToText', 'on', 'FontSize', 10, 'EdgeColor', 'none', 'Color', [0.2705, 0.5058, 0.6627], 'FontWeight', 'bold');
+
+    % Coloring the annotation for Linus (after) in dark blue
+    annotation('textbox', [0.59, 0.58, 0.3, 0.2], 'String', monkey_Units_Trials_info.Linus.after, ...
+        'FitBoxToText', 'on', 'FontSize', 10, 'EdgeColor', 'none', 'Color', [0.1745, 0.3313, 0.5058], 'FontWeight', 'bold');
+end
