@@ -629,13 +629,13 @@ for prefixIdx = 1:numel(uniquePrefixes)
         
     else
         % For other prefixes, select files with blocks 1, 3, and 4
-        if any(contains(files_with_prefix, 'block_1')) && any(contains(files_with_prefix, 'block_3'))
+        if any(contains(files_with_prefix, 'block_1')) && any(contains(files_with_prefix, 'block_3'))  && any(contains(files_with_prefix, 'block_4'))
             % Include block 4 if it exists; otherwise, include only blocks 1 and 3
-            if any(contains(files_with_prefix, 'block_4'))
+          %  if any(contains(files_with_prefix, 'block_4'))
                 selected_files = files_with_prefix(contains(files_with_prefix, 'block_1') | ...
                     contains(files_with_prefix, 'block_3') | ...
                     contains(files_with_prefix, 'block_4'));
-            end
+          %  end
         else
             selected_files = {}; % If no blocks 1 or 3 are present, skip this prefix
         end

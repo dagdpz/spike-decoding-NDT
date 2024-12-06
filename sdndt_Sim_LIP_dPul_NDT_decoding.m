@@ -53,8 +53,8 @@ startTime = tic;
 % For example, if you are working with block_1 and block_3, then be sure that before you start decoding block 3,
 % you have already created the data for block 1 (and therefore already know the num_cv_splits).
 
-listOfRequiredFiles = {% 'firstBlockFiles' ,... 
-    'thirdBlockFiles' %,   %, 'fourthBlockFiles'
+listOfRequiredFiles = { 'firstBlockFiles' ,... 
+    'thirdBlockFiles' ,    'fourthBlockFiles'
     }
 %'secondBlockFiles', ...     'thirdBlockFiles', 'fourthBlockFiles' %, ...
 %     'fifthBlockFiles', 'sixthBlockFiles', ...
@@ -104,8 +104,8 @@ targetParams.GOSignal = 4;
 numFieldNames = numel(fieldnames(targetParams));
 
 %% Define labels_to_use as a cell array containing both values
-labels_to_use = {'instr_R_instr_L' , ...
-   %'choice_R_choice_L'
+labels_to_use = {%'instr_R_instr_L' , ...
+   'choice_R_choice_L'
  };
 % labels_to_use = {'instr_R_instr_L'};
 

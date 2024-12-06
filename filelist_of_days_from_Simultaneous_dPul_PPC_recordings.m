@@ -42,7 +42,7 @@ elseif strcmp(injection, '1') % '1' means 'injection sessions'
                 '20210520'
                 '20210610'
                 '20210616'
-                '20210709' % only one post-inj block !
+                 '20210709' % only one post-inj block !
                 '20210901'
                 '20211006'
                 '20211021'

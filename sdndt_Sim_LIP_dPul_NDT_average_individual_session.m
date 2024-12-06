@@ -2,6 +2,7 @@ function sdndt_Sim_LIP_dPul_NDT_average_individual_session(monkey, injection, ty
 
 % For across session analysis, you just need to average individual session
 % sdndt_Sim_LIP_dPul_NDT_average_individual_session('Bacchus', '1', 'merged_files_across_sessions', 'nis')
+% sdndt_Sim_LIP_dPul_NDT_average_individual_session('Bacchus', '1', 'two_group_combination', 'nis')
 
 
 % monkey: 'Linus', 'Bacchus'
@@ -996,6 +997,18 @@ session_colors_Appearance_Blue = {
     'Light Steel Blue';  % Light Steel Blue for the seventh session
     };
 
+
+
+if data_for_plotting_averages_before.timeValues(1) > 0
+    data_for_plotting_averages_before.timeValues = data_for_plotting_averages_before.timeValues - 500;
+end
+
+if data_for_plotting_averages_after.timeValues(1) > 0
+    data_for_plotting_averages_after.timeValues = data_for_plotting_averages_after.timeValues - 500;
+end
+
+
+
 % Updating session_info for data_for_plotting_averages_before
 numSessionsBefore = numel(data_for_plotting_averages_before.session_info);
 for b = 1:numSessionsBefore
@@ -1108,7 +1121,7 @@ end
 
 
 
-tickPositions = 0:200:1000; % Calculate the tick positions every 200 ms
+tickPositions = -500:200:500; % Calculate the tick positions every 200 ms
 xticks(tickPositions);  % Set the tick positions on the X-axis
 
 xlabel('Time (ms)', 'FontSize', 30); % Set the font size to 14 for the xlabel
@@ -1122,7 +1135,7 @@ ax.XAxis.Visible = 'on';  % Show X-axis
 
 ax.FontSize = 12; % Set the font size for the axis tick labels
 
-xline(500); % draw a vertical line at 500
+xline(0); % draw a vertical line at 500
 yline(50); % draw a horizontal line at 50
 set(gca,'Xlim',settings.time_lim, 'Ylim',settings.y_lim); % limitation of the X (from 0 to 1000) and Y (from 20 to 100) axes
 
@@ -1326,6 +1339,8 @@ darkRedColor = [0.6350 0.0780 0.1840];
 hold on; % Add the new plot to the existing one
 %             plot_average_dynamics = errorbar(timeValues, average_dynamics_by_day, sem, 'LineWidth', 2, 'Color', darkBlueColor); % Use a thicker line and blue color for the average dynamics with error bars
 %             plot_average_dynamics.LineWidth = 1;
+
+
 [hp1_bef, hp2_bef] =  ig_errorband(data_for_plotting_averages_before.timeValues, average_dynamics_by_day_before, sem_before, 0);
 hp1_bef.Color = [0, 0, 0.5]; % darkBlueColor
 hp2_bef.FaceColor = [0, 0, 0.5]; % darkBlueColor
@@ -1340,6 +1355,24 @@ hold off;
 
 session_info_combined_for_text_Num_CV_Splits_before = strjoin(data_for_plotting_averages_before.session_info_combined, '\n');
 session_info_combined_for_text_Num_CV_Splits_after = strjoin(data_for_plotting_averages_after.session_info_combined, '\n');
+
+
+
+
+ax = gca;
+ax.XAxis.FontSize = 12; % Font size for X-axis labels
+ax.YAxis.FontSize = 12; % Font size for Y-axis labels
+
+
+% Shift Y-axis number signatures to the left (in this case, a positive value moves them away from the axis)
+ax.YAxis.TickLabelInterpreter = 'none'; % Remove TeX interpretation (if it interferes)
+ax.YAxis.TickLength = [0.02, 0.02]; % Setting the length of ticks (divisions)
+
+% Visual indentation for numbers (TickLabels) on the Y axis
+ax.YRuler.TickLabelGapOffset = 12;  % Setting the indentation of numbers on the Y-axis from the axis itself
+
+
+
 
 drawnow;
 

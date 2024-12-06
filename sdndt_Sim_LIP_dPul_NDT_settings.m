@@ -56,7 +56,7 @@ end
 settings.windowAroundEvent = 0.5; % s:  epoch to take around the trigger event
 
 % data preparation to create binned_data
-settings.start_time = 1; % ms
+settings.start_time = 1-500; % ms
 settings.bin_width = 100; % ms
 settings.step_size = 25; % ms
 
@@ -81,7 +81,8 @@ settings.num_times_to_repeat_each_label_per_cv_split = 2; % can have multiple re
 settings.create_simultaneously_recorded_populations = 1; % flag, which specifies that the data was recorded at the simultaneously (if not simultaneously - 0)
 
 % plotting
-settings.time_lim = [0 1000]; % s, relative to cue onset
+% settings.time_lim = [0 1000]; % s, relative to cue onset
+settings.time_lim = [-500 500];
 settings.y_lim = [20 100];
 
 % settings.significant_event_times = [0 500 1000]; % for plotting relevant trial events

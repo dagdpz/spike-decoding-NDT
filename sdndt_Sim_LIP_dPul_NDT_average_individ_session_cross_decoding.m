@@ -37,7 +37,7 @@ startTime = tic;
            }; % select the data to be used for the test
     elseif strcmp(monkey, 'Linus')
         listOfRequiredFiles_test = {%'overlapBlocksFiles_BeforeInjection_3_4', 'overlapBlocksFiles_AfterInjection_3_4'%, ...
-           'thirdBlockFiles', 'fourthBlockFiles' % 'firstBlockFiles', 
+            'thirdBlockFiles', 'fourthBlockFiles' % 'firstBlockFiles', 
            };
     end
     
@@ -97,7 +97,7 @@ labels_to_use = {'instr_R_instr_L', 'choice_R_choice_L'};
 %% Define valid combinations of injection and target_brain_structure
 if strcmp(injection, '1') || strcmp(injection, '0')
     combinations_inj_and_target_brain_structure = struct('injection', {injection, injection}, 'target_brain_structure', {'LIP_L', 'LIP_R'});
-    %     combinations_inj_and_target_brain_structure = struct('injection', { injection}, 'target_brain_structure', {'LIP_R'});
+   %      combinations_inj_and_target_brain_structure = struct('injection', { injection}, 'target_brain_structure', {'LIP_L'});
     
 elseif strcmp(injection, '2')
     combinations_inj_and_target_brain_structure = struct('injection', {injection, injection}, 'target_brain_structure', {'dPul_L', 'LIP_L'});
@@ -1051,7 +1051,7 @@ ax.YRuler.TickLabelGapOffset = 19;  % Setting the indentation of numbers on the 
 
 % Setting axis captions and axis dimensions
 xlabel('Time (ms)', 'FontSize', 19);
-ylabel('Spikes/s', 'FontSize', 19);
+ylabel('Classification Accuracy', 'FontSize', 19);
 
 
 
@@ -1101,13 +1101,13 @@ if numOfData == numel(dateOfRecording)
     % A small p-value (typically ≤ 0.05) suggests that the differences are statistically significant
     % h = 0: Fail to reject the null hypothesis, indicating that there is no statistically significant difference between the before and after inactivation data.
     % h = 1: Reject the null hypothesis, indicating that there is a statistically significant difference between the before and after inactivation data
-    [p_crit_Wilcoxon] = perform_wilcoxon_test(data_for_plotting_averages.mean_decoding_results_100, data_for_plotting_averages.timeValues_0, meanResultsFilename, OUTPUT_PATH_binned_data_for_saving);
+ %   [p_crit_Wilcoxon] = perform_wilcoxon_test(data_for_plotting_averages.mean_decoding_results_100, data_for_plotting_averages.timeValues_0, meanResultsFilename, OUTPUT_PATH_binned_data_for_saving);
     
     
     % test_Wilcoxon_annotation = ['Wilcoxon (p = 0.05),'];
-    test_Wilcoxon_annotation = sprintf('Wilcoxon (* - p<%.2f),', p_crit_Wilcoxon);
-    annotation('textbox', [centerX - 0.1, centerY + 0.23, 0.2, 0.2], ...
-        'String', test_Wilcoxon_annotation, 'FontSize', 11, 'EdgeColor', 'none', 'HorizontalAlignment', 'center');
+%     test_Wilcoxon_annotation = sprintf('Wilcoxon (* - p<%.2f),', p_crit_Wilcoxon);
+%     annotation('textbox', [centerX - 0.1, centerY + 0.23, 0.2, 0.2], ...
+%         'String', test_Wilcoxon_annotation, 'FontSize', 11, 'EdgeColor', 'none', 'HorizontalAlignment', 'center');
     
     
     %% Perform cluster-based permutation test

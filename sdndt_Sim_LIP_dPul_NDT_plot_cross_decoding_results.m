@@ -53,6 +53,26 @@ else
     %labels_to_use_string = strjoin(DECODING_RESULTS.DS_PARAMETERS.label_names_to_use);
 end
 
+% Shift of time labels
+% alignment_event_time = 501;  % Время события (по умолчанию середина шкалы)
+% DECODING_RESULTS.DS_PARAMETERS.binned_site_info.binning_parameters.the_bin_start_times = ...
+%     DECODING_RESULTS.DS_PARAMETERS.binned_site_info.binning_parameters.the_bin_start_times - alignment_event_time;
+
+% DECODING_RESULTS.DS_PARAMETERS.binned_site_info.binning_parameters.alignment_event_time = 500; 
+% DECODING_RESULTS.DS_PARAMETERS.binned_site_info.binning_parameters.alignment_type = 2; 
+ 
+
+% Сдвигаем значения так, чтобы первый элемент стал -500
+% DECODING_RESULTS.DS_PARAMETERS.binned_site_info.binning_parameters.the_bin_start_times = DECODING_RESULTS.DS_PARAMETERS.binned_site_info.binning_parameters.the_bin_start_times - 500;
+% DECODING_RESULTS.DS_PARAMETERS.binned_site_info.binning_parameters.start_time = DECODING_RESULTS.DS_PARAMETERS.binned_site_info.binning_parameters.start_time - 500;
+% DECODING_RESULTS.DS_PARAMETERS.binned_site_info.binning_parameters.end_time = DECODING_RESULTS.DS_PARAMETERS.binned_site_info.binning_parameters.end_time - 500;
+
+
+% plot_obj.the_bin_start_times = DECODING_RESULTS.DS_PARAMETERS.binned_site_info.binning_parameters.the_bin_start_times - 500;
+% plot_obj.start_time = DECODING_RESULTS.DS_PARAMETERS.binned_site_info.binning_parameters.start_time - 500;
+% plot_obj.end_time = DECODING_RESULTS.DS_PARAMETERS.binned_site_info.binning_parameters.end_time - 500;
+
+
 
 result_names{1} = save_file_name;
 % create the plot results object
@@ -184,7 +204,7 @@ numOfUnits_and_numOfTrials_info = sprintf('Num of Units: %s\nNum of Trials (trai
 % numOfUnits_and_numOfTrials_info_labelsAppears = [numOfUnits_and_numOfTrials_info, labelCountsInfo];
 
 % change the size of the figure
-set(gcf,'position',[450,400,700,560]) % [x0,y0,width,height]
+set(gcf,'position',[450,400,730,580]) % [x0,y0,width,height]
 
 
 % Set font size for axes
@@ -192,10 +212,10 @@ set(gca, 'FontSize', 11); % Here 11 is font size
 
 
 % Add text using the annotation function
-positionOfAnnotation = [0.75, 0.5, 0.26, 0.28]; % [x position, y position, size x, size y]
+positionOfAnnotation = [0.76, 0.5, 0.26, 0.28]; % [x position, y position, size x, size y]
 annotation('textbox', positionOfAnnotation, 'String', numOfUnits_and_numOfTrials_info, ...
     'FontSize', 10, 'HorizontalAlignment', 'left','FitBoxToText','on');
-set(gca, 'Position', [0.1, 0.13, 0.61, 0.72] ) % change the position of the axes to fit the annotation into the figure too.
+%set(gca, 'Position', [0.1, 0.13, 0.61, 0.72] ) % change the position of the axes to fit the annotation into the figure too.
 
 % Ensure the figure is active before adding the text
 % axes(fig1, 'Position',[0.0932277834525026 0.134420631630453 0.775 0.709626991319852]);
@@ -231,11 +251,34 @@ s.Position(2) = s.Position(2) + 0.04; % Shifting the subheading upwards on the Y
 % set(s, 'Position', sPos);
 
 
+%% Setting of axes
 
-xline(500); 
-set(gca,'Xlim',settings.time_lim, 'Ylim',settings.y_lim);
+xline(0); 
+set(gca, 'Xlim', settings.time_lim, 'Ylim', settings.y_lim); % Установка пределов графика
+xticks(-500:200:500); % Промежутки оси X каждые 200 мс
+xticklabels(arrayfun(@num2str, -500:200:500, 'UniformOutput', false)); % Подписи для меток оси X
 
 
+ax = gca;
+ax.XAxis.FontSize = 12; % Font size for X-axis labels
+ax.YAxis.FontSize = 12; % Font size for Y-axis labels
+
+
+% Shift Y-axis number signatures to the left (in this case, a positive value moves them away from the axis)
+ax.YAxis.TickLabelInterpreter = 'none'; % Remove TeX interpretation (if it interferes)
+ax.YAxis.TickLength = [0.02, 0.02]; % Setting the length of ticks (divisions)
+
+% Visual indentation for numbers (TickLabels) on the Y axis
+ax.YRuler.TickLabelGapOffset = 8;  % Setting the indentation of numbers on the Y-axis from the axis itself
+
+% Setting axis captions and axis dimensions
+xlabel('Time (ms)', 'FontSize', 15);
+ylabel('Classification Accuracy', 'FontSize', 16);
+
+set(gca, 'Position', [0.11, 0.096, 0.62, 0.75] ) % change the position of the axes to fit the annotation into the figure too.
+
+
+%% save
 
 saveas(gcf, [save_file_name(1:end-4) '_DA_as_a_function_of_time.png']);
 

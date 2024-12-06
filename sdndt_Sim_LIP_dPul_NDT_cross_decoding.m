@@ -63,22 +63,22 @@ startTime = tic;
 % (for example, 'Overlapblocksfiles_beforeinjection', 'Overlapblocksfiles_AfternJiding' or 'Thirdblockf iles', 'FourthblockFiles') 
 %  But this is not necessary, since the code does not have to have paired data at the input 
 if strcmp(monkey, 'Bacchus')
-    training_listOfRequiredFiles = {'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection' %,...
+    training_listOfRequiredFiles = {%'overlapBlocksFiles_BeforeInjection', 'overlapBlocksFiles_AfterInjection' %,...
        %'firstBlockFiles',
-       % 'thirdBlockFiles', 'fourthBlockFiles'
+        'thirdBlockFiles', 'fourthBlockFiles'
        };
-    test_listOfRequiredFiles = {'overlapBlocksFiles_AfterInjection', 'overlapBlocksFiles_BeforeInjection' %,...
-      %  'fourthBlockFiles', 'thirdBlockFiles' 
+    test_listOfRequiredFiles = {% 'overlapBlocksFiles_AfterInjection', 'overlapBlocksFiles_BeforeInjection' %,...
+       'fourthBlockFiles', 'thirdBlockFiles' 
         %'firstBlockFiles'
         };
     
 elseif strcmp(monkey, 'Linus')
-    training_listOfRequiredFiles = {'overlapBlocksFiles_BeforeInjection_3_4', 'overlapBlocksFiles_AfterInjection_3_4'%,...
+    training_listOfRequiredFiles = {% 'overlapBlocksFiles_BeforeInjection_3_4', 'overlapBlocksFiles_AfterInjection_3_4'%,...
        %'firstBlockFiles', 
-       %'thirdBlockFiles' , 'fourthBlockFiles'
+       'thirdBlockFiles' , 'fourthBlockFiles'
        };
-    test_listOfRequiredFiles = {'overlapBlocksFiles_AfterInjection_3_4', 'overlapBlocksFiles_BeforeInjection_3_4' %,...
-        % 'fourthBlockFiles', 'thirdBlockFiles' %, 'firstBlockFiles'
+    test_listOfRequiredFiles = {% 'overlapBlocksFiles_AfterInjection_3_4', 'overlapBlocksFiles_BeforeInjection_3_4' %,...
+         'fourthBlockFiles', 'thirdBlockFiles' %, 'firstBlockFiles'
         };
 end
 
@@ -132,7 +132,7 @@ labels_to_use = {'instr_R_instr_L',  'choice_R_choice_L'};
 %% Define valid combinations of injection and target_brain_structure
 if strcmp(injection, '1') || strcmp(injection, '0')
     combinations_inj_and_target_brain_structure = struct('injection', {injection, injection}, 'target_brain_structure', {'LIP_L', 'LIP_R'});
-    %combinations_inj_and_target_brain_structure = struct('injection', { injection}, 'target_brain_structure', {'LIP_R'});
+  %  combinations_inj_and_target_brain_structure = struct('injection', { injection}, 'target_brain_structure', {'LIP_R'});
     
 elseif strcmp(injection, '2')
     combinations_inj_and_target_brain_structure = struct('injection', {injection, injection}, 'target_brain_structure', {'dPul_L', 'LIP_L'});
@@ -838,6 +838,9 @@ the_cross_validator.test_only_at_training_times = 1;
 DECODING_RESULTS = the_cross_validator.run_cv_decoding;
 
 
+DECODING_RESULTS.DS_PARAMETERS.binned_site_info.binning_parameters.the_bin_start_times = DECODING_RESULTS.DS_PARAMETERS.binned_site_info.binning_parameters.the_bin_start_times - 500;
+DECODING_RESULTS.DS_PARAMETERS.binned_site_info.binning_parameters.start_time = DECODING_RESULTS.DS_PARAMETERS.binned_site_info.binning_parameters.start_time - 500;
+DECODING_RESULTS.DS_PARAMETERS.binned_site_info.binning_parameters.end_time = DECODING_RESULTS.DS_PARAMETERS.binned_site_info.binning_parameters.end_time - 500;
 
 
 save_file_name = [Binned_data_dir training_and_test_save_prefix_name(1:end-4) '_DECODING_RESULTS.mat'];
