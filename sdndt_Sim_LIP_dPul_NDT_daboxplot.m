@@ -1292,13 +1292,13 @@ for stateIdx = 1:numel(target_state)
                 % Number of trials
                 trial_type_side = binned_labels.trial_type_side;
                 
-                % Собираем все лейблы и приводим их в строки
+                % Collect all the labels and put them into strings
                 all_labels_as_strings = cellfun(@(x) strjoin(sort(x)), trial_type_side, 'UniformOutput', false);
                 
-                % Находим уникальные последовательности
+                % Finding unique sequences
                 [unique_sequences, ~, group_indices] = unique(all_labels_as_strings);
                 
-                % Преобразуем строки обратно в ячейки (если нужно)
+                % Convert rows back to cells (if necessary)
                 unique_sequences_as_cells = cellfun(@(x) strsplit(x), unique_sequences, 'UniformOutput', false);
                 
                 
@@ -1308,25 +1308,25 @@ for stateIdx = 1:numel(target_state)
                 uniqueLabels = strcat(relevant_labels(1:2:end), '_', relevant_labels(2:2:end)); % Combine in pairs
                 
                 
-                % Шаг 2: Подсчёт меток для каждой уникальной последовательности
+                % Step 2: Counting labels for each unique sequence
                 label_counts_per_sequence = cell(size(unique_sequences));
                 
                 for seq_idx = 1:numel(unique_sequences_as_cells)
-                    % Лейблы в текущей уникальной последовательности
+                    % Labels in the current unique sequence
                     labels_at_site = unique_sequences_as_cells{seq_idx};
                     
-                    % Инициализация счётчиков для текущей уникальной последовательности
+                    % Initialisation of counters for the current unique sequence
                     count_instr_R_training = 0;
                     count_instr_L_training = 0;
                     count_instr_R_test = 0;
                     count_instr_L_test = 0;
                     
-                    % Цикл по всем лейблам в текущей уникальной последовательности
+                   
                     for i = 1:numel(labels_at_site)
-                        % Текущий лейбл
+                        % Current label
                         label_str = labels_at_site{i};
                         
-                        % Подсчёт по категориям
+                        % Counting by category
                         if contains(label_str, 'training') && contains(label_str, 'instr_R') % для instr_R training
                             count_instr_R_training = count_instr_R_training + 1;
                         elseif contains(label_str, 'training') && contains(label_str, 'instr_L') % для instr_L training
@@ -1338,7 +1338,7 @@ for stateIdx = 1:numel(target_state)
                         end
                     end
                     
-                    % Сохраняем результаты подсчёта для текущей последовательности
+                    % Save the counting results for the current sequence
                     label_counts_per_sequence{seq_idx} = struct('instr_R_training', count_instr_R_training, ...
                         'instr_L_training', count_instr_L_training, ...
                         'instr_R_test', count_instr_R_test, ...
@@ -1346,13 +1346,12 @@ for stateIdx = 1:numel(target_state)
                 end
                 
                 
-                % Шаг 3: Инициализация структуры для итоговых значений
+                % Step 3: Initialising the structure for the totals
                 total_NumOfTrials = struct();
                 
-                % Динамически создаем поля для каждой метки из uniqueLabels
+                % Dynamically create fields for each label from uniqueLabels
                 fields = {};
                 for i = 1:numel(uniqueLabels)
-                    % Создаем поля для training и test
                     fields{end+1} = [uniqueLabels{i} '_training'];
                     fields{end+1} = [uniqueLabels{i} '_test'];
                 end
@@ -1367,11 +1366,11 @@ for stateIdx = 1:numel(target_state)
                     % Get the structure for the current unique sequence
                     current_counts = label_counts_per_sequence{seq_idx};
                     
-                    % Для каждого поля, проверяем и добавляем значение
+                    % For each field, check and add a value
                     for i = 1:numel(fields)
                         field_name = fields{i};
                         
-                        % Проверяем наличие такого поля в current_counts
+                        % Check if this field exists in current_counts
                         if isfield(current_counts, field_name)
                             total_NumOfTrials.(field_name) = total_NumOfTrials.(field_name) + current_counts.(field_name);
                         end
