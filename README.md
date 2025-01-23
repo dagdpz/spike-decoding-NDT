@@ -169,4 +169,22 @@ png-files:
 
 txt-file:  
 - like Sessions_Num_CV_Splits_Info_MEAN_data_for_LIP_L_cueON_instr_R_instr_L_train_block_3_test_block_4_smoothed.txt (contains information about num_cv_splits for each session taken in analysis) 
-- like Statistics_Wilcoxon_Splits_Info_Binned_Sim_LIP_dPul_MEAN_data_for_LIP_L_GOsignal_choice_R_choice_L_train_block_3_test_block_4_smoothed.txt (сontains information about the results of statistical analysis for each bin) 
+- like Statistics_Wilcoxon_Splits_Info_Binned_Sim_LIP_dPul_MEAN_data_for_LIP_L_GOsignal_choice_R_choice_L_train_block_3_test_block_4_smoothed.txt (сontains information about the results of statistical analysis for each bin)
+
+# sdndt_Sim_LIP_dPul_NDT_daboxplot.m                                                             
+Plots the whisker boxes based on the decoding or cross-decoding results.                                                                       
+                                                                                                                                                                              
+**Input:**                                                                                                                                                                                            
+many mat-files:                                                                                                                                                                    
+- like Binned_Sim_LIP_dPul__NDT_data_for_LIP_L_cueON_block_1_100ms_bins_25ms_sampled_instr_R instr_L_DECODING_RESULTS.mat, which contains decoding results.
+                                                                                                                                                                                     
+**Output:**                                                                                                                                                                         
+                                                                                                                                                                                                                
+png-files:                                                                                                                                                   
+- boxplot_for_Bac_Lin_сollected_files_across_sessions_LIP_L_Cue_Delay_PostSac_block_1_and_block_3_4_choice_R choice_L_clear_boxes_Lines.png
+- boxplot_for_Bac_Lin_сollected_files_across_sessions_LIP_L_Cue_Delay_PostSac_block_1_and_block_3_4_choice_R choice_L_color_boxes_Lines.png
+
+txt-file:  
+- like Lin_Extracted_window_for_PostSac_Binned_Sim_LIP_dPul__NDT_data_for_LIP_L_GOsignal_block_4_100ms_bins_25ms_sampled_choice_R choice_L.txt (contains the indexes of the bins taken for analysis) 
+- like Wilcoxon_test_results_Bac_Lin_сollected_files_across_sessions_LIP_L_Cue_Delay_PostSac_block_3_and_block_4_choice_R choice_L.txt (сontains contains the results of the Wilcoxon test) 
+
