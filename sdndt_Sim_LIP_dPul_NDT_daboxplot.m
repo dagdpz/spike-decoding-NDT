@@ -16,7 +16,18 @@ function sdndt_Sim_LIP_dPul_NDT_daboxplot(injection, typeOfDecoding, method_of_d
 %
 % method_of_decoding:  'Decoding', 'Cross_decoding'
 
-%%
+
+%% Subfunctions of sdndt_Sim_LIP_dPul_NDT_daboxplot
+%
+% sdndt_Sim_LIP_dPul_NDT_daboxplot_internal - Core processing function that handles data loading, analysis and preparation for plotting
+% processRequiredFiles - Processes and validates input files, returns folder structure for data organization
+% combine_label_segments - Combines label segments into a standardized format for consistent processing
+% extract_window_from_data_epoch - Extracts data from specific time windows and saves window information to text files
+% collectingAveragesAcrossSessions - Collects and processes average decoding results across multiple sessions
+% daboxplotAveragesAcrossSessions - Creates box plots from the processed decoding results (called but not defined in this file)
+% filelist_of_days_from_Simultaneous_dPul_PPC_recordings - Gets list of recording days (external function)
+% sdndt_Sim_LIP_dPul_NDT_settings - Gets experiment settings and paths (external function)
+
 
 % Start timing the execution
 startTime = tic;
